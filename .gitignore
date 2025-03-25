@@ -1,3 +1,4 @@
 **/*.swp
 **/*.swo
 links.yaml
+data/*
