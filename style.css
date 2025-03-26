@@ -60,6 +60,7 @@ div.linklist {
 h1 {
   font-size: 1.4em;
   text-align: center;
-  color: #fff;
-  text-shadow: 0 0 5px #000;
+  color: #535353;
+  text-shadow: 0 0 5px #7e7e7e;
+  font-weight: lighter;
 }
