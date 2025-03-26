@@ -1,1 +1,1 @@
-# SuperSimpleStaticSidebar
+# SuperSimpleSpeedyStaticSinglepageSites
