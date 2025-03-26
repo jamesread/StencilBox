@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<head>
+	<link rel = "stylesheet" href = "style.css" />
+	<title>Homepage</title>
+</head>
+<body class = "links-homepage">
+	{{ $links := datasource "bookmarks" }}
+
+	{{ range $linkBlock := $links }}
+		{{ range $title, $linkTop := $linkBlock }}
+		<div class = "linklist">
+
+		<h1>{{ $title }}</h1>
+
+			{{ range $keys := $linkTop }}
+				{{ range $link, $keys2 := $keys }}
+
+				{{ $keys3 := index $keys2 0 }}
+				<a href = "{{ $keys3.href }}">{{ $link }}</a>
+				{{ end }}
+			{{ end }}
+		</div>
+		{{ end }}
+		
+	{{ end }}
+</body>
+
