@@ -27,11 +27,12 @@ img {
 	padding: 1em;
 }
 
-body.links-homepage {
+.grid {
   display: grid;
   row-gap: 1em;
   column-gap: 4em;
   padding: 5em;
+  padding-top: 1em;
   grid-template-rows: repeat(auto-fill, minmax(3m, 1fr));
   grid-template-columns: repeat(auto-fit, 20em);
   place-content: center;
@@ -58,9 +59,14 @@ div.linklist {
 }
 
 h1 {
+  text-align: center;
+  text-shadow: 0 0 5px #7e7e7e;
+}
+
+h2 {
   font-size: 1.4em;
   text-align: center;
   color: #535353;
   text-shadow: 0 0 5px #7e7e7e;
-  font-weight: lighter;
+  font-weight: normal;
 }

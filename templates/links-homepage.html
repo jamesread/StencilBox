@@ -2,16 +2,22 @@
 
 <head>
 	<link rel = "stylesheet" href = "style.css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Homepage</title>
 </head>
 <body class = "links-homepage">
-	{{ $links := datasource "bookmarks" }}
+	{{ $bookmarks := datasource "bookmarks" }}
 
-	{{ range $linkBlock := $links }}
+	<header>
+	<h1>{{ $bookmarks.title }}</h1>
+	</header>
+
+	<main class = "grid">
+	{{ range $linkBlock := $bookmarks.bookmarks }}
 		{{ range $title, $linkTop := $linkBlock }}
 		<div class = "linklist">
 
-		<h1>{{ $title }}</h1>
+		<h2>{{ $title }}</h2>
 
 			{{ range $keys := $linkTop }}
 				{{ range $link, $keys2 := $keys }}
@@ -24,5 +30,6 @@
 		{{ end }}
 		
 	{{ end }}
+	</main>
 </body>
 
