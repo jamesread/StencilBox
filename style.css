@@ -70,3 +70,18 @@ h2 {
   text-shadow: 0 0 5px #7e7e7e;
   font-weight: normal;
 }
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+a.open {
+	font-weight: bold;
+	background-color: #efefef;
+}
+
+a.selected {
+	background-color: #c4cdd4;
+}

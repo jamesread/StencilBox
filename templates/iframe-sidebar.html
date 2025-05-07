@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<head>
+	<title>SuperSimpleStaticSidebar</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+	<link rel = "stylesheet" type = "text/css" href = "style.css" />
+
+<style type = "text/css">
+
+body {
+	margin: 0;
+	display: flex;
+	flex-direction: row;
+	font-size: small;
+	height: 100%;
+}
+
+body div {
+	display: flex;
+}
+
+iframe {
+	border: 0;
+}
+
+#sidebar {
+	width: 4em;
+	border-right: 1px solid black;
+	box-shadow: 0 0 12px #666;
+	z-index: 9;
+	overflow: hidden;
+}
+
+#sidebar:hover {
+	width: 10em;
+}
+
+#iframes {
+	flex-grow: 1;
+	background-color: white;
+}
+</style>
+</head>
+<body>
+	<div id = "sidebar">
+		<ul>
+		{{ range datasource "links" }}
+		<li>
+			<a href = "#" onclick = "changeTab(this, '{{ .url }}', '{{ .title }}')">
+			<img src = "{{ .icon }}" width = "32" />
+			<span class = "title">{{ .title }}</span>
+		</a>
+		</li>
+		{{ end }}
+		</ul>
+	</div>
+
+	<div id = "iframes">
+	</div>
+
+<script>
+function changeTab(anchor, url, title) {
+	let fr = document.getElementById(title)
+
+	if (fr == null) {
+		fr = document.createElement('iframe')
+		fr.id = title
+		fr.setAttribute('src', url)
+		fr.setAttribute('width', "100%")
+		fr.setAttribute('height', "100%")
+
+		document.getElementById('iframes').appendChild(fr)
+	}
+
+	for (let iframe of document.querySelectorAll('iframe')) {
+		iframe.hidden = true;
+	}
+
+	for (let a of document.getElementById('sidebar').querySelectorAll('a')) {
+		a.classList.remove('selected')
+	}
+
+	fr.hidden = false;
+
+	anchor.classList.add('open')
+	anchor.classList.add('selected')
+}
+</script>
+
+</body>
