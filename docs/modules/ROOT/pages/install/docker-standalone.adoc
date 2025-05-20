@@ -1,0 +1,13 @@
+= Docker (standalone)
+
+.Bash
+[source,bash]
+----
+docker pull ghcr.io/jamesread/stencilbox:latest
+docker create \
+  --name StencilBox \
+  -v stencilbox-config:/config \
+  -p 4337:4337 \
+  --restart unless-stopped \
+  ghcr.io/jamesread/stencilbox:latest
+---

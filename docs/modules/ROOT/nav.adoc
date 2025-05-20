@@ -1,0 +1,6 @@
+* xref:index.adoc[Introduction]
+* Installation Guide
+** xref:install/docker-compose.adoc[Docker Compose]
+** xref:install/docker-standalone.adoc[Docker (Standalone)]
+* xref:config/index.adoc[Configuration]
+* xref:support.adoc[Support]

@@ -1,0 +1,20 @@
+= Configuration
+
+All configuration of StencilBox is via a configuration file called `config.yaml`. When running StencilBox via Docker, this file is located in the `/config` directory.
+
+The configuration file can be created and edited using any text editor. The configuration file is in YAML format, which is a human-readable data serialization standard.
+
+The most basic `config.yaml` file cam be as simple as this:
+
+.config.yaml
+[source,yaml]
+----
+logLevel: info
+----
+
+|===
+| Option       | Description           | Default         | Live Reloadable          | Documentation
+| `configVersion` | The version of the configuration file. | 1 | No | ---
+| `logLevel`      | The log level to use. | info            | Yes                      | One of `debug`, `info`, `warn`, `error`.
+| `showFooter`    | Whether to show the footer in the web UI. | true           | No                      | ---
+|===
