@@ -7,7 +7,7 @@ service:
 	$(MAKE) -wC service
 
 frontend:
-	echo "frontend"
+	$(MAKE) -wC frontend
 
 protoc:
 	$(MAKE) -wC proto
