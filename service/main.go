@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/jamesread/StencilBox/internal/config"
+	"github.com/jamesread/StencilBox/internal/httpserver"
 //	"github.com/jamesread/StencilBox/internal/generator"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
@@ -97,4 +98,6 @@ func main() {
 	}
 
 	//generator.Generate(config.ReadConfigFile())
+
+	httpserver.Start(cfg)
 }

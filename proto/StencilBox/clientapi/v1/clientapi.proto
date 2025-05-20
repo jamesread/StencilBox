@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package StencilBox.clientapi.v1;
+
+option go_package = "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1;clientapi";
+
+message InitRequest {
+}
+
+message InitResponse {
+	string version = 1;
+}
+
+service StencilBoxApiService {
+	rpc Init(InitRequest) returns (InitResponse);
+
+}

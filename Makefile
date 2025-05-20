@@ -1,4 +1,6 @@
-default:
+default: protoc frontend service
+
+local:
 	gomplate -d bookmarks=bookmarks.yaml -d links=links.yaml -f template.html > index.html
 
 service:
@@ -6,6 +8,9 @@ service:
 
 frontend:
 	echo "frontend"
+
+protoc:
+	$(MAKE) -wC proto
 
 docs:
 	$(MAKE) -wC docs
@@ -18,4 +23,4 @@ gomplate:
 	mv gomplate /usr/local/bin
 
 
-.PHONY: default service frontend docs gomplate
+.PHONY: default service frontend docs gomplate proto

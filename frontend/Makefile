@@ -1,0 +1,2 @@
+ci:
+	npm ci
