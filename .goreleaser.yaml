@@ -26,7 +26,7 @@ dockers:
   - id: StencilBox
     dockerfile: Dockerfile
     image_templates:
-      - ghcr.io/jamesread/StencilBox
+      - ghcr.io/jamesread/stencilbox
     extra_files:
       - README.md
 #      - webui
