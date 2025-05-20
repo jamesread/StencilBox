@@ -7,6 +7,10 @@ service:
 frontend:
 	echo "frontend"
 
+docs:
+	$(MAKE) -wC docs
+	./docs/node_modules/.bin/antora antora-playbook.yml
+
 gomplate:
 	wget https://github.com/hairyhenderson/gomplate/releases/download/v4.3.0/gomplate_linux-amd64
 	mv gomplate_linux-amd64 gomplate
