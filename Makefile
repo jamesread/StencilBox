@@ -16,3 +16,6 @@ gomplate:
 	mv gomplate_linux-amd64 gomplate
 	chmod +x gomplate
 	mv gomplate /usr/local/bin
+
+
+.PHONY: default service frontend docs gomplate
