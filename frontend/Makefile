@@ -1,3 +1,3 @@
 ci:
 	npm ci
-	vite build
+	npx vite build
