@@ -2,9 +2,9 @@ FROM alpine
 
 LABEL org.opencontainers.image.source=https://github.com/jamesread/StencilBox
 
-COPY config.yaml /config/config.yaml
+COPY var/config-skel/ /config/
 COPY StencilBox /app/StencilBox
-COPY frontend/dist /webui
+COPY frontend/dist /frontend/
 
 VOLUME /config
 
