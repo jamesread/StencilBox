@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	OutputDir string
 	Sites []*Site;
 }
 

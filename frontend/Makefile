@@ -1,3 +1,3 @@
 ci:
 	npm ci
-	npx vite build
+	npx vite build --base '/webui/'

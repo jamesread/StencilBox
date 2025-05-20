@@ -64,6 +64,38 @@ func findWebuiDir() string {
 }
 
 func getNewWebUIHandler(dir string) http.Handler {
+	return http.StripPrefix("/webui/", http.FileServer(http.Dir(dir)))
+}
+
+func getOutputHandler(dir string) http.Handler {
+	if dir == "" {
+		dir = "./sb-output"
+	}
+
+	index, _ := filepath.Abs(filepath.Join(dir, "index.html"))
+
+	if _, err := os.Stat(index); os.IsNotExist(err) {
+		log.WithFields(log.Fields{
+			"index": index,
+		}).Infof("Creating index.html file")
+
+		err := os.MkdirAll(dir, 0755)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"index": index,
+			}).Fatalf("Could not create output directory")
+		}
+
+		err = os.WriteFile(index, []byte("<html><body><h1>StencilBox Default Index file</h1><p>This page will be replaced when something is built.</p><a href = 'webui'>webui</a></body></html>"), 0644)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"index": index,
+			}).Fatalf("Could not create index.html file")
+		}
+	}
+
 	return http.FileServer(http.Dir(dir))
 }
 
@@ -87,7 +119,9 @@ func Start(cfg *config.Config) {
 
 	log.Infof("WebUI path: %s", webuiPath)
 
-	mux.Handle("/", getNewWebUIHandler(webuiPath))
+	mux.Handle("/webui/", getNewWebUIHandler(webuiPath))
+
+	mux.Handle("/", getOutputHandler(cfg.OutputDir))
 
 	srv := &http.Server{
 		Addr:    "0.0.0.0:8080",
