@@ -29,8 +29,8 @@ dockers:
       - ghcr.io/jamesread/StencilBox
     extra_files:
       - README.md
-      - webui
-      - var/config-skel/
+#      - webui
+#      - var/config-skel/
 
 changelog:
   sort: asc
