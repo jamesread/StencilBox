@@ -1,0 +1,3 @@
+= StencilBox
+
+**Generate super speedy simple static sites, from sleek templates.**

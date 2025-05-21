@@ -1,0 +1,40 @@
+---
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+builds:
+  - id: StencilBox
+    dir: service
+    main: main.go
+    binary: StencilBox
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [amd64]
+    ldflags:
+      - >
+        -s -w
+        -X github.com/jamesread/StencilBox/internal/buildinfo.Version={{.Version}}
+        -X github.com/jamesread/StencilBox/internal/buildinfo.GitCommit={{.Commit}}
+        -X github.com/jamesread/StencilBox/internal/buildinfo.BuildDate={{.Date}}
+
+archives:
+  - builds: [StencilBox]
+
+dockers:
+  - id: StencilBox
+    dockerfile: Dockerfile
+    image_templates:
+      - ghcr.io/jamesread/stencilbox
+    extra_files:
+      - README.md
+      - frontend/dist
+      - var/config-skel
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

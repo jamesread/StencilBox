@@ -1,0 +1,12 @@
+---
+name: ROOT
+title: StencilBox
+version: ''
+start_page: index.adoc
+asciidoc:
+  attributes:
+    source-language: asciidoc@
+    table-caption: false
+    toclevels: 2
+nav:
+- modules/ROOT/nav.adoc

@@ -8,8 +8,8 @@ If you're not sure where to get started, raise an issue in the project.
 
 Ideas may be discussed, purely on their merits and issues. Our Code of Conduct
 (CoC) is straightforward - it's important that contributors feel comfortable in
-discussion throughout the whole process. This project has a [code of conduct](CODE_OF_CONDUCT.md)
-which must be followed.
+discussion throughout the whole process. This project has a
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## More than 3 lines - talk to someone first
 
@@ -28,7 +28,7 @@ about what you're planning might affect things. Some of the larger future plans 
 documented well so it's difficult to understand how your change might affect
 the general direction and roadmap of this project without asking.
 
-The preferred way to communicate is probably via GitHub issues.
+The preferred way to communicate is probably via Discord or GitHub issues.
 
 ## Mechanics of submitting a pull request
 

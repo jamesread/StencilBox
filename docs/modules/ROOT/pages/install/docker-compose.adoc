@@ -1,0 +1,34 @@
+= Docker Compose
+
+.docker-compose.yml
+[source,yaml]
+----
+---
+services:
+  stencilbox:
+    container_name: StencilBox
+    image: ghcr.io/jamesread/stencilbox:latest
+    volumes:
+      - stencilbox-config:/config
+    restart: unless-stopped
+    ports:
+      - "4337:4337"
+    networks:
+      - stencilbox-network
+
+  mariadb:
+    container_name: mariadb
+    image: docker.io/mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: stencilbox
+
+volumes:
+  stencilbox-config:
+    name: stencilbox-config
+    external: false
+
+networks:
+  stencilbox-network:
+    external: false
+----

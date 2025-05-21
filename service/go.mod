@@ -1,6 +1,8 @@
 module github.com/jamesread/StencilBox
 
-go 1.20
+go 1.23.0
+
+toolchain go1.23.8
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.1
@@ -10,6 +12,10 @@ require (
 )
 
 require (
+	connectrpc.com/connect v1.18.1 // indirect
+	connectrpc.com/cors v0.1.0 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/rs/cors v1.11.1 // indirect
 	golang.org/x/sys v0.31.0 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 )

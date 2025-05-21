@@ -1,0 +1,16 @@
+section.small {
+	margin: auto;
+	max-width: 600px;
+}
+
+section.small {
+	margin-bottom: 2em;
+}
+
+table th:first-child {
+	width: 25%;
+}
+
+footer {
+	padding: .5em;
+}
