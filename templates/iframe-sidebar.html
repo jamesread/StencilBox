@@ -53,12 +53,20 @@ iframe {
 		</li>
 		{{ end }}
 		</ul>
+
+		<button onclick = "closeSidebar()">&times;</button>
 	</div>
 
 	<div id = "iframes">
 	</div>
 
 <script>
+
+function closeSidebar() {
+	let sidebar = document.getElementById('sidebar')
+	document.body.removeChild(sidebar)
+}
+
 function changeTab(anchor, url, title) {
 	let fr = document.getElementById(title)
 
