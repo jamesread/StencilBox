@@ -89,3 +89,9 @@ a.open {
 a.selected {
 	background-color: #c4cdd4;
 }
+
+button {
+	padding: 1em;
+	font-weight: bold;
+	margin: .6em;
+}
