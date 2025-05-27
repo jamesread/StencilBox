@@ -8,7 +8,7 @@ import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2
  * Describes the file StencilBox/clientapi/v1/clientapi.proto.
  */
 export const file_StencilBox_clientapi_v1_clientapi = /*@__PURE__*/
-  fileDesc("CidTdGVuY2lsQm94L2NsaWVudGFwaS92MS9jbGllbnRhcGkucHJvdG8SF1N0ZW5jaWxCb3guY2xpZW50YXBpLnYxIg0KC0luaXRSZXF1ZXN0Ih8KDEluaXRSZXNwb25zZRIPCgd2ZXJzaW9uGAEgASgJIg4KDEJ1aWxkUmVxdWVzdCIfCg1CdWlsZFJlc3BvbnNlEg4KBnN0YXR1cxgBIAEoCTLIAQoUU3RlbmNpbEJveEFwaVNlcnZpY2USUwoESW5pdBIkLlN0ZW5jaWxCb3guY2xpZW50YXBpLnYxLkluaXRSZXF1ZXN0GiUuU3RlbmNpbEJveC5jbGllbnRhcGkudjEuSW5pdFJlc3BvbnNlElsKClN0YXJ0QnVpbGQSJS5TdGVuY2lsQm94LmNsaWVudGFwaS52MS5CdWlsZFJlcXVlc3QaJi5TdGVuY2lsQm94LmNsaWVudGFwaS52MS5CdWlsZFJlc3BvbnNlQkpaSGdpdGh1Yi5jb20vamFtZXNyZWFkL1N0ZW5jaWxCb3gvZ2VuL1N0ZW5jaWxCb3gvY2xpZW50YXBpL3YxO2NsaWVudGFwaV9wYmIGcHJvdG8z");
+  fileDesc("CidTdGVuY2lsQm94L2NsaWVudGFwaS92MS9jbGllbnRhcGkucHJvdG8SF1N0ZW5jaWxCb3guY2xpZW50YXBpLnYxIg0KC0luaXRSZXF1ZXN0IlwKDEluaXRSZXNwb25zZRIPCgd2ZXJzaW9uGAEgASgJEjsKDWJ1aWxkX2NvbmZpZ3MYAiADKAsyJC5TdGVuY2lsQm94LmNsaWVudGFwaS52MS5CdWlsZENvbmZpZyIbCgtCdWlsZENvbmZpZxIMCgRuYW1lGAEgASgJIiMKDEJ1aWxkUmVxdWVzdBITCgtjb25maWdfbmFtZRgBIAEoCSJaCg1CdWlsZFJlc3BvbnNlEhMKC2NvbmZpZ19uYW1lGAEgASgJEg4KBnN0YXR1cxgCIAEoCRINCgVmb3VuZBgDIAEoCBIVCg1yZWxhdGl2ZV9wYXRoGAQgASgJMsgBChRTdGVuY2lsQm94QXBpU2VydmljZRJTCgRJbml0EiQuU3RlbmNpbEJveC5jbGllbnRhcGkudjEuSW5pdFJlcXVlc3QaJS5TdGVuY2lsQm94LmNsaWVudGFwaS52MS5Jbml0UmVzcG9uc2USWwoKU3RhcnRCdWlsZBIlLlN0ZW5jaWxCb3guY2xpZW50YXBpLnYxLkJ1aWxkUmVxdWVzdBomLlN0ZW5jaWxCb3guY2xpZW50YXBpLnYxLkJ1aWxkUmVzcG9uc2VCSlpIZ2l0aHViLmNvbS9qYW1lc3JlYWQvU3RlbmNpbEJveC9nZW4vU3RlbmNpbEJveC9jbGllbnRhcGkvdjE7Y2xpZW50YXBpX3BiYgZwcm90bzM");
 
 /**
  * Describes the message StencilBox.clientapi.v1.InitRequest.
@@ -25,18 +25,25 @@ export const InitResponseSchema = /*@__PURE__*/
   messageDesc(file_StencilBox_clientapi_v1_clientapi, 1);
 
 /**
+ * Describes the message StencilBox.clientapi.v1.BuildConfig.
+ * Use `create(BuildConfigSchema)` to create a new message.
+ */
+export const BuildConfigSchema = /*@__PURE__*/
+  messageDesc(file_StencilBox_clientapi_v1_clientapi, 2);
+
+/**
  * Describes the message StencilBox.clientapi.v1.BuildRequest.
  * Use `create(BuildRequestSchema)` to create a new message.
  */
 export const BuildRequestSchema = /*@__PURE__*/
-  messageDesc(file_StencilBox_clientapi_v1_clientapi, 2);
+  messageDesc(file_StencilBox_clientapi_v1_clientapi, 3);
 
 /**
  * Describes the message StencilBox.clientapi.v1.BuildResponse.
  * Use `create(BuildResponseSchema)` to create a new message.
  */
 export const BuildResponseSchema = /*@__PURE__*/
-  messageDesc(file_StencilBox_clientapi_v1_clientapi, 3);
+  messageDesc(file_StencilBox_clientapi_v1_clientapi, 4);
 
 /**
  * @generated from service StencilBox.clientapi.v1.StencilBoxApiService

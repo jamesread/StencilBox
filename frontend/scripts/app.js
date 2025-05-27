@@ -27,13 +27,30 @@ async function setupApi() {
 
   document.getElementById('current-version').innerText = 'Version: ' + status.version;
 
-  document.getElementById('start-build').onclick = async () => {
-    startBuild();
+  for (const bc of status.buildConfigs) {
+    createBuildConfigSection(bc)
   }
 }
 
-function startBuild() {
-  window.client.startBuild({})
+function createBuildConfigSection(buildConfig) {
+  console.log('Creating build config section for:', buildConfig);
+
+  let tpl = document.getElementById('build-config-template').content.cloneNode(true);
+
+  tpl.querySelector('section').setAttribute('title', buildConfig.name);
+  tpl.querySelector('.build-config-name').innerText = buildConfig.name;
+
+  tpl.querySelector('.start-build-button').onclick = () => {
+    startBuild(buildConfig.name);
+  }
+
+  document.getElementsByTagName('main')[0].appendChild(tpl);
+}
+
+function startBuild(buildConfigName) {
+  window.client.startBuild({
+    'configName': buildConfigName
+  })
     .then(response => {
       onBuildStarted(response);
     })
@@ -45,5 +62,44 @@ function startBuild() {
 function onBuildStarted(response) {
   console.log('Build started:', response);
 
-  document.getElementById('last-built').innerText = 'Build started successfully!';
+  if (!response.found) {
+    showBigError('Build config not found. Please check the configuration.');
+    return;
+  }
+
+  let buildSection = document.querySelector(`section[title="${response.configName}"]`);
+
+  if (!buildSection) {
+    showBigError('Build section not found. Please refresh the page.');
+  }
+
+  buildSection.querySelector('.build-status').innerText = response.status;
+
+  let l = window.location;
+  let a = document.createElement('a');
+  a.href = l.origin + '/' + response.relativePath
+
+  a.innerText = 'LINK';
+
+  let urlContainer = buildSection.querySelector('.build-url')
+  urlContainer.innerHTML = '';
+  urlContainer.appendChild(a)
+
+}
+
+function showBigError(message) {
+  console.error('Big error:', message);
+
+  let el = document.createElement('dialog');
+  el.classList.add('critical')
+  el.innerHTML = `
+    <h2>Critical Error</h2>
+    <p>${message}</p>
+    <form method="dialog">
+    <button type = "close">Close</button>
+    </form>
+  `;
+
+  document.body.appendChild(el);
+  el.showModal()
 }

@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"github.com/jamesread/golure/pkg/dirs"
-	"github.com/jamesread/StencilBox/internal/config"
 	"github.com/jamesread/StencilBox/internal/clientapi"
 	clientapiconnect "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
 
@@ -28,12 +27,12 @@ func withCors(h http.Handler) http.Handler {
 	return mw.Handler(h)
 }
 
-func getNewApiHandler(cfg *config.Config) (string, http.Handler) {
-	apiServer := clientapi.NewServer(cfg)
+func getNewApiHandler() (string, http.Handler, *clientapi.ClientApi) {
+	apiServer := clientapi.NewServer()
 
 	path, handler := clientapiconnect.NewStencilBoxApiServiceHandler(apiServer)
 
-	return path, withCors(handler)
+	return path, withCors(handler), apiServer
 }
 
 func findWebuiDir() string {
@@ -58,10 +57,6 @@ func getNewWebUIHandler(dir string) http.Handler {
 }
 
 func getOutputHandler(dir string) http.Handler {
-	if dir == "" {
-		dir = "./sb-output"
-	}
-
 	index, _ := filepath.Abs(filepath.Join(dir, "index.html"))
 
 	if _, err := os.Stat(index); os.IsNotExist(err) {
@@ -89,11 +84,11 @@ func getOutputHandler(dir string) http.Handler {
 	return http.FileServer(http.Dir(dir))
 }
 
-func Start(cfg *config.Config) {
+func Start() {
 	log.WithFields(log.Fields{
 	}).Info("Starting HTTP server")
 
-	apipath, apihandler := getNewApiHandler(cfg)
+	apipath, apihandler, apiServer := getNewApiHandler()
 
 	log.Infof("API path: %s", apipath)
 
@@ -109,7 +104,7 @@ func Start(cfg *config.Config) {
 
 	mux.Handle("/webui/", getNewWebUIHandler(webuiPath))
 
-	mux.Handle("/", getOutputHandler(cfg.OutputDir))
+	mux.Handle("/", getOutputHandler(apiServer.BaseOutputDir))
 
 	srv := &http.Server{
 		Addr:    "0.0.0.0:8080",

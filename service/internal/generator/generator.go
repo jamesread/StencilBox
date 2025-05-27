@@ -1,18 +1,28 @@
 package generator
 
 import (
-	"github.com/jamesread/StencilBox/internal/config"
+	"github.com/jamesread/StencilBox/internal/buildconfigs"
 
 	log "github.com/sirupsen/logrus"
 	"os"
 
 	"gopkg.in/yaml.v3"
 
+	"path/filepath"
+
 	"text/template"
 )
 
-func Generate(cfg *config.Config) {
-	log.Infof("Starting build for project %v", cfg.OutputDir)
+func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) {
+	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
+
+	log.WithFields(log.Fields{
+		"name":	   cfg.Name,
+		"outputDir": cfg.OutputDir,
+		"finalOutputDir": finalOutputDir,
+	}).Infof("Starting build for project")
+
+	os.MkdirAll(finalOutputDir, 0755)
 
 	tmpl, err := template.ParseFiles("../templates/" + cfg.Template + "/index.html")
 
@@ -37,9 +47,7 @@ func Generate(cfg *config.Config) {
 
 	log.Infof("Datafiles loaded: %+v", datafiles)
 
-	cfg.OutputDir = "sb-output/"
-
-	outfile, err := os.Create(cfg.OutputDir + "/index.html")
+	outfile, err := os.Create(finalOutputDir + "/index.html")
 
 	if err != nil {
 		log.Errorf("Error creating output file: %v", err)
@@ -53,12 +61,10 @@ func Generate(cfg *config.Config) {
 		return
 	}
 
-	copyAssets(cfg.OutputDir)
+	copyAssets(finalOutputDir)
 }
 
 func copyAssets(outputDir string) {
-	outputDir = "sb-output/"
-
 	contents, err := os.ReadFile("../style.css")
 
 	if err != nil {

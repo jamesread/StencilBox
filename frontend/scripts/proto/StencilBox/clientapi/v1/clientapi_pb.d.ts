@@ -30,6 +30,11 @@ export declare type InitResponse = Message<"StencilBox.clientapi.v1.InitResponse
    * @generated from field: string version = 1;
    */
   version: string;
+
+  /**
+   * @generated from field: repeated StencilBox.clientapi.v1.BuildConfig build_configs = 2;
+   */
+  buildConfigs: BuildConfig[];
 };
 
 /**
@@ -39,9 +44,29 @@ export declare type InitResponse = Message<"StencilBox.clientapi.v1.InitResponse
 export declare const InitResponseSchema: GenMessage<InitResponse>;
 
 /**
+ * @generated from message StencilBox.clientapi.v1.BuildConfig
+ */
+export declare type BuildConfig = Message<"StencilBox.clientapi.v1.BuildConfig"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message StencilBox.clientapi.v1.BuildConfig.
+ * Use `create(BuildConfigSchema)` to create a new message.
+ */
+export declare const BuildConfigSchema: GenMessage<BuildConfig>;
+
+/**
  * @generated from message StencilBox.clientapi.v1.BuildRequest
  */
 export declare type BuildRequest = Message<"StencilBox.clientapi.v1.BuildRequest"> & {
+  /**
+   * @generated from field: string config_name = 1;
+   */
+  configName: string;
 };
 
 /**
@@ -55,9 +80,24 @@ export declare const BuildRequestSchema: GenMessage<BuildRequest>;
  */
 export declare type BuildResponse = Message<"StencilBox.clientapi.v1.BuildResponse"> & {
   /**
-   * @generated from field: string status = 1;
+   * @generated from field: string config_name = 1;
+   */
+  configName: string;
+
+  /**
+   * @generated from field: string status = 2;
    */
   status: string;
+
+  /**
+   * @generated from field: bool found = 3;
+   */
+  found: boolean;
+
+  /**
+   * @generated from field: string relative_path = 4;
+   */
+  relativePath: string;
 };
 
 /**

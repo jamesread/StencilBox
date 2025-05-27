@@ -2,3 +2,4 @@
 **/*.swo
 links.yaml
 data/*
+/sb-output

@@ -20,28 +20,29 @@
 	</header>
 
 	<main>
-		<section class = "small">
-			<h2>Welcome to StencilBox</h2>
-			<p>StencilBox is a tool for creating and managing stencil projects.</p>
-		</section>
+	</main>
 
+	<template id = "build-config-template">
 		<section class = "small">
-			<h2>Build Info</h2>
+			<h2>Build: <span class = "build-config-name">???</span></h2>
 
 			<p>This shows the last build.</p>
 
 			<table>
 				<tr>
-					<th>Last built</th>
-					<td id = "last-built">Never</td>
+					<th>Status</th>
+					<td class = "build-status">Never</td>
 				</tr>
+				<tr>
+					<th>URL</th>
+					<td class = "build-url">...</td>
 			</table>
 
 			<p>Click the button below to build the project.</p>
 
-			<button id = "start-build" type = "submit">Build</button>
+			<button class = "start-build-button" type = "submit">Build</button>
 		</section>
-	</main>
+	</template>
 
 	<footer>
 		<span><a href = "https://github.com/jamesread/StencilBox" />StencilBox on GitHub</a></span>

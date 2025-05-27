@@ -9,14 +9,23 @@ message InitRequest {
 
 message InitResponse {
 	string version = 1;
+
+	repeated BuildConfig build_configs = 2;
+}
+
+message BuildConfig {
+	string name = 1;
 }
 
 message BuildRequest {
+	string config_name = 1;
 }
 
 message BuildResponse {
-	string status = 1;
-
+	string config_name = 1;
+	string status = 2;
+	bool found = 3;
+	string relative_path = 4;
 }
 
 service StencilBoxApiService {
