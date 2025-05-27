@@ -29,6 +29,7 @@ dockers:
       - ghcr.io/jamesread/stencilbox
     extra_files:
       - README.md
+      - templates
       - frontend/dist
       - var/config-skel
 

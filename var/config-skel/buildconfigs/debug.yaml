@@ -1,0 +1,8 @@
+name: hello world
+
+outputdir: helloworld
+
+template: debug
+
+datafiles:
+  links: data/sites.yml

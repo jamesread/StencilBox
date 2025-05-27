@@ -2,9 +2,11 @@ package generator
 
 import (
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
+	"github.com/jamesread/golure/pkg/dirs"
+
+	"os"
 
 	log "github.com/sirupsen/logrus"
-	"os"
 
 	"gopkg.in/yaml.v3"
 
@@ -24,7 +26,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) {
 
 	os.MkdirAll(finalOutputDir, 0755)
 
-	tmpl, err := template.ParseFiles("../templates/" + cfg.Template + "/index.html")
+	tmpl, err := template.ParseFiles(findTemplateDir() + cfg.Template + "/index.html")
 
 	if err != nil {
 		log.Errorf("Error parsing template %v: %v", cfg.Template, err)
@@ -62,6 +64,15 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) {
 	}
 
 	copyAssets(finalOutputDir)
+}
+
+func findTemplateDir() string {
+	dir, _ := dirs.GetFirstExistingDirectory([]string{
+		"../templates/",
+		"/config/templates/",
+	})
+
+	return dir
 }
 
 func copyAssets(outputDir string) {

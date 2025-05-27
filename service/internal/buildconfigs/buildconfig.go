@@ -20,7 +20,7 @@ type BuildConfig struct {
 
 func getConfigDir() (string, error) {
 	directoriesToSearch := []string{
-		"/config/",
+		"/config/buildconfigs/",
 		os.Getenv("BUILD_CONFIG_DIR"),
 	}
 

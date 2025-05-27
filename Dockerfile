@@ -3,6 +3,7 @@ FROM alpine
 LABEL org.opencontainers.image.source=https://github.com/jamesread/StencilBox
 
 COPY var/config-skel/ /config/
+COPY templates/ /config/templates/
 COPY StencilBox /app/StencilBox
 COPY frontend/dist /frontend/
 
