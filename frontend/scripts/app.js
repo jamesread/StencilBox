@@ -27,8 +27,15 @@ async function setupApi() {
 
   document.getElementById('current-version').innerText = 'Version: ' + status.version;
 
-  for (const bc of status.buildConfigs) {
-    createBuildConfigSection(bc)
+  if (status.buildConfigs.length === 0) {
+    let section = document.createElement('section');
+    section.innerText = 'No build configurations found yet, please write one!';
+
+    document.getElementsByTagName('main')[0].appendChild(section);
+  } else {
+    for (const bc of status.buildConfigs) {
+      createBuildConfigSection(bc)
+    }
   }
 }
 
