@@ -9,12 +9,10 @@ import (
 
 type Config struct {
 	OutputDir string
-	Sites []*Site;
-}
 
-type Site struct {
-	Name string;
-	URL string;
+	Template string
+
+	Datafiles map[string]string
 }
 
 func getConfigFile() string {

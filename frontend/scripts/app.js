@@ -4,8 +4,6 @@ import { createConnectTransport } from "@connectrpc/connect-web"
 import { StencilBoxApiService } from './proto/StencilBox/clientapi/v1/clientapi_pb'
 
 export function init() {
-  console.log("App initialized");
-
   createApiClient();
   setupApi();
 }

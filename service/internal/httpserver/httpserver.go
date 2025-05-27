@@ -100,8 +100,6 @@ func Start(cfg *config.Config) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api"+apipath, func(w http.ResponseWriter, r *http.Request) {
-		log.Infof("API request: %s", r.URL.Path)
-
 		http.StripPrefix("/api", apihandler).ServeHTTP(w, r)
 	})
 

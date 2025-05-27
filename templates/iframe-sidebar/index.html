@@ -44,7 +44,7 @@ iframe {
 <body>
 	<div id = "sidebar">
 		<ul>
-		{{ range datasource "links" }}
+		{{ range .links }}
 		<li>
 			<a href = "#" onclick = "changeTab(this, '{{ .url }}', '{{ .title }}')">
 			<img src = "{{ .icon }}" width = "32" />

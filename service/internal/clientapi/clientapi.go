@@ -4,6 +4,7 @@ import (
 	"connectrpc.com/connect"
 	"context"
 	"github.com/jamesread/StencilBox/internal/config"
+	"github.com/jamesread/StencilBox/internal/generator"
 	"github.com/jamesread/StencilBox/internal/buildinfo"
 	pb "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1"
 	client "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
@@ -33,6 +34,8 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	response := &pb.BuildResponse{
 		Status: "Build started",
 	}
+
+	generator.Generate(c.cfg)
 
 	return connect.NewResponse(response), nil
 }
