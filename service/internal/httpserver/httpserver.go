@@ -1,9 +1,10 @@
 package httpserver
 
 import (
+	"github.com/jamesread/golure/pkg/dirs"
 	"github.com/jamesread/StencilBox/internal/config"
 	"github.com/jamesread/StencilBox/internal/clientapi"
-	"github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapiconnect"
+	clientapiconnect "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
 
 	connectcors "connectrpc.com/cors"
 
@@ -36,31 +37,20 @@ func getNewApiHandler(cfg *config.Config) (string, http.Handler) {
 }
 
 func findWebuiDir() string {
-	directoriesToSearch := []string{
+	webuidir, err := dirs.GetFirstExistingDirectory([]string{
 		"../frontend/dist/",
 		"../frontend/",
 		"/frontend/",
 		"/usr/share/SpaghettiCannon/frontend/",
 		"/var/www/SpaghettiCannon/",
 		"/etc/SpaghettiCannon/frontend/",
+	})
+
+	if err != nil {
+		log.Warnf("Did not find the webui directory, you will probably get 404 errors.")
 	}
 
-	for _, dir := range directoriesToSearch {
-		if _, err := os.Stat(dir); !os.IsNotExist(err) {
-			absdir, _ := filepath.Abs(dir)
-
-			log.WithFields(log.Fields{
-				"dir": dir,
-				"absdir": absdir,
-			}).Infof("Found the webui directory")
-
-			return absdir
-		}
-	}
-
-	log.Warnf("Did not find the webui directory, you will probably get 404 errors.")
-
-	return "./webui" // Should not exist
+	return webuidir
 }
 
 func getNewWebUIHandler(dir string) http.Handler {

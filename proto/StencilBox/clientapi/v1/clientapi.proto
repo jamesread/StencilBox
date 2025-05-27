@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package StencilBox.clientapi.v1;
 
-option go_package = "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1;clientapi";
+option go_package = "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1;clientapi_pb";
 
 message InitRequest {
 }
@@ -11,7 +11,16 @@ message InitResponse {
 	string version = 1;
 }
 
+message BuildRequest {
+}
+
+message BuildResponse {
+	string status = 1;
+
+}
+
 service StencilBoxApiService {
 	rpc Init(InitRequest) returns (InitResponse);
 
+	rpc StartBuild(BuildRequest) returns (BuildResponse);
 }

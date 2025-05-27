@@ -23,29 +23,36 @@
 		<section class = "small">
 			<h2>Welcome to StencilBox</h2>
 			<p>StencilBox is a tool for creating and managing stencil projects.</p>
-
-			<button type = "submit">Build</button>
 		</section>
 
 		<section class = "small">
-			<h2>Info</h2>
+			<h2>Build Info</h2>
 
-			<p>Helpful information about StencilBox.</p>
+			<p>This shows the last build.</p>
+
 			<table>
 				<tr>
-					<th>Version</th>
-					<td>1.0.0</td>
-				</tr>
-				<tr>
-					<th>Public dir</th>
-					<td>MIT</td>
+					<th>Last built</th>
+					<td id = "last-built">Never</td>
 				</tr>
 			</table>
+
+			<p>Click the button below to build the project.</p>
+
+			<button id = "start-build" type = "submit">Build</button>
+		</section>
 	</main>
 
 	<footer>
 		<span><a href = "https://github.com/jamesread/StencilBox" />StencilBox on GitHub</a></span>
+		<span id = "current-version">?</span>
 	</footer>
+
+	<script type = "module">
+		import { init } from './scripts/app.js';
+
+		init();
+	</script>
 </body>
 
 </html>

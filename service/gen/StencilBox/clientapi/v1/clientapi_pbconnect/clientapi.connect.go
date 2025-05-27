@@ -2,7 +2,7 @@
 //
 // Source: StencilBox/clientapi/v1/clientapi.proto
 
-package clientapiconnect
+package clientapi_pbconnect
 
 import (
 	connect "connectrpc.com/connect"
@@ -36,12 +36,16 @@ const (
 	// StencilBoxApiServiceInitProcedure is the fully-qualified name of the StencilBoxApiService's Init
 	// RPC.
 	StencilBoxApiServiceInitProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/Init"
+	// StencilBoxApiServiceStartBuildProcedure is the fully-qualified name of the StencilBoxApiService's
+	// StartBuild RPC.
+	StencilBoxApiServiceStartBuildProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/StartBuild"
 )
 
 // StencilBoxApiServiceClient is a client for the StencilBox.clientapi.v1.StencilBoxApiService
 // service.
 type StencilBoxApiServiceClient interface {
 	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
+	StartBuild(context.Context, *connect.Request[v1.BuildRequest]) (*connect.Response[v1.BuildResponse], error)
 }
 
 // NewStencilBoxApiServiceClient constructs a client for the
@@ -62,12 +66,19 @@ func NewStencilBoxApiServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(stencilBoxApiServiceMethods.ByName("Init")),
 			connect.WithClientOptions(opts...),
 		),
+		startBuild: connect.NewClient[v1.BuildRequest, v1.BuildResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceStartBuildProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("StartBuild")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // stencilBoxApiServiceClient implements StencilBoxApiServiceClient.
 type stencilBoxApiServiceClient struct {
-	init *connect.Client[v1.InitRequest, v1.InitResponse]
+	init       *connect.Client[v1.InitRequest, v1.InitResponse]
+	startBuild *connect.Client[v1.BuildRequest, v1.BuildResponse]
 }
 
 // Init calls StencilBox.clientapi.v1.StencilBoxApiService.Init.
@@ -75,10 +86,16 @@ func (c *stencilBoxApiServiceClient) Init(ctx context.Context, req *connect.Requ
 	return c.init.CallUnary(ctx, req)
 }
 
+// StartBuild calls StencilBox.clientapi.v1.StencilBoxApiService.StartBuild.
+func (c *stencilBoxApiServiceClient) StartBuild(ctx context.Context, req *connect.Request[v1.BuildRequest]) (*connect.Response[v1.BuildResponse], error) {
+	return c.startBuild.CallUnary(ctx, req)
+}
+
 // StencilBoxApiServiceHandler is an implementation of the
 // StencilBox.clientapi.v1.StencilBoxApiService service.
 type StencilBoxApiServiceHandler interface {
 	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
+	StartBuild(context.Context, *connect.Request[v1.BuildRequest]) (*connect.Response[v1.BuildResponse], error)
 }
 
 // NewStencilBoxApiServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -94,10 +111,18 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 		connect.WithSchema(stencilBoxApiServiceMethods.ByName("Init")),
 		connect.WithHandlerOptions(opts...),
 	)
+	stencilBoxApiServiceStartBuildHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceStartBuildProcedure,
+		svc.StartBuild,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("StartBuild")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/StencilBox.clientapi.v1.StencilBoxApiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StencilBoxApiServiceInitProcedure:
 			stencilBoxApiServiceInitHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceStartBuildProcedure:
+			stencilBoxApiServiceStartBuildHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -109,4 +134,8 @@ type UnimplementedStencilBoxApiServiceHandler struct{}
 
 func (UnimplementedStencilBoxApiServiceHandler) Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.Init is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) StartBuild(context.Context, *connect.Request[v1.BuildRequest]) (*connect.Response[v1.BuildResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.StartBuild is not implemented"))
 }

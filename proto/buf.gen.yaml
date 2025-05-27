@@ -9,5 +9,4 @@ plugins:
     opt: paths=source_relative
 
   - remote: buf.build/bufbuild/es
-    out: ../frontend/ts/proto/
-    opt: target=ts
+    out: ../frontend/scripts/proto/
