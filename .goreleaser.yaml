@@ -11,7 +11,7 @@ builds:
     binary: StencilBox
     env: [CGO_ENABLED=0]
     goos: [linux]
-    goarch: [amd64]
+    goarch: [amd64, arm64]
     ldflags:
       - >
         -s -w
@@ -20,19 +20,51 @@ builds:
         -X github.com/jamesread/StencilBox/internal/buildinfo.BuildDate={{.Date}}
 
 archives:
-  - builds: [StencilBox]
+  - ids: [StencilBox]
 
 dockers:
-  - id: StencilBox
-    dockerfile: Dockerfile
+  - dockerfile: Dockerfile
+    goarch: amd64
+    use: buildx
     image_templates:
-      - ghcr.io/jamesread/stencilbox
+      - ghcr.io/jamesread/stencilbox:{{.Tag}}-amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Tag}}"
     extra_files:
       - README.md
       - templates
       - layers
       - frontend/dist
       - var/config-skel
+
+  - dockerfile: Dockerfile
+    goarch: arm64
+    use: buildx
+    image_templates:
+      - ghcr.io/jamesread/stencilbox:{{.Tag}}-arm64
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Tag}}"
+    extra_files:
+      - README.md
+      - templates
+      - layers
+      - frontend/dist
+      - var/config-skel
+
+docker_manifests:
+  - name_template: ghcr.io/jamesread/stencilbox:{{ .Version }}
+    image_templates:
+      - ghcr.io/jamesread/stencilbox:{{ .Version }}-amd64
+      - ghcr.io/jamesread/stencilbox:{{ .Version }}-arm64
+
+  - name_template: ghcr.io/jamesread/stencilbox:latest
+    image_templates:
+      - ghcr.io/jamesread/stencilbox:{{ .Version }}-amd64
+      - ghcr.io/jamesread/stencilbox:{{ .Version }}-arm64
 
 changelog:
   sort: asc
