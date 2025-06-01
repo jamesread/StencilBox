@@ -36,7 +36,7 @@ func getNewApiHandler() (string, http.Handler, *clientapi.ClientApi) {
 }
 
 func findWebuiDir() string {
-	webuidir, err := dirs.GetFirstExistingDirectory([]string{
+	webuidir, err := dirs.GetFirstExistingDirectory("webui", []string{
 		"../frontend/dist/",
 		"../frontend/",
 		"/frontend/",

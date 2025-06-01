@@ -1,3 +1,21 @@
-- url: github.com
-- url: slashdot.com
-- url: stackoverflow.com
+title: My Favorite Sites
+
+categories:
+  - title: tech sites
+    links:
+    - url: github.com
+      title: GitHub
+
+    - url: slashdot.com
+      title: Slashdot
+
+    - url: stackoverflow.com
+      title: Stack Overflow
+
+  - title: Funny sites
+    links:
+      - url: xkcd.com
+        title: XKCD
+
+      - url: theonion.com
+        title: The Onion

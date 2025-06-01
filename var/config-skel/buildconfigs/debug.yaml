@@ -1,6 +1,6 @@
-name: hello world
+name: debug
 
-outputdir: helloworld
+outputdir: debug
 
 template: debug
 

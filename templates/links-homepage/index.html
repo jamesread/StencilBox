@@ -6,29 +6,20 @@
 	<title>Homepage</title>
 </head>
 <body class = "links-homepage">
-	{{ $bookmarks := datasource "bookmarks" }}
-
 	<header>
-	<h1>{{ $bookmarks.title }}</h1>
+	<h1>{{ .links.title }}</h1>
 	</header>
 
 	<main class = "grid">
-	{{ range $linkBlock := $bookmarks.bookmarks }}
-		{{ range $title, $linkTop := $linkBlock }}
+	{{ range .links.categories }}
 		<div class = "linklist">
 
-		<h2>{{ $title }}</h2>
+		<h2>{{ .title }}</h2>
 
-			{{ range $keys := $linkTop }}
-				{{ range $link, $keys2 := $keys }}
-
-				{{ $keys3 := index $keys2 0 }}
-				<a href = "{{ $keys3.href }}">{{ $link }}</a>
-				{{ end }}
+			{{ range .links }}
+				<a href = "{{ .url }}">{{ .title }}</a>
 			{{ end }}
 		</div>
-		{{ end }}
-
 	{{ end }}
 	</main>
 </body>

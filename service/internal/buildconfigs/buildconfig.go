@@ -16,15 +16,19 @@ type BuildConfig struct {
 	Template string
 
 	Datafiles map[string]string
+
+	//  Internal
+	Path string
 }
 
 func getConfigDir() (string, error) {
 	directoriesToSearch := []string{
 		"/config/buildconfigs/",
+		"../var/config-skel/buildconfigs/",
 		os.Getenv("BUILD_CONFIG_DIR"),
 	}
 
-	return dirs.GetFirstExistingDirectory(directoriesToSearch)
+	return dirs.GetFirstExistingDirectory("config", directoriesToSearch)
 }
 
 func ReadConfigFiles() map[string]*BuildConfig {
@@ -41,6 +45,7 @@ func ReadConfigFiles() map[string]*BuildConfig {
 
 	for _, file := range files {
 		bc := readBuildConfig(file)
+		bc.Path = file
 
 		if bc != nil {
 			ret[bc.Name] = bc

@@ -46,6 +46,7 @@ function createBuildConfigSection(buildConfig) {
 
   tpl.querySelector('section').setAttribute('title', buildConfig.name);
   tpl.querySelector('.build-config-name').innerText = buildConfig.name;
+  tpl.querySelector('.build-template').innerText = buildConfig.template;
 
   tpl.querySelector('.start-build-button').onclick = () => {
     startBuild(buildConfig.name);
@@ -81,6 +82,14 @@ function onBuildStarted(response) {
   }
 
   buildSection.querySelector('.build-status').innerText = response.status;
+
+  if (response.isError) {
+    buildSection.querySelector('.build-status').classList.add('error');
+    buildSection.querySelector('.build-status').classList.remove('good');
+  } else {
+    buildSection.querySelector('.build-status').classList.remove('error');
+    buildSection.querySelector('.build-status').classList.add('good');
+  }
 
   let l = window.location;
   let a = document.createElement('a');

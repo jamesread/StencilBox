@@ -28,7 +28,7 @@ func NewServer() *ClientApi {
 }
 
 func findOutputDir() string {
-	outputdir, err := dirs.GetFirstExistingDirectory([]string{
+	outputdir, err := dirs.GetFirstExistingDirectory("output", []string{
 		"/var/www/StencilBox/",
 		"../sb-output/",
 	})
@@ -47,9 +47,12 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 		Version: buildinfo.Version,
 	}
 
-	for name, _ := range c.buildConfigs {
+	c.buildConfigs = buildconfigs.ReadConfigFiles()
+
+	for name, bc := range c.buildConfigs {
 		response.BuildConfigs = append(response.BuildConfigs, &pb.BuildConfig{
 			Name:       name,
+			Template:   bc.Template,
 		})
 	}
 
@@ -65,7 +68,10 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	buildConfig, found := c.buildConfigs[req.Msg.ConfigName]
 
 	if found {
-		generator.Generate(c.BaseOutputDir, buildConfig)
+		buildstatus := generator.Generate(c.BaseOutputDir, buildConfig)
+
+		response.Status = buildstatus.Message
+		response.IsError = buildstatus.IsError
 	}
 
 	response.RelativePath = buildConfig.OutputDir

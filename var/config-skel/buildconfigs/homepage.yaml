@@ -1,0 +1,8 @@
+name: homepage
+
+outputdir: homepage
+
+template: links-homepage
+
+datafiles:
+  links: data/sites.yml

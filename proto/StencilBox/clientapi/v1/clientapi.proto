@@ -15,6 +15,7 @@ message InitResponse {
 
 message BuildConfig {
 	string name = 1;
+	string template = 2;
 }
 
 message BuildRequest {
@@ -26,6 +27,7 @@ message BuildResponse {
 	string status = 2;
 	bool found = 3;
 	string relative_path = 4;
+	bool isError = 5;
 }
 
 service StencilBoxApiService {

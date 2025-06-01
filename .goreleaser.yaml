@@ -30,6 +30,7 @@ dockers:
     extra_files:
       - README.md
       - templates
+      - layers
       - frontend/dist
       - var/config-skel
 

@@ -3,7 +3,9 @@ package generator
 import (
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
 	"github.com/jamesread/golure/pkg/dirs"
+	"errors"
 
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -15,7 +17,16 @@ import (
 	"text/template"
 )
 
-func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) {
+type BuildStatus struct {
+	IsError bool
+	Message string
+}
+
+func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus {
+	buildStatus := &BuildStatus{
+		IsError: false,
+	}
+
 	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
 
 	log.WithFields(log.Fields{
@@ -26,11 +37,15 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) {
 
 	os.MkdirAll(finalOutputDir, 0755)
 
-	tmpl, err := template.ParseFiles(findTemplateDir() + cfg.Template + "/index.html")
+	indexPath := filepath.Join(findTemplateDir(), cfg.Template, "index.html")
+
+	tmpl, err := template.ParseFiles(indexPath)
 
 	if err != nil {
-		log.Errorf("Error parsing template %v: %v", cfg.Template, err)
-		return
+		buildStatus.IsError = true
+		buildStatus.Message = "Failed to parse template: " + err.Error()
+
+		return buildStatus
 	}
 
 	datafiles := make(map[string]any)
@@ -38,7 +53,13 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) {
 	for name, path := range cfg.Datafiles {
 		log.Infof("Adding datafile %v with path %v", name, path)
 
-		dat := readDatafile(path)
+		dat, err := readDatafile(path, filepath.Dir(cfg.Path))
+
+		if err != nil {
+			buildStatus.IsError = true
+			buildStatus.Message = "Error reading datafile " + name + ": " + err.Error()
+			return buildStatus
+		}
 
 		if dat == nil {
 			continue
@@ -53,45 +74,78 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) {
 
 	if err != nil {
 		log.Errorf("Error creating output file: %v", err)
-		return
+		return buildStatus
 	}
 
 	err = tmpl.Execute(outfile, datafiles)
 
 	if err != nil {
-		log.Errorf("Error executing template: %v", err)
-		return
+		buildStatus.IsError = true
+		buildStatus.Message = "Error executing template: " + err.Error()
+		return buildStatus
 	}
 
-	copyAssets(finalOutputDir)
+	copyLayers(finalOutputDir)
+
+	buildStatus.Message = "Build completed successfully"
+	buildStatus.IsError = false
+
+	return buildStatus
+}
+
+func findLayersDir() string {
+	dir, _ := dirs.GetFirstExistingDirectory("layers", []string{
+		"../layers/",
+		"/app/layers/",
+		"/config/layers/",
+	})
+
+	if dir == "" {
+		log.Warnf("No layers directory found, using default")
+		return "/config/layers/"
+	}
+
+	return dir
+}
+
+func copyLayers(finalOutputDir string) {
+	layersDir := findLayersDir()
+
+	layerBaseDir := filepath.Join(layersDir, "base")
+
+	copyFile(layerBaseDir, finalOutputDir, "style.css")
 }
 
 func findTemplateDir() string {
-	dir, _ := dirs.GetFirstExistingDirectory([]string{
+	dir, _ := dirs.GetFirstExistingDirectory("template", []string{
 		"../templates/",
+		"/app/templates/",
 		"/config/templates/",
 	})
 
 	return dir
 }
 
-func copyAssets(outputDir string) {
-	contents, err := os.ReadFile("../style.css")
+func copyFile(fromDir string, toDir string, filename string) {
+	contents, err := os.ReadFile(filepath.Join(fromDir, filename))
 
 	if err != nil {
 		log.Errorf("Error reading style.css: %v", err)
 		return
 	}
 
-	os.WriteFile(outputDir + "/style.css", contents, 0644)
+	os.WriteFile(filepath.Join(toDir, filename), contents, 0644)
+
+	log.Infof("Copied %v to %v", filename, toDir)
 }
 
-func readDatafile(path string) any {
+func readDatafile(path string, buildconfigPath string) (any, error) {
+	path = filepath.Join(buildconfigPath, path)
+
 	content, err := os.ReadFile(path)
 
 	if err != nil {
-		log.Errorf("Error reading datafile %v: %v", path, err)
-		return nil
+		return nil, errors.New(fmt.Sprintf("failed to read datafile: %v", path))
 	}
 
 	var data any
@@ -99,9 +153,8 @@ func readDatafile(path string) any {
 	err = yaml.Unmarshal(content, &data)
 
 	if err != nil {
-		log.Errorf("Error unmarshalling datafile %v: %v", path, err)
-		return nil
+		return nil, errors.New(fmt.Sprintf("failed to unmarshal datafile: %v", path))
 	}
 
-	return data
+	return data, nil
 }

@@ -11,6 +11,10 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/jamesread/golure v0.0.0-20250526203429-094f29574da2 h1:/vsVvTxtd8nY4OdwJhP3u4ItjI0EgzR7OonWySquGdk=
 github.com/jamesread/golure v0.0.0-20250526203429-094f29574da2/go.mod h1:MQO6ZMHO2oBTcDLXAphsFp0OBxET8QHDjqCRo0gmaP0=
+github.com/jamesread/golure v0.0.0-20250601222921-0ab9a7bd4f9f h1:dz60Nk9n7bAu2K0oUSgCl5w6FgwdNbXBynxXrSDvpb8=
+github.com/jamesread/golure v0.0.0-20250601222921-0ab9a7bd4f9f/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
+github.com/jamesread/golure v0.0.0-20250601223641-a9cb50f9465d h1:o600c3+EgbGI2XTc8VFIa66q38eyPNCdGYPyRmUEEJs=
+github.com/jamesread/golure v0.0.0-20250601223641-a9cb50f9465d/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rs/cors v1.11.1 h1:eU3gRzXLRK57F5rKMGMZURNdIG4EoAmX8k94r9wXWHA=
