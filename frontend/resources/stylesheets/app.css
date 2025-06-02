@@ -23,10 +23,28 @@ th.small {
 	width: 10%;
 }
 
-tr:hover {
+tr:hover td {
+	color: black;
 	background-color: beige;
+}
+
+tr:hover th {
+	color: #747239;
+
 }
 
 a.active {
 	text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+	tr:hover th {
+		color: #c5c166;
+	}
+
+	tr:hover td {
+		color: black;
+		background-color: #c5c166;
+	}
+
 }
