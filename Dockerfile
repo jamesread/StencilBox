@@ -2,6 +2,8 @@ FROM alpine
 
 LABEL org.opencontainers.image.source=https://github.com/jamesread/StencilBox
 
+RUN apk add --no-cache git
+
 COPY var/config-skel/ /config/
 COPY templates/ /app/templates/
 COPY layers/ /app/layers/
