@@ -3,7 +3,7 @@ default: protoc frontend service
 local:
 	gomplate -d bookmarks=bookmarks.yaml -d links=links.yaml -f template.html > index.html
 
-service:
+service: container-tools
 	$(MAKE) -wC service
 
 frontend:
@@ -15,6 +15,9 @@ protoc:
 docs:
 	$(MAKE) -wC docs
 	./docs/node_modules/.bin/antora antora-playbook.yml
+
+container-tools:
+	$(MAKE) -wC var/tools/
 
 gomplate:
 	wget https://github.com/hairyhenderson/gomplate/releases/download/v4.3.0/gomplate_linux-amd64

@@ -38,6 +38,7 @@ dockers:
       - layers
       - frontend/dist
       - var/config-skel
+      - var/tools
 
   - dockerfile: Dockerfile
     goarch: arm64
@@ -54,6 +55,7 @@ dockers:
       - layers
       - frontend/dist
       - var/config-skel
+      - var/tools
 
 docker_manifests:
   - name_template: ghcr.io/jamesread/stencilbox:{{ .Version }}
