@@ -19,6 +19,8 @@ type BuildConfig struct {
 
 	Repos []GitRepo
 
+	PostProcessors []string
+
 	//  Internal
 	Path string
 }
