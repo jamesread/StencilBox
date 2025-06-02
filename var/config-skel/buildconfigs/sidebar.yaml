@@ -1,0 +1,12 @@
+name: Sidebar
+
+template: iframe-sidebar
+
+outputdir: sidebar
+
+repos:
+  - url: https://github.com/jamesread/golure.git
+  - url: https://github.com/homarr-labs/dashboard-icons.git
+
+datafiles:
+  links: data/sidebar-links.yaml

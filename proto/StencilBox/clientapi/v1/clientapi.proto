@@ -11,6 +11,14 @@ message InitResponse {
 	string version = 1;
 
 	repeated BuildConfig build_configs = 2;
+
+	repeated Template templates = 3;
+}
+
+message Template {
+	string name = 1;
+	string source = 2;
+	string status = 3;
 }
 
 message BuildConfig {

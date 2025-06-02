@@ -17,13 +17,36 @@
 	<header>
 		<img src = "resources/images/logo.png" class = "logo" />
 		<h1>StencilBox</h1>
+		<nav>
+			<ul id = "header-links">
+			</ul>
+		</nav>
 	</header>
 
 	<main>
+		<section class = "template small" hidden>
+			<h2>Templates</h2>
+
+			<p>This is a list of templates, both builtin, and from your config directory.</p>
+
+			<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Source</th>
+						<th class = "small">Status</th>
+					</tr>
+				</thead>
+
+				<tbody id = "template-table-rows">
+				</tbody>
+			</tbody>
+			</table>
+		</section>
 	</main>
 
 	<template id = "build-config-template">
-		<section class = "small">
+		<section class = "small build-config">
 			<h2>Build Config: <span class = "build-config-name">???</span></h2>
 
 			<p>This shows the last build.</p>

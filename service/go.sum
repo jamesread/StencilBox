@@ -15,6 +15,14 @@ github.com/jamesread/golure v0.0.0-20250601222921-0ab9a7bd4f9f h1:dz60Nk9n7bAu2K
 github.com/jamesread/golure v0.0.0-20250601222921-0ab9a7bd4f9f/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
 github.com/jamesread/golure v0.0.0-20250601223641-a9cb50f9465d h1:o600c3+EgbGI2XTc8VFIa66q38eyPNCdGYPyRmUEEJs=
 github.com/jamesread/golure v0.0.0-20250601223641-a9cb50f9465d/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
+github.com/jamesread/golure v0.0.0-20250602090020-9663c176f304 h1:+vAsL59EsRthrPM8J4aVUBw4dav5UBdLqTuqdEysLTQ=
+github.com/jamesread/golure v0.0.0-20250602090020-9663c176f304/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
+github.com/jamesread/golure v0.0.0-20250602090519-2ef730885b38 h1:nsaR2q09PTxozu2EERxfxBjk4vNZiDZiFAgti+AxFg4=
+github.com/jamesread/golure v0.0.0-20250602090519-2ef730885b38/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
+github.com/jamesread/golure v0.0.0-20250602092913-6b925a1285f0 h1:zH4LizD4GhD6TGq4DDvD32hIBITxGZsY+dZ1bsUD/tw=
+github.com/jamesread/golure v0.0.0-20250602092913-6b925a1285f0/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
+github.com/jamesread/golure v0.0.0-20250602094058-842cf536d370 h1:EsZhra4qwzdqeK4+soTUTLc0ft1yThgCDs2HdDKBvdk=
+github.com/jamesread/golure v0.0.0-20250602094058-842cf536d370/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rs/cors v1.11.1 h1:eU3gRzXLRK57F5rKMGMZURNdIG4EoAmX8k94r9wXWHA=

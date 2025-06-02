@@ -44,14 +44,15 @@ iframe {
 <body>
 	<div id = "sidebar">
 		<ul>
-		{{ range .links }}
+		{{ range .links.links }}
 		<li>
 			<a href = "#" onclick = "changeTab(this, '{{ .url }}', '{{ .title }}')">
 			<img src = "{{ .icon }}" width = "32" />
 			<span class = "title">{{ .title }}</span>
 		</a>
-		</li>
 		{{ end }}
+		</li>
+
 		<li>
 			<button onclick = "closeSidebar()">&times;</button>
 		</li>
@@ -94,7 +95,7 @@ function changeTab(anchor, url, title) {
 
 	anchor.classList.add('open')
 	anchor.classList.add('selected')
-	
+
 	document.title = title
 }
 </script>

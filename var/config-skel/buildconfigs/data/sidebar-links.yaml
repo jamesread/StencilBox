@@ -1,0 +1,16 @@
+links:
+  - title: GitHub
+    url: https://github.com
+    icon: dashboard-icons/png/github.png
+
+  - title: GitLab
+    url: https://gitlab.com
+    icon: dashboard-icons/png/gitlab.png
+
+  - title: Grafana
+    url: https://grafana.com
+    icon: dashboard-icons/png/grafana.png
+
+  - title: Prometheus
+    url: https://prometheus.io
+    icon: dashboard-icons/png/prometheus.png

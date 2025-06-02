@@ -10,11 +10,13 @@ import (
 	pb "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1"
 	client "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
 	log "github.com/sirupsen/logrus"
+	"path/filepath"
 )
 
 type ClientApi struct {
 	buildConfigs map[string]*buildconfigs.BuildConfig
 	BaseOutputDir string
+	templates []string
 
 	client.StencilBoxApiServiceClient
 }
@@ -48,6 +50,7 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 	}
 
 	c.buildConfigs = buildconfigs.ReadConfigFiles()
+	c.templates = readTemplates();
 
 	for name, bc := range c.buildConfigs {
 		response.BuildConfigs = append(response.BuildConfigs, &pb.BuildConfig{
@@ -56,7 +59,34 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 		})
 	}
 
+	for _, template := range c.templates {
+		response.Templates = append(response.Templates, &pb.Template{
+			Name: template,
+			Source: "built-in",
+			Status: "OK",
+		})
+	}
+
 	return connect.NewResponse(response), nil
+}
+
+func readTemplates() []string {
+	templates := make([]string, 0)
+
+	res, err := filepath.Glob(filepath.Join(generator.FindTemplateDir(), "**", "index.html"))
+
+	log.Infof("Reading templates from: %s", filepath.Join("templates", "**", "index.html"))
+
+	if err != nil {
+		log.Errorf("Error reading templates: %v", err)
+		return templates
+	}
+
+	for _, fp := range res {
+		templates = append(templates, filepath.Base(filepath.Dir(fp)))
+	}
+
+	return templates
 }
 
 func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.BuildRequest]) (*connect.Response[pb.BuildResponse], error) {

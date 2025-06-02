@@ -37,6 +37,67 @@ async function setupApi() {
       createBuildConfigSection(bc)
     }
   }
+
+  renderTemplateList(status.templates);
+
+  let homeLink = createHeaderLink('Build Configs', 'build-config');
+  createHeaderLink('Templates', 'template')
+
+  homeLink.dispatchEvent(new MouseEvent('click'));
+}
+
+function createHeaderLink(name, templateClass) {
+  let link = document.createElement('a');
+  link.innerText = name;
+  link.href = '#'
+  link.onclick = (e) => {
+    document.querySelectorAll('#header-links li a').forEach(a => {
+      a.classList.remove('active');
+    });
+    e.target.classList.add('active');
+    showSectionsWithClass(templateClass)
+  }
+
+  let li = document.createElement('li');
+  li.appendChild(link);
+
+  document.getElementById('header-links').appendChild(li);
+
+  return link;
+}
+
+function showSectionsWithClass(className) {
+  for (const section of document.querySelectorAll('section')) {
+    if (section.classList.contains(className)) {
+      section.hidden = false;
+    } else {
+      section.hidden = true;
+    }
+  }
+}
+
+function renderTemplateList(templates) {
+  // sort templates by name
+  templates.sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const template of templates) {
+    let row = document.createElement('tr');
+
+    let nameCell = document.createElement('td');
+    nameCell.innerText = template.name;
+    row.appendChild(nameCell);
+
+    let sourceCell = document.createElement('td');
+    sourceCell.innerText = template.source;
+    row.appendChild(sourceCell);
+
+    let statusCell = document.createElement('td');
+    statusCell.innerText = template.status;
+    statusCell.classList.add('good');
+    row.appendChild(statusCell);
+
+    document.getElementById('template-table-rows').appendChild(row);
+  }
 }
 
 function createBuildConfigSection(buildConfig) {

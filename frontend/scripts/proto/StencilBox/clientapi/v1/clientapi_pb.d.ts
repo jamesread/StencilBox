@@ -35,6 +35,11 @@ export declare type InitResponse = Message<"StencilBox.clientapi.v1.InitResponse
    * @generated from field: repeated StencilBox.clientapi.v1.BuildConfig build_configs = 2;
    */
   buildConfigs: BuildConfig[];
+
+  /**
+   * @generated from field: repeated StencilBox.clientapi.v1.Template templates = 3;
+   */
+  templates: Template[];
 };
 
 /**
@@ -42,6 +47,32 @@ export declare type InitResponse = Message<"StencilBox.clientapi.v1.InitResponse
  * Use `create(InitResponseSchema)` to create a new message.
  */
 export declare const InitResponseSchema: GenMessage<InitResponse>;
+
+/**
+ * @generated from message StencilBox.clientapi.v1.Template
+ */
+export declare type Template = Message<"StencilBox.clientapi.v1.Template"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string source = 2;
+   */
+  source: string;
+
+  /**
+   * @generated from field: string status = 3;
+   */
+  status: string;
+};
+
+/**
+ * Describes the message StencilBox.clientapi.v1.Template.
+ * Use `create(TemplateSchema)` to create a new message.
+ */
+export declare const TemplateSchema: GenMessage<Template>;
 
 /**
  * @generated from message StencilBox.clientapi.v1.BuildConfig

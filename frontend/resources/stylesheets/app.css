@@ -1,6 +1,6 @@
 section.small {
 	margin: auto;
-	max-width: 600px;
+	max-width: 720px;
 }
 
 section.small {
@@ -13,4 +13,20 @@ table th:first-child {
 
 footer {
 	padding: .5em;
+}
+
+th {
+	text-align: left;
+}
+
+th.small {
+	width: 10%;
+}
+
+tr:hover {
+	background-color: beige;
+}
+
+a.active {
+	text-decoration: underline;
 }

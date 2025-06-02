@@ -3,6 +3,7 @@ package generator
 import (
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
 	"github.com/jamesread/golure/pkg/dirs"
+	"github.com/jamesread/golure/pkg/git"
 	"errors"
 
 	"fmt"
@@ -37,7 +38,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 
 	os.MkdirAll(finalOutputDir, 0755)
 
-	indexPath := filepath.Join(findTemplateDir(), cfg.Template, "index.html")
+	indexPath := filepath.Join(FindTemplateDir(), cfg.Template, "index.html")
 
 	tmpl, err := template.ParseFiles(indexPath)
 
@@ -86,11 +87,24 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 	}
 
 	copyLayers(finalOutputDir)
+	cloneRepos(cfg.Repos, finalOutputDir)
 
 	buildStatus.Message = "Build completed successfully"
 	buildStatus.IsError = false
 
 	return buildStatus
+}
+
+func cloneRepos(repos []buildconfigs.GitRepo, outputDir string) {
+	for _, repo := range repos {
+		res := git.CloneOrPull(repo.URL, outputDir)
+
+		if res.WasCloned {
+			log.Infof("Cloned repo %s to %s", repo.URL, outputDir)
+		} else {
+			log.Infof("Pulled repo %s in %s", repo.URL, outputDir)
+		}
+	}
 }
 
 func findLayersDir() string {
@@ -116,7 +130,7 @@ func copyLayers(finalOutputDir string) {
 	copyFile(layerBaseDir, finalOutputDir, "style.css")
 }
 
-func findTemplateDir() string {
+func FindTemplateDir() string {
 	dir, _ := dirs.GetFirstExistingDirectory("template", []string{
 		"../templates/",
 		"/app/templates/",

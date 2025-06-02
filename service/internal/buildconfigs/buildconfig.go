@@ -17,8 +17,14 @@ type BuildConfig struct {
 
 	Datafiles map[string]string
 
+	Repos []GitRepo
+
 	//  Internal
 	Path string
+}
+
+type GitRepo struct {
+	URL string
 }
 
 func getConfigDir() (string, error) {
