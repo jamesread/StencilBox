@@ -4,6 +4,7 @@ LABEL org.opencontainers.image.source=https://github.com/jamesread/StencilBox
 
 COPY var/config-skel/ /config/
 COPY templates/ /app/templates/
+COPY layers/ /app/layers/
 COPY StencilBox /app/StencilBox
 COPY frontend/dist /frontend/
 
