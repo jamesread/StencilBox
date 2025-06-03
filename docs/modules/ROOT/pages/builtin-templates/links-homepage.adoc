@@ -1,0 +1,41 @@
+= links-homepage
+
+.buildconfigs/homepage.yaml
+[source,yaml]
+----
+name: homepage
+
+outputdir: homepage
+
+template: links-homepage
+
+datafiles:
+  links: data/sites.yml
+
+.buildconfigs/data/sites.yaml
+----
+
+[source,yaml]
+----
+title: My Favorite Sites
+
+categories:
+  - title: tech sites
+    links:
+    - url: github.com
+      title: GitHub
+
+    - url: slashdot.com
+      title: Slashdot
+
+    - url: stackoverflow.com
+      title: Stack Overflow
+
+  - title: Funny sites
+    links:
+      - url: xkcd.com
+        title: XKCD
+
+      - url: theonion.com
+        title: The Onion
+---
