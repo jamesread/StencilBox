@@ -11,7 +11,7 @@ export function init() {
 function createApiClient() {
 	let baseUrl = '/api/'
 
-	if (window.location.hostname.includes('localhost')) {
+	if (window.location.hostname.includes('localhost') && window.location.port === '5173') {
 		baseUrl = 'http://localhost:8080/api/'
 	}
 
