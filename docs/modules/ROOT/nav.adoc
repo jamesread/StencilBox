@@ -5,4 +5,4 @@
 * xref:config/index.adoc[Configuration]
 * xref:support.adoc[Support]
 * Built-In Templates
-** xref:buildin-templates/links-homepage.adoc[Links Homepage]
+** xref:builtin-templates/links-homepage.adoc[Links Homepage]
