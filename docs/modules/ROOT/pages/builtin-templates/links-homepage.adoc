@@ -1,7 +1,7 @@
 = links-homepage
 
-.buildconfigs/homepage.yaml
 [source,yaml]
+.buildconfigs/homepage.yaml
 ----
 name: homepage
 
@@ -11,11 +11,10 @@ template: links-homepage
 
 datafiles:
   links: data/sites.yml
-
-.buildconfigs/data/sites.yaml
 ----
 
 [source,yaml]
+.buildconfigs/data/sites.yaml
 ----
 title: My Favorite Sites
 
@@ -38,4 +37,4 @@ categories:
 
       - url: theonion.com
         title: The Onion
----
+----
