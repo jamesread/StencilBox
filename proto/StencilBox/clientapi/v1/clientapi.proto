@@ -13,6 +13,10 @@ message InitResponse {
 	repeated BuildConfig build_configs = 2;
 
 	repeated Template templates = 3;
+
+    string templates_path = 4;
+
+    string output_path = 5;
 }
 
 message Template {

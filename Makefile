@@ -9,7 +9,7 @@ service: container-tools
 frontend:
 	$(MAKE) -wC frontend
 
-protoc:
+proto:
 	$(MAKE) -wC proto
 
 docs:

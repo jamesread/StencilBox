@@ -14,18 +14,18 @@
 
 <body>
 	<header>
-		<div id = "sidebar-button" class = "flex-row logo-with-title">
+		<div class = "flex-row">
 			<img src = "resources/images/logo.png" class = "logo" />
 			<h1>StencilBox</h1>
 		</div>
+
+		<nav>
+		<ul id = "header-links" class = "flex-row">
+		</ul>
+		</nav>
 	</header>
 
 	<div id = "layout">
-		<aside id = "sidebar" class = "shown stuck">
-			<ul id = "header-links">
-			</ul>
-		</aside>
-
 		<div id = "content">
 			<main>
 				<section class = "template small" hidden>
@@ -44,6 +44,21 @@
 
 						<tbody id = "template-table-rows">
 						</tbody>
+					</table>
+
+					<h2>Details</h2>
+
+					<p>Backend paths, etc</p>
+
+					<table>
+						<tr>
+							<th>Templates path</th>
+							<td id = "templates-path">...</td>
+						</tr>
+						<tr>
+							<th>Output path</th>
+							<td id = "output-path">...</td>
+						</tr>
 					</table>
 				</section>
 			</main>
