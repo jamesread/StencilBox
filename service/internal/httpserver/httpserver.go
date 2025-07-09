@@ -85,7 +85,14 @@ func getOutputHandler(dir string) http.Handler {
 }
 
 func Start() {
+	address := os.Getenv("STENCILBOX_ADDRESS")
+
+	if address == "" {
+		address = "0.0.0.0:8080"
+	}
+
 	log.WithFields(log.Fields{
+		"address": address,
 	}).Info("Starting HTTP server")
 
 	apipath, apihandler, apiServer := getNewApiHandler()
@@ -107,7 +114,7 @@ func Start() {
 	mux.Handle("/", getOutputHandler(apiServer.BaseOutputDir))
 
 	srv := &http.Server{
-		Addr:    "0.0.0.0:8080",
+		Addr:    address,
 		Handler: mux,
 	}
 

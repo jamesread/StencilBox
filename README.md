@@ -10,3 +10,10 @@ Generate super speedy simple static sites, from sleek templates.
 </div>
 
 If you've ever used static site generators like Hugo, this is very similar. The emphesis of this is for the self hosted community. Think sidebars, static links pages, etc.
+
+## Screenshots
+
+<p align = "center">
+<img src = "var/screenshots/mainpage-laptop_framed.png" />
+<img src = "var/screenshots/mainpage-phone_framed.png" />
+</p>
