@@ -1,10 +1,10 @@
 version: v2
 plugins:
-  - local: protoc-gen-go
+  - remote: buf.build/protocolbuffers/go
     out: ../service/gen/
     opt: paths=source_relative
 
-  - local: protoc-gen-connect-go
+  - remote: buf.build/connectrpc/go
     out: ../service/gen/
     opt: paths=source_relative
 

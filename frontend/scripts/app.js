@@ -44,6 +44,9 @@ async function setupApi() {
   createHeaderLink('Templates', 'template')
 
   homeLink.dispatchEvent(new MouseEvent('click'));
+
+  document.getElementById('templates-path').innerText = status.templatesPath;
+  document.getElementById('output-path').innerText = status.outputPath;
 }
 
 function createHeaderLink(name, templateClass) {
@@ -117,6 +120,11 @@ function createBuildConfigSection(buildConfig) {
 }
 
 function startBuild(buildConfigName) {
+  let buildSection = document.querySelector(`section[title="${buildConfigName}"]`);
+
+  buildSection.querySelector('.build-status').innerText = 'Building...';
+  buildSection.querySelector('.build-status').classList.add('good');
+
   window.client.startBuild({
     'configName': buildConfigName
   })

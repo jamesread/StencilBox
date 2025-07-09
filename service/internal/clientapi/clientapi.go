@@ -24,7 +24,7 @@ type ClientApi struct {
 func NewServer() *ClientApi {
 	api := &ClientApi{}
 	api.buildConfigs = buildconfigs.ReadConfigFiles()
-	api.BaseOutputDir = findOutputDir()
+	api.BaseOutputDir, _ = filepath.Abs(findOutputDir())
 
 	return api;
 }
@@ -66,6 +66,9 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 			Status: "OK",
 		})
 	}
+
+	response.OutputPath = c.BaseOutputDir
+	response.TemplatesPath = filepath.Join(generator.FindTemplateDir(), "templates")
 
 	return connect.NewResponse(response), nil
 }
