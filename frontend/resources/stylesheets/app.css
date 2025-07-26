@@ -10,12 +10,12 @@ section.small {
 	margin-bottom: 2em;
 }
 
-table th:first-child {
-	width: 25%;
+footer span {
+	margin-right: 1em;
 }
 
-footer {
-	padding: .5em;
+table th:first-child {
+	width: 25%;
 }
 
 th {

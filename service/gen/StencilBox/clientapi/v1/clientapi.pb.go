@@ -60,10 +60,6 @@ func (*InitRequest) Descriptor() ([]byte, []int) {
 type InitResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	BuildConfigs  []*BuildConfig         `protobuf:"bytes,2,rep,name=build_configs,json=buildConfigs,proto3" json:"build_configs,omitempty"`
-	Templates     []*Template            `protobuf:"bytes,3,rep,name=templates,proto3" json:"templates,omitempty"`
-	TemplatesPath string                 `protobuf:"bytes,4,opt,name=templates_path,json=templatesPath,proto3" json:"templates_path,omitempty"`
-	OutputPath    string                 `protobuf:"bytes,5,opt,name=output_path,json=outputPath,proto3" json:"output_path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -101,34 +97,6 @@ func (*InitResponse) Descriptor() ([]byte, []int) {
 func (x *InitResponse) GetVersion() string {
 	if x != nil {
 		return x.Version
-	}
-	return ""
-}
-
-func (x *InitResponse) GetBuildConfigs() []*BuildConfig {
-	if x != nil {
-		return x.BuildConfigs
-	}
-	return nil
-}
-
-func (x *InitResponse) GetTemplates() []*Template {
-	if x != nil {
-		return x.Templates
-	}
-	return nil
-}
-
-func (x *InitResponse) GetTemplatesPath() string {
-	if x != nil {
-		return x.TemplatesPath
-	}
-	return ""
-}
-
-func (x *InitResponse) GetOutputPath() string {
-	if x != nil {
-		return x.OutputPath
 	}
 	return ""
 }
@@ -365,19 +333,262 @@ func (x *BuildResponse) GetIsError() bool {
 	return false
 }
 
+type GetTemplatesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTemplatesRequest) Reset() {
+	*x = GetTemplatesRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTemplatesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTemplatesRequest) ProtoMessage() {}
+
+func (x *GetTemplatesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTemplatesRequest.ProtoReflect.Descriptor instead.
+func (*GetTemplatesRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{6}
+}
+
+type GetTemplatesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Templates     []*Template            `protobuf:"bytes,1,rep,name=templates,proto3" json:"templates,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTemplatesResponse) Reset() {
+	*x = GetTemplatesResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTemplatesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTemplatesResponse) ProtoMessage() {}
+
+func (x *GetTemplatesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTemplatesResponse.ProtoReflect.Descriptor instead.
+func (*GetTemplatesResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetTemplatesResponse) GetTemplates() []*Template {
+	if x != nil {
+		return x.Templates
+	}
+	return nil
+}
+
+type GetStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStatusRequest) Reset() {
+	*x = GetStatusRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStatusRequest) ProtoMessage() {}
+
+func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetStatusRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{8}
+}
+
+type GetStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TemplatesPath string                 `protobuf:"bytes,4,opt,name=templates_path,json=templatesPath,proto3" json:"templates_path,omitempty"`
+	OutputPath    string                 `protobuf:"bytes,5,opt,name=output_path,json=outputPath,proto3" json:"output_path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStatusResponse) Reset() {
+	*x = GetStatusResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStatusResponse) ProtoMessage() {}
+
+func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStatusResponse.ProtoReflect.Descriptor instead.
+func (*GetStatusResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetStatusResponse) GetTemplatesPath() string {
+	if x != nil {
+		return x.TemplatesPath
+	}
+	return ""
+}
+
+func (x *GetStatusResponse) GetOutputPath() string {
+	if x != nil {
+		return x.OutputPath
+	}
+	return ""
+}
+
+type GetBuildConfigsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBuildConfigsRequest) Reset() {
+	*x = GetBuildConfigsRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBuildConfigsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBuildConfigsRequest) ProtoMessage() {}
+
+func (x *GetBuildConfigsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBuildConfigsRequest.ProtoReflect.Descriptor instead.
+func (*GetBuildConfigsRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{10}
+}
+
+type GetBuildConfigsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BuildConfigs  []*BuildConfig         `protobuf:"bytes,1,rep,name=build_configs,json=buildConfigs,proto3" json:"build_configs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBuildConfigsResponse) Reset() {
+	*x = GetBuildConfigsResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBuildConfigsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBuildConfigsResponse) ProtoMessage() {}
+
+func (x *GetBuildConfigsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBuildConfigsResponse.ProtoReflect.Descriptor instead.
+func (*GetBuildConfigsResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetBuildConfigsResponse) GetBuildConfigs() []*BuildConfig {
+	if x != nil {
+		return x.BuildConfigs
+	}
+	return nil
+}
+
 var File_StencilBox_clientapi_v1_clientapi_proto protoreflect.FileDescriptor
 
 const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\n" +
 	"'StencilBox/clientapi/v1/clientapi.proto\x12\x17StencilBox.clientapi.v1\"\r\n" +
-	"\vInitRequest\"\xfc\x01\n" +
+	"\vInitRequest\"(\n" +
 	"\fInitResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\tR\aversion\x12I\n" +
-	"\rbuild_configs\x18\x02 \x03(\v2$.StencilBox.clientapi.v1.BuildConfigR\fbuildConfigs\x12?\n" +
-	"\ttemplates\x18\x03 \x03(\v2!.StencilBox.clientapi.v1.TemplateR\ttemplates\x12%\n" +
-	"\x0etemplates_path\x18\x04 \x01(\tR\rtemplatesPath\x12\x1f\n" +
-	"\voutput_path\x18\x05 \x01(\tR\n" +
-	"outputPath\"N\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\"N\n" +
 	"\bTemplate\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12\x16\n" +
@@ -394,11 +605,25 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x14\n" +
 	"\x05found\x18\x03 \x01(\bR\x05found\x12#\n" +
 	"\rrelative_path\x18\x04 \x01(\tR\frelativePath\x12\x18\n" +
-	"\aisError\x18\x05 \x01(\bR\aisError2\xc8\x01\n" +
+	"\aisError\x18\x05 \x01(\bR\aisError\"\x15\n" +
+	"\x13GetTemplatesRequest\"W\n" +
+	"\x14GetTemplatesResponse\x12?\n" +
+	"\ttemplates\x18\x01 \x03(\v2!.StencilBox.clientapi.v1.TemplateR\ttemplates\"\x12\n" +
+	"\x10GetStatusRequest\"[\n" +
+	"\x11GetStatusResponse\x12%\n" +
+	"\x0etemplates_path\x18\x04 \x01(\tR\rtemplatesPath\x12\x1f\n" +
+	"\voutput_path\x18\x05 \x01(\tR\n" +
+	"outputPath\"\x18\n" +
+	"\x16GetBuildConfigsRequest\"d\n" +
+	"\x17GetBuildConfigsResponse\x12I\n" +
+	"\rbuild_configs\x18\x01 \x03(\v2$.StencilBox.clientapi.v1.BuildConfigR\fbuildConfigs2\x8f\x04\n" +
 	"\x14StencilBoxApiService\x12S\n" +
 	"\x04Init\x12$.StencilBox.clientapi.v1.InitRequest\x1a%.StencilBox.clientapi.v1.InitResponse\x12[\n" +
 	"\n" +
-	"StartBuild\x12%.StencilBox.clientapi.v1.BuildRequest\x1a&.StencilBox.clientapi.v1.BuildResponseBJZHgithub.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1;clientapi_pbb\x06proto3"
+	"StartBuild\x12%.StencilBox.clientapi.v1.BuildRequest\x1a&.StencilBox.clientapi.v1.BuildResponse\x12k\n" +
+	"\fGetTemplates\x12,.StencilBox.clientapi.v1.GetTemplatesRequest\x1a-.StencilBox.clientapi.v1.GetTemplatesResponse\x12b\n" +
+	"\tGetStatus\x12).StencilBox.clientapi.v1.GetStatusRequest\x1a*.StencilBox.clientapi.v1.GetStatusResponse\x12t\n" +
+	"\x0fGetBuildConfigs\x12/.StencilBox.clientapi.v1.GetBuildConfigsRequest\x1a0.StencilBox.clientapi.v1.GetBuildConfigsResponseBJZHgithub.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1;clientapi_pbb\x06proto3"
 
 var (
 	file_StencilBox_clientapi_v1_clientapi_proto_rawDescOnce sync.Once
@@ -412,27 +637,39 @@ func file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP() []byte {
 	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescData
 }
 
-var file_StencilBox_clientapi_v1_clientapi_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_StencilBox_clientapi_v1_clientapi_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_StencilBox_clientapi_v1_clientapi_proto_goTypes = []any{
-	(*InitRequest)(nil),   // 0: StencilBox.clientapi.v1.InitRequest
-	(*InitResponse)(nil),  // 1: StencilBox.clientapi.v1.InitResponse
-	(*Template)(nil),      // 2: StencilBox.clientapi.v1.Template
-	(*BuildConfig)(nil),   // 3: StencilBox.clientapi.v1.BuildConfig
-	(*BuildRequest)(nil),  // 4: StencilBox.clientapi.v1.BuildRequest
-	(*BuildResponse)(nil), // 5: StencilBox.clientapi.v1.BuildResponse
+	(*InitRequest)(nil),             // 0: StencilBox.clientapi.v1.InitRequest
+	(*InitResponse)(nil),            // 1: StencilBox.clientapi.v1.InitResponse
+	(*Template)(nil),                // 2: StencilBox.clientapi.v1.Template
+	(*BuildConfig)(nil),             // 3: StencilBox.clientapi.v1.BuildConfig
+	(*BuildRequest)(nil),            // 4: StencilBox.clientapi.v1.BuildRequest
+	(*BuildResponse)(nil),           // 5: StencilBox.clientapi.v1.BuildResponse
+	(*GetTemplatesRequest)(nil),     // 6: StencilBox.clientapi.v1.GetTemplatesRequest
+	(*GetTemplatesResponse)(nil),    // 7: StencilBox.clientapi.v1.GetTemplatesResponse
+	(*GetStatusRequest)(nil),        // 8: StencilBox.clientapi.v1.GetStatusRequest
+	(*GetStatusResponse)(nil),       // 9: StencilBox.clientapi.v1.GetStatusResponse
+	(*GetBuildConfigsRequest)(nil),  // 10: StencilBox.clientapi.v1.GetBuildConfigsRequest
+	(*GetBuildConfigsResponse)(nil), // 11: StencilBox.clientapi.v1.GetBuildConfigsResponse
 }
 var file_StencilBox_clientapi_v1_clientapi_proto_depIdxs = []int32{
-	3, // 0: StencilBox.clientapi.v1.InitResponse.build_configs:type_name -> StencilBox.clientapi.v1.BuildConfig
-	2, // 1: StencilBox.clientapi.v1.InitResponse.templates:type_name -> StencilBox.clientapi.v1.Template
-	0, // 2: StencilBox.clientapi.v1.StencilBoxApiService.Init:input_type -> StencilBox.clientapi.v1.InitRequest
-	4, // 3: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:input_type -> StencilBox.clientapi.v1.BuildRequest
-	1, // 4: StencilBox.clientapi.v1.StencilBoxApiService.Init:output_type -> StencilBox.clientapi.v1.InitResponse
-	5, // 5: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:output_type -> StencilBox.clientapi.v1.BuildResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2,  // 0: StencilBox.clientapi.v1.GetTemplatesResponse.templates:type_name -> StencilBox.clientapi.v1.Template
+	3,  // 1: StencilBox.clientapi.v1.GetBuildConfigsResponse.build_configs:type_name -> StencilBox.clientapi.v1.BuildConfig
+	0,  // 2: StencilBox.clientapi.v1.StencilBoxApiService.Init:input_type -> StencilBox.clientapi.v1.InitRequest
+	4,  // 3: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:input_type -> StencilBox.clientapi.v1.BuildRequest
+	6,  // 4: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:input_type -> StencilBox.clientapi.v1.GetTemplatesRequest
+	8,  // 5: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:input_type -> StencilBox.clientapi.v1.GetStatusRequest
+	10, // 6: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:input_type -> StencilBox.clientapi.v1.GetBuildConfigsRequest
+	1,  // 7: StencilBox.clientapi.v1.StencilBoxApiService.Init:output_type -> StencilBox.clientapi.v1.InitResponse
+	5,  // 8: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:output_type -> StencilBox.clientapi.v1.BuildResponse
+	7,  // 9: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:output_type -> StencilBox.clientapi.v1.GetTemplatesResponse
+	9,  // 10: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:output_type -> StencilBox.clientapi.v1.GetStatusResponse
+	11, // 11: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:output_type -> StencilBox.clientapi.v1.GetBuildConfigsResponse
+	7,  // [7:12] is the sub-list for method output_type
+	2,  // [2:7] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_StencilBox_clientapi_v1_clientapi_proto_init() }
@@ -446,7 +683,7 @@ func file_StencilBox_clientapi_v1_clientapi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_StencilBox_clientapi_v1_clientapi_proto_rawDesc), len(file_StencilBox_clientapi_v1_clientapi_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

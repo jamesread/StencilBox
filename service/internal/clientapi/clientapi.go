@@ -52,24 +52,6 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 	c.buildConfigs = buildconfigs.ReadConfigFiles()
 	c.templates = readTemplates();
 
-	for name, bc := range c.buildConfigs {
-		response.BuildConfigs = append(response.BuildConfigs, &pb.BuildConfig{
-			Name:       name,
-			Template:   bc.Template,
-		})
-	}
-
-	for _, template := range c.templates {
-		response.Templates = append(response.Templates, &pb.Template{
-			Name: template,
-			Source: "built-in",
-			Status: "OK",
-		})
-	}
-
-	response.OutputPath = c.BaseOutputDir
-	response.TemplatesPath = filepath.Join(generator.FindTemplateDir(), "templates")
-
 	return connect.NewResponse(response), nil
 }
 
@@ -109,6 +91,41 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 
 	response.RelativePath = buildConfig.OutputDir
 	response.Found = found
+
+	return connect.NewResponse(response), nil
+}
+
+func (c *ClientApi) GetBuildConfigs(ctx context.Context, req *connect.Request[pb.GetBuildConfigsRequest]) (*connect.Response[pb.GetBuildConfigsResponse], error) {
+	response := &pb.GetBuildConfigsResponse{}
+
+	for name, bc := range c.buildConfigs {
+		response.BuildConfigs = append(response.BuildConfigs, &pb.BuildConfig{
+			Name:       name,
+			Template:   bc.Template,
+		})
+	}
+
+	return connect.NewResponse(response), nil
+}
+
+func (c *ClientApi) GetTemplates(ctx context.Context, req *connect.Request[pb.GetTemplatesRequest]) (*connect.Response[pb.GetTemplatesResponse], error) {
+	response := &pb.GetTemplatesResponse{}
+
+	for _, template := range c.templates {
+		response.Templates = append(response.Templates, &pb.Template{
+			Name: template,
+			Source: "built-in",
+			Status: "OK",
+		})
+	}
+
+	return connect.NewResponse(response), nil
+}
+
+func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetStatusRequest]) (*connect.Response[pb.GetStatusResponse], error) {
+	response := &pb.GetStatusResponse{}
+	response.OutputPath = c.BaseOutputDir
+	response.TemplatesPath = filepath.Join(generator.FindTemplateDir(), "templates")
 
 	return connect.NewResponse(response), nil
 }

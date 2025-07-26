@@ -8,42 +8,64 @@ message InitRequest {
 }
 
 message InitResponse {
-	string version = 1;
-
-	repeated BuildConfig build_configs = 2;
-
-	repeated Template templates = 3;
-
-    string templates_path = 4;
-
-    string output_path = 5;
+  string version = 1;
 }
 
 message Template {
-	string name = 1;
-	string source = 2;
-	string status = 3;
+  string name = 1;
+  string source = 2;
+  string status = 3;
 }
 
 message BuildConfig {
-	string name = 1;
-	string template = 2;
+  string name = 1;
+  string template = 2;
 }
 
 message BuildRequest {
-	string config_name = 1;
+  string config_name = 1;
 }
 
 message BuildResponse {
-	string config_name = 1;
-	string status = 2;
-	bool found = 3;
-	string relative_path = 4;
-	bool isError = 5;
+  string config_name = 1;
+  string status = 2;
+  bool found = 3;
+  string relative_path = 4;
+  bool isError = 5;
+}
+
+message GetTemplatesRequest {
+}
+
+message GetTemplatesResponse {
+  repeated Template templates = 1;
+}
+
+message GetStatusRequest {
+}
+
+message GetStatusResponse {
+  string templates_path = 4;
+
+  string output_path = 5;
+
+}
+
+message GetBuildConfigsRequest {
+}
+
+message GetBuildConfigsResponse {
+  repeated BuildConfig build_configs = 1;
 }
 
 service StencilBoxApiService {
-	rpc Init(InitRequest) returns (InitResponse);
+  rpc Init(InitRequest) returns (InitResponse);
 
-	rpc StartBuild(BuildRequest) returns (BuildResponse);
+  rpc StartBuild(BuildRequest) returns (BuildResponse);
+
+  rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse);
+
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+  rpc GetBuildConfigs(GetBuildConfigsRequest) returns (GetBuildConfigsResponse);
 }

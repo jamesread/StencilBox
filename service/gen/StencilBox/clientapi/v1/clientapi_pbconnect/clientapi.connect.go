@@ -39,6 +39,15 @@ const (
 	// StencilBoxApiServiceStartBuildProcedure is the fully-qualified name of the StencilBoxApiService's
 	// StartBuild RPC.
 	StencilBoxApiServiceStartBuildProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/StartBuild"
+	// StencilBoxApiServiceGetTemplatesProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetTemplates RPC.
+	StencilBoxApiServiceGetTemplatesProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetTemplates"
+	// StencilBoxApiServiceGetStatusProcedure is the fully-qualified name of the StencilBoxApiService's
+	// GetStatus RPC.
+	StencilBoxApiServiceGetStatusProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetStatus"
+	// StencilBoxApiServiceGetBuildConfigsProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetBuildConfigs RPC.
+	StencilBoxApiServiceGetBuildConfigsProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetBuildConfigs"
 )
 
 // StencilBoxApiServiceClient is a client for the StencilBox.clientapi.v1.StencilBoxApiService
@@ -46,6 +55,9 @@ const (
 type StencilBoxApiServiceClient interface {
 	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
 	StartBuild(context.Context, *connect.Request[v1.BuildRequest]) (*connect.Response[v1.BuildResponse], error)
+	GetTemplates(context.Context, *connect.Request[v1.GetTemplatesRequest]) (*connect.Response[v1.GetTemplatesResponse], error)
+	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
+	GetBuildConfigs(context.Context, *connect.Request[v1.GetBuildConfigsRequest]) (*connect.Response[v1.GetBuildConfigsResponse], error)
 }
 
 // NewStencilBoxApiServiceClient constructs a client for the
@@ -72,13 +84,34 @@ func NewStencilBoxApiServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(stencilBoxApiServiceMethods.ByName("StartBuild")),
 			connect.WithClientOptions(opts...),
 		),
+		getTemplates: connect.NewClient[v1.GetTemplatesRequest, v1.GetTemplatesResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetTemplatesProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetTemplates")),
+			connect.WithClientOptions(opts...),
+		),
+		getStatus: connect.NewClient[v1.GetStatusRequest, v1.GetStatusResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetStatusProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetStatus")),
+			connect.WithClientOptions(opts...),
+		),
+		getBuildConfigs: connect.NewClient[v1.GetBuildConfigsRequest, v1.GetBuildConfigsResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetBuildConfigsProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetBuildConfigs")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // stencilBoxApiServiceClient implements StencilBoxApiServiceClient.
 type stencilBoxApiServiceClient struct {
-	init       *connect.Client[v1.InitRequest, v1.InitResponse]
-	startBuild *connect.Client[v1.BuildRequest, v1.BuildResponse]
+	init            *connect.Client[v1.InitRequest, v1.InitResponse]
+	startBuild      *connect.Client[v1.BuildRequest, v1.BuildResponse]
+	getTemplates    *connect.Client[v1.GetTemplatesRequest, v1.GetTemplatesResponse]
+	getStatus       *connect.Client[v1.GetStatusRequest, v1.GetStatusResponse]
+	getBuildConfigs *connect.Client[v1.GetBuildConfigsRequest, v1.GetBuildConfigsResponse]
 }
 
 // Init calls StencilBox.clientapi.v1.StencilBoxApiService.Init.
@@ -91,11 +124,29 @@ func (c *stencilBoxApiServiceClient) StartBuild(ctx context.Context, req *connec
 	return c.startBuild.CallUnary(ctx, req)
 }
 
+// GetTemplates calls StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates.
+func (c *stencilBoxApiServiceClient) GetTemplates(ctx context.Context, req *connect.Request[v1.GetTemplatesRequest]) (*connect.Response[v1.GetTemplatesResponse], error) {
+	return c.getTemplates.CallUnary(ctx, req)
+}
+
+// GetStatus calls StencilBox.clientapi.v1.StencilBoxApiService.GetStatus.
+func (c *stencilBoxApiServiceClient) GetStatus(ctx context.Context, req *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error) {
+	return c.getStatus.CallUnary(ctx, req)
+}
+
+// GetBuildConfigs calls StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs.
+func (c *stencilBoxApiServiceClient) GetBuildConfigs(ctx context.Context, req *connect.Request[v1.GetBuildConfigsRequest]) (*connect.Response[v1.GetBuildConfigsResponse], error) {
+	return c.getBuildConfigs.CallUnary(ctx, req)
+}
+
 // StencilBoxApiServiceHandler is an implementation of the
 // StencilBox.clientapi.v1.StencilBoxApiService service.
 type StencilBoxApiServiceHandler interface {
 	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
 	StartBuild(context.Context, *connect.Request[v1.BuildRequest]) (*connect.Response[v1.BuildResponse], error)
+	GetTemplates(context.Context, *connect.Request[v1.GetTemplatesRequest]) (*connect.Response[v1.GetTemplatesResponse], error)
+	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
+	GetBuildConfigs(context.Context, *connect.Request[v1.GetBuildConfigsRequest]) (*connect.Response[v1.GetBuildConfigsResponse], error)
 }
 
 // NewStencilBoxApiServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -117,12 +168,36 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 		connect.WithSchema(stencilBoxApiServiceMethods.ByName("StartBuild")),
 		connect.WithHandlerOptions(opts...),
 	)
+	stencilBoxApiServiceGetTemplatesHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetTemplatesProcedure,
+		svc.GetTemplates,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetTemplates")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetStatusHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetStatusProcedure,
+		svc.GetStatus,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetBuildConfigsHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetBuildConfigsProcedure,
+		svc.GetBuildConfigs,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetBuildConfigs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/StencilBox.clientapi.v1.StencilBoxApiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StencilBoxApiServiceInitProcedure:
 			stencilBoxApiServiceInitHandler.ServeHTTP(w, r)
 		case StencilBoxApiServiceStartBuildProcedure:
 			stencilBoxApiServiceStartBuildHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetTemplatesProcedure:
+			stencilBoxApiServiceGetTemplatesHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetStatusProcedure:
+			stencilBoxApiServiceGetStatusHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetBuildConfigsProcedure:
+			stencilBoxApiServiceGetBuildConfigsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -138,4 +213,16 @@ func (UnimplementedStencilBoxApiServiceHandler) Init(context.Context, *connect.R
 
 func (UnimplementedStencilBoxApiServiceHandler) StartBuild(context.Context, *connect.Request[v1.BuildRequest]) (*connect.Response[v1.BuildResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.StartBuild is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetTemplates(context.Context, *connect.Request[v1.GetTemplatesRequest]) (*connect.Response[v1.GetTemplatesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetStatus is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetBuildConfigs(context.Context, *connect.Request[v1.GetBuildConfigsRequest]) (*connect.Response[v1.GetBuildConfigsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs is not implemented"))
 }
