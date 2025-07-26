@@ -13,7 +13,7 @@
 
 			<tbody>
 				<tr v-for="template in templates" :key="template.name">
-					<td>{{ template.name }}</td>
+					<td><a href = "#" @click.prevent = "openTemplate(template)">{{ template.name }}</a></td>
 					<td>{{ template.source }}</td>
 					<td :class = "'small ' + template.statusClass ">{{ template.status }}</td>
 				</tr>
@@ -24,8 +24,14 @@
 
 <script setup>
 	import { ref, onMounted } from 'vue';
+	import { useRouter } from 'vue-router';
 
 	const templates = ref([]);
+	const router = useRouter();
+
+	function openTemplate(template) {
+		router.push({ name: 'templateView', params: { name: template.name } });
+	}
 
 	async function getTemplates() {
 		try {

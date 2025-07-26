@@ -1,9 +1,9 @@
 <template>
 		<ul>
-			<li v-for = "link in links" :key = "link.name" :class = "currentSectionName === link.name ? 'active' : ''">
-				<a href = "#" @click.prevent="showNavSection(link.name)">
+			<li v-for = "link in links" :key = "link.name" :class = "$route.path === link.href ? 'active' : ''">
+				<router-link :to = "link.href">
 					{{ link.title }}
-				</a>
+				</router-link>
 			</li>
 		</ul>
 </template>
@@ -15,24 +15,18 @@
 </style>
 
 <script setup>
-	import { ref, inject } from 'vue';
+	import { ref } from 'vue';
+	import { useRouter } from 'vue-router';
 
-	const currentSectionName = ref('welcome');
-	const changeSection = inject('changeSection');
-	const links = ref([
-	]);
+	const $route = useRouter();
+	const links = ref([]);
 
-	function addLink(title, name) {
+	function addLink(title, href) {
 		links.value.push({
 			title: title,
-			name: name,
-			href: '#'
+			name: href,
+			href: href
 		});
-	}
-
-	function showNavSection(sectionName) {
-	    currentSectionName.value = sectionName;
-		changeSection(sectionName);
 	}
 
 	defineExpose({

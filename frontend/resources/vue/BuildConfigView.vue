@@ -10,29 +10,26 @@
 			<p>No build configuration selected.</p>
 		</div>
 
-		<table v-if="config">
-			<tbody>
-				<tr>
-					<th>Template</th>
-					<td>{{ config.template }}</td>
-				</tr>
-				<tr>
-					<th>Status</th>
-					<td :class = "buildClass">{{ buildStatus }}</td>
-				</tr>
-				<tr>
-					<th>URL</th>
-					<td>
-						<span v-if = "buildUrl">
-							<a :href = "buildUrl">LINK</a>
-						</span>
-						<span v-else>
-							Not available
-						</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+
+		<dl v-if="config">
+			<dt>Template</dt>
+			<dd>
+				<a :href="'/template/' + config.template">{{ config.template }}</a>
+			</dd>
+
+			<dt>Build status</dt>
+			<dd :class = "buildClass">{{ buildStatus }}</dd>
+
+			<dt>Build URL</dt>
+			<dd>
+				<span v-if = "buildUrl">
+					<a :href = "buildUrl">LINK</a>
+				</span>
+				<span v-else>
+					Not available
+				</span>
+			</dd>
+		</dl>
 
 		<p v-if="config">Click the button below to build the project.</p>
 
@@ -41,17 +38,32 @@
 </template>
 
 <script setup>
-	import { ref, defineProps } from 'vue';
+	import { ref, onMounted } from 'vue';
 
 	const props = defineProps({
-		config: {
-			type: Object,
-			required: false,
-			default: null
+		name: {
+			type: String,
+			required: true
 		}
 	});
 
-	const config = ref(props.config);
+	const config = ref(null);
+
+	async function loadConfig() {
+		try {
+			const response = await window.client.getBuildConfig({
+				configName: props.name
+			});
+			config.value = response.buildConfig;
+		} catch (error) {
+			console.error('Error loading build config:', error);
+		}
+	}
+
+	onMounted(() => {
+		console.log('Build config mounted:', config.value);
+		loadConfig();
+	});
 
 	const buildStatus = ref('unknown');
 	const buildClass = ref('unknown');

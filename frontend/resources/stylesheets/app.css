@@ -40,6 +40,28 @@ a.active {
 	text-decoration: underline;
 }
 
+dl {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.2em 0em;
+}
+
+dt:after {
+	content: ':';
+}
+
+dt {
+	font-weight: bold;
+	background-color: #EFF1F3;
+	padding: 0.6em;
+}
+
+dd {
+	margin-left: 0;
+	padding: 0.6em;
+}
+
+
 @media (prefers-color-scheme: dark) {
 	tr:hover th {
 		color: #c5c166;

@@ -4,6 +4,7 @@ import { createConnectTransport } from "@connectrpc/connect-web"
 import { StencilBoxApiService } from './proto/StencilBox/clientapi/v1/clientapi_pb'
 
 import { createApp } from 'vue';
+import router from './router.js';
 
 import App from '../resources/vue/App.vue';
 
@@ -17,6 +18,7 @@ export function init() {
 function setupVue() {
   const app = createApp(App);
 
+  app.use(router);
   app.config.globalProperties.$client = window.client;
   app.mount('#app');
 }

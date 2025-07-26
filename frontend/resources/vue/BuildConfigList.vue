@@ -7,16 +7,15 @@
 				<tr>
 					<th>Name</th>
 					<th>Template</th>
-					<th class = "small">Actions</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr v-for="config in buildConfigs" :key="config.name">
-					<td>{{ config.name }}</td>
-					<td>{{ config.template }}</td>
 					<td>
-						<span :class="'small ' + config.statusClass">{{ config.status }}</span>
-						<a href = "#" @click.prevent = "openBuild(config)">Open</a>
+						<a href="#" @click.prevent="openBuild(config)">{{ config.name }}</a>
+					</td>
+					<td>
+						<a href="#" @click.prevent="openTemplate(config)">{{ config.template }}</a>
 					</td>
 				</tr>
 			</tbody>
@@ -25,13 +24,18 @@
 </template>
 
 <script setup>
-	import { ref, onMounted, inject } from 'vue';
+	import { ref, onMounted } from 'vue';
+	import { useRouter } from 'vue-router';
 
 	const buildConfigs = ref([]);
-	const changeSection = inject('changeSection');
+	const router = useRouter();
 
 	function openBuild(config) {
-		changeSection('buildConfig', config);
+		router.push({ name: 'buildConfig', params: { name: config.name } });
+	}
+
+	function openTemplate(config) {
+		router.push({ name: 'templateView', params: { name: config.template } });
 	}
 
 	async function getBuildConfigs() {

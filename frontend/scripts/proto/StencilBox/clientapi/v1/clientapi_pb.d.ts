@@ -56,6 +56,11 @@ export declare type Template = Message<"StencilBox.clientapi.v1.Template"> & {
    * @generated from field: string status = 3;
    */
   status: string;
+
+  /**
+   * @generated from field: string documentation_url = 4;
+   */
+  documentationUrl: string;
 };
 
 /**
@@ -182,6 +187,11 @@ export declare const GetStatusRequestSchema: GenMessage<GetStatusRequest>;
  */
 export declare type GetStatusResponse = Message<"StencilBox.clientapi.v1.GetStatusResponse"> & {
   /**
+   * @generated from field: bool in_container = 2;
+   */
+  inContainer: boolean;
+
+  /**
    * @generated from field: string templates_path = 4;
    */
   templatesPath: string;
@@ -227,6 +237,70 @@ export declare type GetBuildConfigsResponse = Message<"StencilBox.clientapi.v1.G
 export declare const GetBuildConfigsResponseSchema: GenMessage<GetBuildConfigsResponse>;
 
 /**
+ * @generated from message StencilBox.clientapi.v1.GetBuildConfigRequest
+ */
+export declare type GetBuildConfigRequest = Message<"StencilBox.clientapi.v1.GetBuildConfigRequest"> & {
+  /**
+   * @generated from field: string config_name = 1;
+   */
+  configName: string;
+};
+
+/**
+ * Describes the message StencilBox.clientapi.v1.GetBuildConfigRequest.
+ * Use `create(GetBuildConfigRequestSchema)` to create a new message.
+ */
+export declare const GetBuildConfigRequestSchema: GenMessage<GetBuildConfigRequest>;
+
+/**
+ * @generated from message StencilBox.clientapi.v1.GetBuildConfigResponse
+ */
+export declare type GetBuildConfigResponse = Message<"StencilBox.clientapi.v1.GetBuildConfigResponse"> & {
+  /**
+   * @generated from field: StencilBox.clientapi.v1.BuildConfig build_config = 1;
+   */
+  buildConfig?: BuildConfig;
+};
+
+/**
+ * Describes the message StencilBox.clientapi.v1.GetBuildConfigResponse.
+ * Use `create(GetBuildConfigResponseSchema)` to create a new message.
+ */
+export declare const GetBuildConfigResponseSchema: GenMessage<GetBuildConfigResponse>;
+
+/**
+ * @generated from message StencilBox.clientapi.v1.GetTemplateRequest
+ */
+export declare type GetTemplateRequest = Message<"StencilBox.clientapi.v1.GetTemplateRequest"> & {
+  /**
+   * @generated from field: string template_name = 1;
+   */
+  templateName: string;
+};
+
+/**
+ * Describes the message StencilBox.clientapi.v1.GetTemplateRequest.
+ * Use `create(GetTemplateRequestSchema)` to create a new message.
+ */
+export declare const GetTemplateRequestSchema: GenMessage<GetTemplateRequest>;
+
+/**
+ * @generated from message StencilBox.clientapi.v1.GetTemplateResponse
+ */
+export declare type GetTemplateResponse = Message<"StencilBox.clientapi.v1.GetTemplateResponse"> & {
+  /**
+   * @generated from field: StencilBox.clientapi.v1.Template template = 1;
+   */
+  template?: Template;
+};
+
+/**
+ * Describes the message StencilBox.clientapi.v1.GetTemplateResponse.
+ * Use `create(GetTemplateResponseSchema)` to create a new message.
+ */
+export declare const GetTemplateResponseSchema: GenMessage<GetTemplateResponse>;
+
+/**
  * @generated from service StencilBox.clientapi.v1.StencilBoxApiService
  */
 export declare const StencilBoxApiService: GenService<{
@@ -255,6 +329,14 @@ export declare const StencilBoxApiService: GenService<{
     output: typeof GetTemplatesResponseSchema;
   },
   /**
+   * @generated from rpc StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate
+   */
+  getTemplate: {
+    methodKind: "unary";
+    input: typeof GetTemplateRequestSchema;
+    output: typeof GetTemplateResponseSchema;
+  },
+  /**
    * @generated from rpc StencilBox.clientapi.v1.StencilBoxApiService.GetStatus
    */
   getStatus: {
@@ -269,5 +351,13 @@ export declare const StencilBoxApiService: GenService<{
     methodKind: "unary";
     input: typeof GetBuildConfigsRequestSchema;
     output: typeof GetBuildConfigsResponseSchema;
+  },
+  /**
+   * @generated from rpc StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig
+   */
+  getBuildConfig: {
+    methodKind: "unary";
+    input: typeof GetBuildConfigRequestSchema;
+    output: typeof GetBuildConfigResponseSchema;
   },
 }>;

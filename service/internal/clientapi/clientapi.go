@@ -1,24 +1,36 @@
 package clientapi
 
 import (
-	"connectrpc.com/connect"
 	"context"
-	"github.com/jamesread/golure/pkg/dirs"
-	"github.com/jamesread/StencilBox/internal/buildconfigs"
-	"github.com/jamesread/StencilBox/internal/generator"
-	"github.com/jamesread/StencilBox/internal/buildinfo"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v3"
+
+	"connectrpc.com/connect"
 	pb "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1"
 	client "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
+	"github.com/jamesread/StencilBox/internal/buildconfigs"
+	"github.com/jamesread/StencilBox/internal/buildinfo"
+	"github.com/jamesread/StencilBox/internal/generator"
+	"github.com/jamesread/golure/pkg/dirs"
 	log "github.com/sirupsen/logrus"
-	"path/filepath"
 )
 
 type ClientApi struct {
-	buildConfigs map[string]*buildconfigs.BuildConfig
+	buildConfigs  map[string]*buildconfigs.BuildConfig
 	BaseOutputDir string
-	templates []string
+	templates     map[string]*Template
 
 	client.StencilBoxApiServiceClient
+}
+
+type Template struct {
+	Name             string
+	Source           string
+	Status           string
+	DocumentationURL string
 }
 
 func NewServer() *ClientApi {
@@ -26,7 +38,7 @@ func NewServer() *ClientApi {
 	api.buildConfigs = buildconfigs.ReadConfigFiles()
 	api.BaseOutputDir, _ = filepath.Abs(findOutputDir())
 
-	return api;
+	return api
 }
 
 func findOutputDir() string {
@@ -43,20 +55,23 @@ func findOutputDir() string {
 	return outputdir
 }
 
-
 func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitRequest]) (*connect.Response[pb.InitResponse], error) {
 	response := &pb.InitResponse{
 		Version: buildinfo.Version,
 	}
 
 	c.buildConfigs = buildconfigs.ReadConfigFiles()
-	c.templates = readTemplates();
+	c.templates = readTemplates()
 
 	return connect.NewResponse(response), nil
 }
 
-func readTemplates() []string {
-	templates := make([]string, 0)
+type TemplateMetadata struct {
+	DocumentationUrl string `yaml:"documentation_url"`
+}
+
+func readTemplates() map[string]*Template {
+	templates := make(map[string]*Template)
 
 	res, err := filepath.Glob(filepath.Join(generator.FindTemplateDir(), "**", "index.html"))
 
@@ -68,7 +83,30 @@ func readTemplates() []string {
 	}
 
 	for _, fp := range res {
-		templates = append(templates, filepath.Base(filepath.Dir(fp)))
+		templateName := filepath.Base(filepath.Dir(fp))
+
+		metadataFile := filepath.Join(filepath.Dir(fp), "metadata.yaml")
+		metadata, err := os.ReadFile(metadataFile)
+
+		if err != nil {
+			log.Errorf("Error reading metadata: %v", err)
+			continue
+		}
+
+		metadataMap := TemplateMetadata{}
+		err = yaml.Unmarshal(metadata, &metadataMap)
+
+		if err != nil {
+			log.Errorf("Error unmarshalling metadata: %v", err)
+			continue
+		}
+
+		templates[templateName] = &Template{
+			Name:             templateName,
+			Source:           "built-in",
+			Status:           "OK",
+			DocumentationURL: metadataMap.DocumentationUrl,
+		}
 	}
 
 	return templates
@@ -77,7 +115,7 @@ func readTemplates() []string {
 func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.BuildRequest]) (*connect.Response[pb.BuildResponse], error) {
 	response := &pb.BuildResponse{
 		ConfigName: req.Msg.ConfigName,
-		Status: "Build started",
+		Status:     "Build started",
 	}
 
 	buildConfig, found := c.buildConfigs[req.Msg.ConfigName]
@@ -100,8 +138,8 @@ func (c *ClientApi) GetBuildConfigs(ctx context.Context, req *connect.Request[pb
 
 	for name, bc := range c.buildConfigs {
 		response.BuildConfigs = append(response.BuildConfigs, &pb.BuildConfig{
-			Name:       name,
-			Template:   bc.Template,
+			Name:     name,
+			Template: bc.Template,
 		})
 	}
 
@@ -113,9 +151,9 @@ func (c *ClientApi) GetTemplates(ctx context.Context, req *connect.Request[pb.Ge
 
 	for _, template := range c.templates {
 		response.Templates = append(response.Templates, &pb.Template{
-			Name: template,
-			Source: "built-in",
-			Status: "OK",
+			Name:   template.Name,
+			Source: template.Source,
+			Status: template.Status,
 		})
 	}
 
@@ -123,9 +161,55 @@ func (c *ClientApi) GetTemplates(ctx context.Context, req *connect.Request[pb.Ge
 }
 
 func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetStatusRequest]) (*connect.Response[pb.GetStatusResponse], error) {
-	response := &pb.GetStatusResponse{}
-	response.OutputPath = c.BaseOutputDir
-	response.TemplatesPath = filepath.Join(generator.FindTemplateDir(), "templates")
+	containerFileExists := false
+
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		containerFileExists = true
+	}
+
+	response := &pb.GetStatusResponse{
+		InContainer:   containerFileExists,
+		OutputPath:    c.BaseOutputDir,
+		TemplatesPath: filepath.Join(generator.FindTemplateDir(), "templates"),
+	}
 
 	return connect.NewResponse(response), nil
+}
+
+func (c *ClientApi) GetTemplate(ctx context.Context, req *connect.Request[pb.GetTemplateRequest]) (*connect.Response[pb.GetTemplateResponse], error) {
+	response := &pb.GetTemplateResponse{}
+
+	template, found := c.templates[req.Msg.TemplateName]
+
+	log.Infof("Getting template: %+v %+v", c.templates, req.Msg.TemplateName)
+
+	if found {
+		response.Template = &pb.Template{
+			Name:             template.Name,
+			Source:           template.Source,
+			Status:           template.Status,
+			DocumentationUrl: template.DocumentationURL,
+		}
+
+		return connect.NewResponse(response), nil
+	} else {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("template not found"))
+	}
+}
+
+func (c *ClientApi) GetBuildConfig(ctx context.Context, req *connect.Request[pb.GetBuildConfigRequest]) (*connect.Response[pb.GetBuildConfigResponse], error) {
+	response := &pb.GetBuildConfigResponse{}
+
+	buildConfig, found := c.buildConfigs[req.Msg.ConfigName]
+
+	if found {
+		response.BuildConfig = &pb.BuildConfig{
+			Name:     buildConfig.Name,
+			Template: buildConfig.Template,
+		}
+
+		return connect.NewResponse(response), nil
+	} else {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("template not found"))
+	}
 }
