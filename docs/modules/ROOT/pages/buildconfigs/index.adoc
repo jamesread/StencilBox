@@ -1,0 +1,56 @@
+= Build configs
+
+A Build Config is a YAML file that tells StencilBox how to build a set of pages. Build Configs rely on a template to provide the basic structure of the page, and will often pull in data from data files.
+
+Here is an example of a build config;
+
+.Build Config (`buildconfigs/homepage.yml`)
+[source,yaml]
+----
+name: homepage
+
+outputdir: homepage
+
+template: links-homepage
+
+datafiles:
+  links: data/sites.yml
+----
+
+You'll see that this simple Build Config is just a few lines of YAML, and it pulls in a data file to populate the page. Here's an example of the data file that goes with it;
+
+.Data file (`buildconfigs/data/sites.yml`)
+[source,yaml]
+----
+title: My Favorite Sites
+
+categories:
+  - title: tech sites
+    links:
+    - url: github.com
+      title: GitHub
+
+    - url: slashdot.com
+      title: Slashdot
+
+    - url: stackoverflow.com
+      title: Stack Overflow
+
+  - title: Funny sites
+    links:
+      - url: xkcd.com
+        title: XKCD
+
+      - url: theonion.com
+        title: The Onion
+----
+
+The data file is a list of objects, each with a name and url property. When the build is run, it looks up the template defined in the build config (links-homepage), and uses it to build the page. Once it's all put together, it should show up in the SencilBox interface looking something like this;
+
+image::homepage.png[Build Config]
+
+The built page will be saved in the output directory defined in the build config (homepage in this case). You can open the "LINK" to see the built page;
+
+image::homepage-built.png[Built Page]
+
+The template used in this Build Config is xref:builtin-templates/links-homepage.adoc[links-homepage].

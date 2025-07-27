@@ -2,7 +2,7 @@
 	<section>
 		<SectionHeader title="Templates" subtitle="This is a list of templates, both builtin, and from your config directory.">
 			<template #actions>
-				<button class="good" @click="addTemplate">
+				<button class="good" @click="addTemplate" disabled>
 					Add Template
 				</button>
 			</template>
@@ -13,6 +13,7 @@
 				<tr>
 					<th>Name</th>
 					<th>Source</th>
+					<th>Used by</th>
 					<th class = "small">Status</th>
 				</tr>
 			</thead>
@@ -21,6 +22,7 @@
 				<tr v-for="template in templates" :key="template.name">
 					<td><a href = "#" @click.prevent = "openTemplate(template)">{{ template.name }}</a></td>
 					<td>{{ template.source }}</td>
+					<td>{{ template.buildConfigs.length }}</td>
 					<td :class = "'small ' + template.statusClass ">{{ template.status }}</td>
 				</tr>
 			</tbody>

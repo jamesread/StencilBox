@@ -16,11 +16,18 @@ message Template {
   string source = 2;
   string status = 3;
   string documentation_url = 4;
+  repeated string build_configs = 5;
 }
 
 message BuildConfig {
   string name = 1;
   string template = 2;
+  string output_dir = 3;
+  repeated string repos = 4;
+  map<string, string> datafiles = 5;
+  string filename = 6;
+  string path = 7;
+  string error_message = 8;
 }
 
 message BuildRequest {
@@ -52,6 +59,7 @@ message GetStatusResponse {
 
   string output_path = 5;
 
+  string build_configs_dir = 6;
 }
 
 message GetBuildConfigsRequest {
@@ -59,6 +67,7 @@ message GetBuildConfigsRequest {
 
 message GetBuildConfigsResponse {
   repeated BuildConfig build_configs = 1;
+  bool can_git_pull = 2;
 }
 
 message GetBuildConfigRequest {

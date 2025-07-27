@@ -3,6 +3,12 @@
 		<SectionHeader title = "System Details" subtitle = "This is a list of the system details." />
 
 		<dl>
+			<dt>Build configs directory</dt>
+			<dd>{{status?.buildConfigsDir}}
+				<span v-if="status?.inContainer"> (container volume)</span>
+				<span v-else> (on host)</span>
+			</dd>
+
 			<dt>Templates path</dt>
 			<dd>{{status?.templatesPath}}</dd>
 

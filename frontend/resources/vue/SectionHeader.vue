@@ -8,7 +8,7 @@
 			</p>
 		</div>
 
-		<div>
+		<div role = "toolbar">
 			<slot name = "actions" />
 		</div>
 	</div>

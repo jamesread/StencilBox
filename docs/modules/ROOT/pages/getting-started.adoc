@@ -1,0 +1,3 @@
+= Getting Started
+
+Assuming that you have StencilBox installed and running, then your first step is to try to build one of the sample build configs.

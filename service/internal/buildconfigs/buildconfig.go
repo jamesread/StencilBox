@@ -1,19 +1,21 @@
 package buildconfigs
 
 import (
-	"gopkg.in/yaml.v3"
+	"bytes"
 	"os"
-	log "github.com/sirupsen/logrus"
-	"github.com/jamesread/golure/pkg/dirs"
 	"path/filepath"
+
+	"github.com/jamesread/golure/pkg/dirs"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type BuildConfig struct {
-	Name string
-
-	OutputDir string
-
-	Template string
+	Name         string
+	Filename     string
+	OutputDir    string
+	ErrorMessage string
+	Template     string
 
 	Datafiles map[string]string
 
@@ -29,7 +31,7 @@ type GitRepo struct {
 	URL string
 }
 
-func getConfigDir() (string, error) {
+func GetConfigDir() (string, error) {
 	directoriesToSearch := []string{
 		"/config/buildconfigs/",
 		"../var/config-skel/buildconfigs/",
@@ -39,10 +41,24 @@ func getConfigDir() (string, error) {
 	return dirs.GetFirstExistingDirectory("config", directoriesToSearch)
 }
 
+func CanGitPull() bool {
+	dir, err := GetConfigDir()
+
+	if err != nil {
+		return false
+	}
+
+	// Check if the directory has a .git directory
+	gitDir := filepath.Join(dir, ".git")
+	_, err = os.Stat(gitDir)
+
+	return err == nil
+}
+
 func ReadConfigFiles() map[string]*BuildConfig {
 	ret := make(map[string]*BuildConfig, 0)
 
-	dir, err := getConfigDir()
+	dir, err := GetConfigDir()
 
 	files, _ := filepath.Glob(filepath.Join(dir, "*.yaml"))
 
@@ -53,6 +69,7 @@ func ReadConfigFiles() map[string]*BuildConfig {
 
 	for _, file := range files {
 		bc := readBuildConfig(file)
+		bc.Filename = filepath.Base(file)
 		bc.Path = file
 
 		if bc != nil {
@@ -62,7 +79,7 @@ func ReadConfigFiles() map[string]*BuildConfig {
 		}
 	}
 
-	return ret;
+	return ret
 }
 
 func readBuildConfig(file string) *BuildConfig {
@@ -75,11 +92,14 @@ func readBuildConfig(file string) *BuildConfig {
 
 	cfg := &BuildConfig{}
 
-	err = yaml.Unmarshal(yfile, &cfg)
+	decoder := yaml.NewDecoder(bytes.NewReader(yfile))
+	decoder.KnownFields(true)
+	err = decoder.Decode(&cfg)
 
 	if err != nil {
 		log.Errorf("Failed to unmarshal build config from file %s: %v", file, err)
-		return nil
+		cfg.ErrorMessage = err.Error()
+		return cfg
 	}
 
 	return cfg

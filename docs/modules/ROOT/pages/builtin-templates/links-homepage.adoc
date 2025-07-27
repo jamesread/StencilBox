@@ -1,21 +1,10 @@
-= links-homepage
+= Links Homepage (links-homepage)
 
-This is the build config that sets up the build.
+This template simply shows a page of links grouped by category. This might be useful for a homepage, or a page of links to your favorite sites.
 
-[source,yaml]
-.buildconfigs/homepage.yaml
-----
-name: homepage
+image::homepage-built.png[Built Page]
 
-outputdir: homepage
-
-template: links-homepage
-
-datafiles:
-  links: data/sites.yml
-----
-
-Then this is the data file that contains all the links.
+== Datafile structure
 
 [source,yaml]
 .buildconfigs/data/sites.yaml
@@ -42,3 +31,7 @@ categories:
       - url: theonion.com
         title: The Onion
 ----
+
+== Example Build Config
+
+Check out the xref:buildconfigs/index.adoc[Build Configs] page for an example of how to use this template.

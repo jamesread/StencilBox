@@ -61,6 +61,11 @@ export declare type Template = Message<"StencilBox.clientapi.v1.Template"> & {
    * @generated from field: string documentation_url = 4;
    */
   documentationUrl: string;
+
+  /**
+   * @generated from field: repeated string build_configs = 5;
+   */
+  buildConfigs: string[];
 };
 
 /**
@@ -82,6 +87,36 @@ export declare type BuildConfig = Message<"StencilBox.clientapi.v1.BuildConfig">
    * @generated from field: string template = 2;
    */
   template: string;
+
+  /**
+   * @generated from field: string output_dir = 3;
+   */
+  outputDir: string;
+
+  /**
+   * @generated from field: repeated string repos = 4;
+   */
+  repos: string[];
+
+  /**
+   * @generated from field: map<string, string> datafiles = 5;
+   */
+  datafiles: { [key: string]: string };
+
+  /**
+   * @generated from field: string filename = 6;
+   */
+  filename: string;
+
+  /**
+   * @generated from field: string path = 7;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string error_message = 8;
+   */
+  errorMessage: string;
 };
 
 /**
@@ -200,6 +235,11 @@ export declare type GetStatusResponse = Message<"StencilBox.clientapi.v1.GetStat
    * @generated from field: string output_path = 5;
    */
   outputPath: string;
+
+  /**
+   * @generated from field: string build_configs_dir = 6;
+   */
+  buildConfigsDir: string;
 };
 
 /**
@@ -228,6 +268,11 @@ export declare type GetBuildConfigsResponse = Message<"StencilBox.clientapi.v1.G
    * @generated from field: repeated StencilBox.clientapi.v1.BuildConfig build_configs = 1;
    */
   buildConfigs: BuildConfig[];
+
+  /**
+   * @generated from field: bool can_git_pull = 2;
+   */
+  canGitPull: boolean;
 };
 
 /**

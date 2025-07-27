@@ -1,12 +1,11 @@
 <template>
 	<header>
-		<div class="flex-row">
+		<div class="flex-row" id = "sidebar-button">
 			<img src="../images/logo.png" class="logo" />
 			<h1>StencilBox</h1>
-
-			<Breadcrumbs />
 		</div>
 
+		<Breadcrumbs />
 	</header>
 
 	<div id="layout">
@@ -30,14 +29,20 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import {
+	Notification03Icon,
+	CodeSquareIcon,
+	Settings01Icon,
+	Configuration01Icon
+} from '@hugeicons/core-free-icons';
 
 const sectionNavigation = ref(null);
 
 onMounted(() => {
-	sectionNavigation.value.addLink('Welcome', '/');
-	sectionNavigation.value.addLink('Templates', '/templates');
-	sectionNavigation.value.addLink('Build Configs', '/build-configs');
-	sectionNavigation.value.addLink('System Details', '/system');
+	sectionNavigation.value.addLink('Welcome', '/', Notification03Icon);
+	sectionNavigation.value.addLink('Build Configs', '/build-configs', Configuration01Icon);
+	sectionNavigation.value.addLink('Templates', '/templates', CodeSquareIcon);
+	sectionNavigation.value.addLink('System Details', '/system', Settings01Icon);
 });
 
 </script>

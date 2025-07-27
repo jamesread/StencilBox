@@ -10,6 +10,10 @@ section.small {
 	margin-bottom: 2em;
 }
 
+section > p:last-child {
+	margin-bottom: 0;
+}
+
 footer span {
 	margin-right: 1em;
 }
@@ -43,7 +47,7 @@ a.active {
 dl {
 	display: grid;
 	grid-template-columns: max-content 1fr;
-	gap: 0.2em 0em;
+	gap: 0;
 }
 
 dt:after {
@@ -52,7 +56,8 @@ dt:after {
 
 dt {
 	font-weight: bold;
-	background-color: #EFF1F3;
+	border-right: 1px solid #666;
+	text-align: right;
 	padding: 0.6em;
 }
 
@@ -61,14 +66,31 @@ dd {
 	padding: 0.6em;
 }
 
+a.button {
+	color: #000;
+}
+
+a svg, button svg, h2 svg {
+	vertical-align: bottom;
+}
+
+ul {
+	list-style: '\25b9    ';
+	list-style-position: outside;
+	padding-left: 1.4em;
+}
+
 @media (prefers-color-scheme: dark) {
 	tr:hover th {
 		color: #c5c166;
 	}
 
 	tr:hover td {
-		color: black;
-		background-color: #c5c166;
+		color: white;
+		background-color: #1d345c;
 	}
 
+	a.button {
+		color: #fff;
+	}
 }

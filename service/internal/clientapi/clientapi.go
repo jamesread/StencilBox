@@ -135,11 +135,17 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 
 func (c *ClientApi) GetBuildConfigs(ctx context.Context, req *connect.Request[pb.GetBuildConfigsRequest]) (*connect.Response[pb.GetBuildConfigsResponse], error) {
 	response := &pb.GetBuildConfigsResponse{}
+	response.CanGitPull = buildconfigs.CanGitPull()
 
 	for name, bc := range c.buildConfigs {
 		response.BuildConfigs = append(response.BuildConfigs, &pb.BuildConfig{
-			Name:     name,
-			Template: bc.Template,
+			Name:         name,
+			Template:     bc.Template,
+			OutputDir:    bc.OutputDir,
+			Datafiles:    bc.Datafiles,
+			Filename:     bc.Filename,
+			Path:         bc.Path,
+			ErrorMessage: bc.ErrorMessage,
 		})
 	}
 
@@ -151,13 +157,26 @@ func (c *ClientApi) GetTemplates(ctx context.Context, req *connect.Request[pb.Ge
 
 	for _, template := range c.templates {
 		response.Templates = append(response.Templates, &pb.Template{
-			Name:   template.Name,
-			Source: template.Source,
-			Status: template.Status,
+			Name:         template.Name,
+			Source:       template.Source,
+			Status:       template.Status,
+			BuildConfigs: c.getBuildConfigsForTemplate(template.Name),
 		})
 	}
 
 	return connect.NewResponse(response), nil
+}
+
+func (c *ClientApi) getBuildConfigsForTemplate(templateName string) []string {
+	buildConfigs := []string{}
+
+	for _, bc := range c.buildConfigs {
+		if bc.Template == templateName {
+			buildConfigs = append(buildConfigs, bc.Name)
+		}
+	}
+
+	return buildConfigs
 }
 
 func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetStatusRequest]) (*connect.Response[pb.GetStatusResponse], error) {
@@ -167,10 +186,13 @@ func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetSt
 		containerFileExists = true
 	}
 
+	dir, _ := buildconfigs.GetConfigDir()
+
 	response := &pb.GetStatusResponse{
-		InContainer:   containerFileExists,
-		OutputPath:    c.BaseOutputDir,
-		TemplatesPath: filepath.Join(generator.FindTemplateDir(), "templates"),
+		InContainer:     containerFileExists,
+		OutputPath:      c.BaseOutputDir,
+		TemplatesPath:   filepath.Join(generator.FindTemplateDir(), "templates"),
+		BuildConfigsDir: dir,
 	}
 
 	return connect.NewResponse(response), nil
@@ -189,6 +211,7 @@ func (c *ClientApi) GetTemplate(ctx context.Context, req *connect.Request[pb.Get
 			Source:           template.Source,
 			Status:           template.Status,
 			DocumentationUrl: template.DocumentationURL,
+			BuildConfigs:     c.getBuildConfigsForTemplate(template.Name),
 		}
 
 		return connect.NewResponse(response), nil
@@ -204,12 +227,28 @@ func (c *ClientApi) GetBuildConfig(ctx context.Context, req *connect.Request[pb.
 
 	if found {
 		response.BuildConfig = &pb.BuildConfig{
-			Name:     buildConfig.Name,
-			Template: buildConfig.Template,
+			Name:         buildConfig.Name,
+			Template:     buildConfig.Template,
+			Filename:     buildConfig.Filename,
+			Path:         buildConfig.Path,
+			ErrorMessage: buildConfig.ErrorMessage,
+			OutputDir:    buildConfig.OutputDir,
+			Datafiles:    buildConfig.Datafiles,
+			Repos:        c.getReposForBuildConfig(buildConfig.Name),
 		}
 
 		return connect.NewResponse(response), nil
 	} else {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("template not found"))
 	}
+}
+
+func (c *ClientApi) getReposForBuildConfig(buildConfigName string) []string {
+	repos := []string{}
+
+	for _, repo := range c.buildConfigs[buildConfigName].Repos {
+		repos = append(repos, repo.URL)
+	}
+
+	return repos
 }

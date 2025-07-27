@@ -1,4 +1,4 @@
-default: protoc frontend service
+default: proto frontend service
 
 local:
 	gomplate -d bookmarks=bookmarks.yaml -d links=links.yaml -f template.html > index.html

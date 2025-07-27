@@ -14,6 +14,18 @@
                 <a :href="template?.documentationUrl" target="_blank">{{ template?.documentationUrl }}</a>
             </dd>
         </dl>
+
+        <h2>Build Configs</h2>
+        <p>The following build configs are associated with this template:</p>
+
+        <p v-if="template?.buildConfigs && template.buildConfigs.length === 0">
+            No build configs are associated with this template.
+        </p>
+        <ul v-else>
+            <li v-for="buildConfig in template?.buildConfigs" :key="buildConfig">
+                <a :href="`/build-config/${buildConfig}`">{{ buildConfig }}</a>
+            </li>
+        </ul>
     </section>
 </template>
 
