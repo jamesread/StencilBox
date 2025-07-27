@@ -1,11 +1,17 @@
 <template>
 	<div class = "flex-row">
-		<h2>{{ title }}</h2>
-	</div>
+		<div class = "fg1">
+			<h2>{{ title }}</h2>
 
-	<p>
-		{{ subtitle }}
-	</p>
+			<p>
+				{{ subtitle }}
+			</p>
+		</div>
+
+		<div>
+			<slot name = "actions" />
+		</div>
+	</div>
 </template>
 
 <script setup>

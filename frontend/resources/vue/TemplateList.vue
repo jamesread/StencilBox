@@ -1,6 +1,12 @@
 <template>
 	<section>
-		<SectionHeader title = "Templates" subtitle = "This is a list of templates, both builtin, and from your config directory." />
+		<SectionHeader title="Templates" subtitle="This is a list of templates, both builtin, and from your config directory.">
+			<template #actions>
+				<button class="good" @click="addTemplate">
+					Add Template
+				</button>
+			</template>
+		</SectionHeader>
 
 		<table>
 			<thead>
@@ -31,6 +37,11 @@
 
 	function openTemplate(template) {
 		router.push({ name: 'templateView', params: { name: template.name } });
+	}
+
+	function addTemplate() {
+		router.push({ name: 'templateAdd' });
+
 	}
 
 	async function getTemplates() {

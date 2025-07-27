@@ -61,7 +61,6 @@ dd {
 	padding: 0.6em;
 }
 
-
 @media (prefers-color-scheme: dark) {
 	tr:hover th {
 		color: #c5c166;

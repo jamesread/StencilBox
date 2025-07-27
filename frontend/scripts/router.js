@@ -5,6 +5,7 @@ import BuildConfigList from '../resources/vue/BuildConfigList.vue'
 import BuildConfigView from '../resources/vue/BuildConfigView.vue'
 import TemplateList from '../resources/vue/TemplateList.vue'
 import TemplateView from '../resources/vue/TemplateView.vue'
+import TemplateAdd from '../resources/vue/TemplateAdd.vue'
 import SystemDetails from '../resources/vue/SystemDetails.vue'
 
 const routes = [
@@ -47,6 +48,17 @@ const routes = [
     meta: {
       breadcrumb: [
         { name: 'Templates' }
+      ]
+    }
+  },
+  {
+    path: '/template/add',
+    name: 'templateAdd',
+    component: TemplateAdd,
+    meta: {
+      breadcrumb: [
+        { name: 'Templates', href: '/templates' },
+        { name: 'Add Template' }
       ]
     }
   },
