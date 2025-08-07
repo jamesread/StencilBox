@@ -68,7 +68,7 @@
 			<dt>Build URL</dt>
 			<dd>
 				<span v-if = "buildUrl">
-					<a :href = "buildUrl">LINK</a>
+					<a :href = "buildUrl">{{ buildUrl }}</a>
 				</span>
 				<span v-else>
 					Not available
