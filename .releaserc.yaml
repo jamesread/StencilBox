@@ -2,7 +2,8 @@
 branches:
   - name: main
   - name: v1
-    range: ">=1.0.0 < 2.0.0"
+    range: ">=1.0.0 <2.0.0"
+
 plugins:
   - '@semantic-release/commit-analyzer'
   - '@semantic-release/git'
