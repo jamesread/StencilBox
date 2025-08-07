@@ -1,6 +1,6 @@
 <div align = "center">
   <img alt = "project logo" src = "logo.png" width = "128" />
-  <h1>StencilBox</h1>
+  <h1>StencilBox v2</h1>
 
 Generate super speedy simple static sites, from sleek templates.
 
