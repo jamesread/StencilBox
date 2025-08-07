@@ -1,6 +1,7 @@
 ---
 branches:
   - main
+  - beta
 plugins:
   - '@semantic-release/commit-analyzer'
   - '@semantic-release/git'
