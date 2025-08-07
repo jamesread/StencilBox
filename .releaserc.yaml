@@ -1,7 +1,10 @@
 ---
 branches:
-  - main
-  - beta
+  - main:
+  - alpha:
+      prerelease: true
+  - beta:
+      prerelease: true
 plugins:
   - '@semantic-release/commit-analyzer'
   - '@semantic-release/git'
