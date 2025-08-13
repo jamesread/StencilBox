@@ -36,6 +36,8 @@ import {
 	Configuration01Icon
 } from '@hugeicons/core-free-icons';
 
+import Breadcrumbs from 'picocrank/vue/components/Breadcrumbs.vue';
+
 const sectionNavigation = ref(null);
 
 onMounted(() => {

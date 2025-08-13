@@ -14,7 +14,7 @@ const routes = [
     name: 'welcome',
     component: Welcome,
     meta: {
-      breadcrumb: [
+      breadcrumbs: () => [
         { name: 'Welcome' }
       ]
     }
@@ -24,7 +24,7 @@ const routes = [
     name: 'buildConfigList',
     component: BuildConfigList,
     meta: {
-      breadcrumb: [
+      breadcrumbs: () => [
         { name: 'Build Configs' }
       ]
     }
@@ -35,7 +35,7 @@ const routes = [
     component: BuildConfigView,
     props: true,
     meta: {
-      breadcrumb: [
+      breadcrumbs: () => [
         { name: 'Build Configs', href: '/build-configs' },
         { name: 'View Build Config' }
       ]
@@ -46,7 +46,7 @@ const routes = [
     name: 'templateList',
     component: TemplateList,
     meta: {
-      breadcrumb: [
+      breadcrumbs: () => [
         { name: 'Templates' }
       ]
     }
@@ -56,7 +56,7 @@ const routes = [
     name: 'templateAdd',
     component: TemplateAdd,
     meta: {
-      breadcrumb: [
+      breadcrumbs: () => [
         { name: 'Templates', href: '/templates' },
         { name: 'Add Template' }
       ]
@@ -68,7 +68,7 @@ const routes = [
     component: TemplateView,
     props: true,
     meta: {
-      breadcrumb: [
+      breadcrumbs: () => [
         { name: 'Templates', href: '/templates' },
         { name: 'View Template' }
       ]
@@ -79,7 +79,7 @@ const routes = [
     name: 'systemDetails',
     component: SystemDetails,
     meta: {
-      breadcrumb: [
+      breadcrumbs: () => [
         { name: 'System Details' }
       ]
     }

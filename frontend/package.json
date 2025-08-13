@@ -9,14 +9,15 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@connectrpc/connect": "^2.0.2",
-    "@connectrpc/connect-web": "^2.0.2",
+    "@connectrpc/connect": "^2.0.3",
+    "@connectrpc/connect-web": "^2.0.3",
     "@hugeicons/core-free-icons": "^1.0.16",
     "@hugeicons/vue": "^1.0.3",
-    "@vitejs/plugin-vue": "^6.0.0",
-    "femtocrank": "^1.2.3",
-    "unplugin-vue-components": "^28.8.0",
-    "vite": "^6.3.5",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "femtocrank": "^2.2.0",
+    "picocrank": "^1.0.0",
+    "unplugin-vue-components": "^29.0.0",
+    "vite": "^7.1.2",
     "vue-router": "^4.5.1"
   }
 }
