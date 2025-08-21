@@ -21,38 +21,39 @@ If you've ever used static site generators like Hugo, this is very similar. The 
 
 ### What can I use StencilBox for?
 
-* **As a self hosted enthusiast**, I want a "homepage" of links that I can easily update from YAML, and loads super quickly in the browser.
-* **As a sysadmin**, I want to give my users a simple way to create their own static pages without needing to know about Git, worry about tooling, or hosting.
-* **As a developer**, I want to render data stored as YAML on a nice webpage.
+* **As a self hoster**, I want a "homepage" of links that I can easily update from YAML, and loads super duper quickly in the browser.
+* **As a sysadmin**, I want to give my users who can understand a YAML file a simple way to create pages without needing to know about Git, worry about tooling, or hosting.
+* **As a developer**, I want data in YAML format to be rendered to a nice looking webpage (eg: XSLT).
 
-* Static pages are built once, and then served extremely quickly from a web server (optionally from the webserver built-in to StencilBox).
-* Build multiple static sites from a simple directory of configs, or even multiple Git repositories.
-* Administrators can give an "easy button" to users to create a static page, without needing to know how to use Git or a static site generator.
-* Opt in to GitOps to build your pages, without the pain of external build and hosting tools.
-
-### How does it compare to heimdall, homepage, and other similar tools?
+### FAQ 
+<details>
+<summary>How does it compare to heimdall, homepage, and other similar tools?</summary>
 
 StencilBox is similar in concept to those tools, with the following differences that might be seen as an advantage;
 
 * **Static site generation** - means that pages are generated once, and images, assets, etc can be optimized. This means no scripts running in the browser. This means that pages are extremely fast to load.
 * **Multiple build configs** - StencilBox can build multiple sites, meaning you can create a simple homepage for family, another homepage for friends, and another for you - without needing to run multiple containers.
 * **Not just for links** - StencilBox is not just for links, it can render any data you want, from YAML files. This means you can create a simple static page with any content you want, and it will be rendered as a static page. Those other tools focus heavily on being homepages only.
+</details>
 
-### How does it compare to Hugo, Jekyll, and other static site generators?
+<details>
+  <summary>How does it compare to Hugo, Jekyll, and other static site generators?</summary>
 
-StencilBox is also very similar in concept to many other static site generators.
+  StencilBox is also very similar in concept to many other static site generators.
 
 However those are tailored for public websites, blogs, and they send to be run in a command line / CI system. StencilBox provides a handy API, and WebUI, and is pretty flexible to generate any type of static site.
 
-## Installation Guide & Documentation
-
-The StencilBox docs can all be found here; [Installation Guide & Documentation](https://jamesread.github.io/StencilBox/index.html)
+</details>
 
 ## Screenshots
 
 <p align = "center">
 <img src = "var/screenshots/mainpage-laptop_framed.png" />
 </p>
+
+## Installation Guide & Documentation
+
+The StencilBox docs can all be found here; [Installation Guide & Documentation](https://jamesread.github.io/StencilBox/index.html)
 
 ## No-Nonsense Software Principles
 
