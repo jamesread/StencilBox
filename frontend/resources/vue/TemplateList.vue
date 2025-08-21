@@ -1,41 +1,51 @@
 <template>
-	<section>
-		<SectionHeader title="Templates" subtitle="This is a list of templates, both builtin, and from your config directory.">
-			<template #actions>
+	<Section title = "Templates" :padding = false>
+			<template #toolbar>
+				<a href = "https://jamesread.github.io/StencilBox/templates/index.html" class = "button">
+					Docs
+					<HugeiconsIcon :icon = "LinkSquare01Icon" size = "24" />
+				</a>
+
 				<button class="good" @click="addTemplate" disabled>
 					Add Template
 				</button>
 			</template>
-		</SectionHeader>
 
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Source</th>
-					<th>Used by</th>
-					<th class = "small">Status</th>
-				</tr>
-			</thead>
-
-			<tbody>
-				<tr v-for="template in templates" :key="template.name">
-					<td><a href = "#" @click.prevent = "openTemplate(template)">{{ template.name }}</a></td>
-					<td>{{ template.source }}</td>
-					<td>{{ template.buildConfigs.length }}</td>
-					<td :class = "'small ' + template.statusClass ">{{ template.status }}</td>
-				</tr>
-			</tbody>
-		</table>
-	</section>
+		<Table :headers = "headers" :data = "templates">
+			<template #cell-name="{ row, value }">
+				<span v-if="!row.name" class="subtle">N/A</span>
+				<router-link v-else :to="{ name: 'templateView', params: { name: row.name } }">
+					{{ row.name }}
+				</router-link>
+			</template>
+			<template #cell-buildConfigs="{ row, value }">
+				{{ value.length }}
+			</template>
+		</Table>
+	</Section>
 </template>
 
 <script setup>
 	import { ref, onMounted } from 'vue';
 	import { useRouter } from 'vue-router';
+	import { HugeiconsIcon } from '@hugeicons/vue';
+	import { LinkSquare01Icon } from '@hugeicons/core-free-icons';
+	import Section from 'picocrank/vue/components/Section.vue';
+	import Table from 'picocrank/vue/components/Table.vue';
+
+	const headers = [
+		{ label: 'Name', key: 'name', hidden: false, sortable: true },
+		{ label: 'Source', key: 'source', hidden: false, sortable: false, linkFunc: null },
+		{ label: 'Used by', key: 'buildConfigs', hidden: false, sortable: false, linkFunc: null },
+		{ label: 'Status', key: 'status', hidden: false, sortable: false, linkFunc: null }
+	];
 
 	const templates = ref([]);
 	const router = useRouter();
+
+	onMounted(() => {
+		getTemplates();
+	});
 
 	function openTemplate(template) {
 		router.push({ name: 'templateView', params: { name: template.name } });
@@ -43,7 +53,6 @@
 
 	function addTemplate() {
 		router.push({ name: 'templateAdd' });
-
 	}
 
 	async function getTemplates() {
@@ -58,13 +67,8 @@
 			})
 
 			templates.value = tpl;
-			console.log('Templates loaded:', templates.value);
 		} catch (error) {
 			console.error('Error loading templates:', error);
 		}
 	}
-
-	onMounted(() => {
-		getTemplates();
-	});
 </script>

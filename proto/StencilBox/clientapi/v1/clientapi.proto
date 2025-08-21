@@ -17,6 +17,7 @@ message Template {
   string status = 3;
   string documentation_url = 4;
   repeated string build_configs = 5;
+  string description = 6;
 }
 
 message BuildConfig {
@@ -28,6 +29,7 @@ message BuildConfig {
   string filename = 6;
   string path = 7;
   string error_message = 8;
+  bool in_container = 9;
 }
 
 message BuildRequest {
@@ -40,6 +42,10 @@ message BuildResponse {
   bool found = 3;
   string relative_path = 4;
   bool isError = 5;
+  string build_url_base = 6;
+  string output_size_human_readable = 7;
+  bool in_container = 8;
+  string base_output_dir = 9;
 }
 
 message GetTemplatesRequest {

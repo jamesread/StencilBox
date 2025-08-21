@@ -1,11 +1,10 @@
-name: Sidebar
+name: My sidebar of apps
 
 template: iframe-sidebar
 
 outputdir: sidebar
 
 repos:
-  - url: https://github.com/jamesread/golure.git
   - url: https://github.com/homarr-labs/dashboard-icons.git
 
 datafiles:

@@ -21,6 +21,8 @@ import (
 type BuildStatus struct {
 	IsError bool
 	Message string
+	BuildUrlBase string
+	OutputSizeHumanReadable string
 }
 
 func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus {
@@ -91,8 +93,50 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 
 	buildStatus.Message = "Build completed successfully"
 	buildStatus.IsError = false
+	buildStatus.BuildUrlBase = getBuildUrlBase()
+	buildStatus.OutputSizeHumanReadable = getDirectorySizeHumanReadable(finalOutputDir)
 
 	return buildStatus
+}
+
+func getDirectorySizeHumanReadable(dir string) string {
+	// Get the size of the getDirectorySizeHumanReadable
+	var size int64 = 0
+
+	err := filepath.Walk(dir, func(_ string, info os.FileInfo, _ error) error {
+		if info.IsDir() {
+			return nil
+		}
+		size += info.Size()
+		return nil
+	})
+	if err != nil {
+		log.Errorf("Error calculating directory size: %v", err)
+		return "unknown"
+	}
+
+
+	return formatSize(size)
+}
+
+func formatSize(size int64) string {
+	if size < 1024 {
+		return fmt.Sprintf("%d B", size)
+	} else if size < 1024*1024 {
+		return fmt.Sprintf("%.2f KB", float64(size)/1024)
+	} else if size < 1024*1024*1024 {
+		return fmt.Sprintf("%.2f MB", float64(size)/(1024*1024))
+	} else {
+		return fmt.Sprintf("%.2f GB", float64(size)/(1024*1024*1024))
+	}
+}
+
+func getBuildUrlBase() string {
+	if os.Getenv("STENCILBOX_BUILD_URL_BASE") != "" {
+		return os.Getenv("STENCILBOX_BUILD_URL_BASE")
+	}
+
+	return ""
 }
 
 func cloneRepos(repos []buildconfigs.GitRepo, outputDir string) {

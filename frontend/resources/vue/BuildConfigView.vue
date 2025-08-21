@@ -1,21 +1,31 @@
 <template id = "build-config-template">
-	<section class = "build-config">
-		<SectionHeader :title = "'Build Config: ' + config?.name" subtitle = "This shows a build configuration.">
-			<template #actions>
+	<Section
+		:title = "'Build Config: ' + config?.name"
+		subtitle = "This shows a build configuration."
+		>
+
+			<template #toolbar>
 				<a href = "https://jamesread.github.io/StencilBox/buildconfigs/index.html" class = "button">
 					Open docs
 					<HugeiconsIcon :icon = "LinkSquare01Icon" size = "24" />
 				</a>
 			</template>
-		</SectionHeader>
 
 		<dl v-if="config">
-			<dt>File Path</dt>
+			<dt>File name</dt>
 			<dd>{{ config.filename }}</dd>
+
+			<dt>File path</dt>
+			<dd>
+				{{ config.path }}
+				{{ config.inContainer ? '(container volume)' : '(on host)' }}
+			</dd>
 
 			<dt>Template</dt>
 			<dd>
-				<a :href="'/template/' + config.template">{{ config.template }}</a>
+				<router-link :to ="'/template/' +config.template" class = "link">
+					{{ config.template }}
+				</router-link>
 			</dd>
 
 			<dt>Output directory</dt>
@@ -38,7 +48,7 @@
 				Datafiles
 			</dt>
 			<dd>
-				<ul v-if = "config.datafiles.length > 0">
+				<ul v-if = "Object.keys(config.datafiles).length > 0">
 					<li v-for="datafile in config.datafiles" :key="datafile">
 						<span>{{ datafile }}</span>
 					</li>
@@ -50,10 +60,9 @@
 		<p>
 			This is defined in your build config yaml.
 		</p>
-	</section>
+	</Section>
 
-	<section>
-		<h2>Build</h2>
+	<Section title = "Build">
 		<p v-if="config">Click the button below to build the project.</p>
 
 		<button v-if="config" class = "start-build-button" type = "submit" @click = "startBuild(config)">
@@ -65,23 +74,43 @@
 			<dt>Build status</dt>
 			<dd :class = "buildClass">{{ buildStatus }}</dd>
 
+			<dt>Output directory</dt>
+			<dd>
+				<span v-if = "outputDirectory">
+					{{ outputDirectory }}
+					<span v-if = "inContainer">(container volume)</span>
+					<span v-else>(on host)</span>
+				</span>
+				<span v-else class = "subtle">Not available</span>
+			</dd>
+
+			<dt>Output size</dt>
+			<dd>
+				<span v-if = "outputSizeHumanReadable">
+					{{ outputSizeHumanReadable }}
+				</span>
+				<span v-else class = "subtle">Not available</span>
+			</dd>
+
 			<dt>Build URL</dt>
 			<dd>
 				<span v-if = "buildUrl">
 					<a :href = "buildUrl">{{ buildUrl }}</a>
+					(<a href = "https://jamesread.github.io/StencilBox/config/build_urls.html">Docs</a>)
 				</span>
-				<span v-else>
+				<span v-else class = "subtle">
 					Not available
 				</span>
 			</dd>
 		</dl>
-	</section>
+	</Section>
 </template>
 
 <script setup>
 	import { ref, onMounted } from 'vue';
 	import { HugeiconsIcon } from '@hugeicons/vue';
 	import { LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
+	import Section from 'picocrank/vue/components/Section.vue';
 
 	const props = defineProps({
 		name: {
@@ -111,6 +140,9 @@
 	const buildStatus = ref('unknown');
 	const buildClass = ref('unknown');
 	const buildUrl = ref(null);
+	const outputSizeHumanReadable = ref(null);
+	const outputDirectory = ref(null);
+	const inContainer = ref(false);
 
 	async function startBuild() {
 	  buildStatus.value = 'Building...';
@@ -135,6 +167,9 @@
 		}
 
 		buildStatus.value = response.status;
+		outputSizeHumanReadable.value = response.outputSizeHumanReadable;
+		outputDirectory.value = response.baseOutputDir;
+		inContainer.value = response.inContainer;
 
 		if (response.isError) {
 			buildClass.value = 'critical';
@@ -146,8 +181,13 @@
 	}
 
 	function updateBuildUrl(response) {
-	  let l = window.location;
+        if (response.buildUrlBase == "") {
+			let l = window.location;
 
-      buildUrl.value = l.origin + '/' + response.relativePath;
+			buildUrl.value = l.origin + '/' + response.relativePath;
+		} else {
+			buildUrl.value = response.buildUrlBase + '/' + response.relativePath;
+		}
+
 	}
 </script>

@@ -31,6 +31,7 @@ type Template struct {
 	Source           string
 	Status           string
 	DocumentationURL string
+	Description      string
 }
 
 func NewServer() *ClientApi {
@@ -68,6 +69,7 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 
 type TemplateMetadata struct {
 	DocumentationUrl string `yaml:"documentation_url"`
+	Description      string `yaml:"description"`
 }
 
 func readTemplates() map[string]*Template {
@@ -106,6 +108,7 @@ func readTemplates() map[string]*Template {
 			Source:           "built-in",
 			Status:           "OK",
 			DocumentationURL: metadataMap.DocumentationUrl,
+			Description:      metadataMap.Description,
 		}
 	}
 
@@ -125,6 +128,10 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 
 		response.Status = buildstatus.Message
 		response.IsError = buildstatus.IsError
+		response.BuildUrlBase = buildstatus.BuildUrlBase
+		response.OutputSizeHumanReadable = buildstatus.OutputSizeHumanReadable
+		response.BaseOutputDir = c.BaseOutputDir
+		response.InContainer = inContainer()
 	}
 
 	response.RelativePath = buildConfig.OutputDir
@@ -179,17 +186,21 @@ func (c *ClientApi) getBuildConfigsForTemplate(templateName string) []string {
 	return buildConfigs
 }
 
-func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetStatusRequest]) (*connect.Response[pb.GetStatusResponse], error) {
+func inContainer() bool {
 	containerFileExists := false
 
 	if _, err := os.Stat("/.dockerenv"); err == nil {
 		containerFileExists = true
 	}
 
+	return containerFileExists
+}
+
+func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetStatusRequest]) (*connect.Response[pb.GetStatusResponse], error) {
 	dir, _ := buildconfigs.GetConfigDir()
 
 	response := &pb.GetStatusResponse{
-		InContainer:     containerFileExists,
+		InContainer:     inContainer(),
 		OutputPath:      c.BaseOutputDir,
 		TemplatesPath:   filepath.Join(generator.FindTemplateDir(), "templates"),
 		BuildConfigsDir: dir,
@@ -212,6 +223,7 @@ func (c *ClientApi) GetTemplate(ctx context.Context, req *connect.Request[pb.Get
 			Status:           template.Status,
 			DocumentationUrl: template.DocumentationURL,
 			BuildConfigs:     c.getBuildConfigsForTemplate(template.Name),
+			Description:      template.Description,
 		}
 
 		return connect.NewResponse(response), nil
@@ -231,6 +243,7 @@ func (c *ClientApi) GetBuildConfig(ctx context.Context, req *connect.Request[pb.
 			Template:     buildConfig.Template,
 			Filename:     buildConfig.Filename,
 			Path:         buildConfig.Path,
+			InContainer:  inContainer(),
 			ErrorMessage: buildConfig.ErrorMessage,
 			OutputDir:    buildConfig.OutputDir,
 			Datafiles:    buildConfig.Datafiles,

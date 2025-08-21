@@ -1,7 +1,5 @@
 <template>
-	<section>
-		<SectionHeader title = "System Details" subtitle = "This is a list of the system details." />
-
+	<Section title = "System Details">
 		<dl>
 			<dt>Build configs directory</dt>
 			<dd>{{status?.buildConfigsDir}}
@@ -18,11 +16,12 @@
 			<dt>In container</dt>
 			<dd>{{status?.inContainer}}</dd>
 		</dl>
-	</section>
+	</Section>
 </template>
 
 <script setup>
 	import { ref, onMounted } from 'vue';
+	import Section from 'picocrank/vue/components/Section.vue';
 
 	const status = ref(null)
 

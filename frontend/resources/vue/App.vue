@@ -9,9 +9,7 @@
 	</header>
 
 	<div id="layout">
-		<aside class="shown stuck" id = "sidebar">
-			<SectionNavigation ref="sectionNavigation" />
-		</aside>
+		<Sidebar ref="sidebar" />
 
 		<div id = "content">
 			<main>
@@ -37,14 +35,17 @@ import {
 } from '@hugeicons/core-free-icons';
 
 import Breadcrumbs from 'picocrank/vue/components/Breadcrumbs.vue';
+import Sidebar from 'picocrank/vue/components/Sidebar.vue';
 
-const sectionNavigation = ref(null);
+const sidebar = ref(null);
 
 onMounted(() => {
-	sectionNavigation.value.addLink('Welcome', '/', Notification03Icon);
-	sectionNavigation.value.addLink('Build Configs', '/build-configs', Configuration01Icon);
-	sectionNavigation.value.addLink('Templates', '/templates', CodeSquareIcon);
-	sectionNavigation.value.addLink('System Details', '/system', Settings01Icon);
+	sidebar.value.addNavigationLink({ title: 'Welcome', id: 'welcome', path: '/', icon: Notification03Icon });
+	sidebar.value.addNavigationLink({ title: 'Build Configs', id: 'buildConfigs', path: '/build-configs', icon: Configuration01Icon });
+	sidebar.value.addNavigationLink({ title: 'Templates', id: 'templates', path: '/templates', icon: CodeSquareIcon });
+	sidebar.value.addNavigationLink({ title: 'System Details', id: 'system', path: '/system', icon: Settings01Icon });
+	sidebar.value.toggle();
+	sidebar.value.stick();
 });
 
 </script>

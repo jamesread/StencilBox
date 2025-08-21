@@ -3,3 +3,6 @@
 links.yaml
 data/*
 /sb-output
+build/
+dist/
+tmp/

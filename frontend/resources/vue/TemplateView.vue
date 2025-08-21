@@ -1,10 +1,11 @@
 <template>
-    <section>
-        <SectionHeader :title = "'View Template: ' + template?.name" />
-
+    <Section :title = "'View Template: ' + template?.name">
         <dl>
             <dt>Name</dt>
             <dd>{{ template?.name }}</dd>
+
+			<dt>Description</dt>
+			<dd>{{ template?.description }}</dd>
 
             <dt>Source</dt>
             <dd>{{ template?.source }}</dd>
@@ -15,7 +16,8 @@
             </dd>
         </dl>
 
-        <h2>Build Configs</h2>
+	</Section>
+	<Section title="Associated Build Configs">
         <p>The following build configs are associated with this template:</p>
 
         <p v-if="template?.buildConfigs && template.buildConfigs.length === 0">
@@ -23,10 +25,12 @@
         </p>
         <ul v-else>
             <li v-for="buildConfig in template?.buildConfigs" :key="buildConfig">
-                <a :href="`/build-config/${buildConfig}`">{{ buildConfig }}</a>
+				<router-link :to="{ name: 'buildConfig', params: { name: buildConfig } }">
+					{{ buildConfig }}
+				</router-link>
             </li>
         </ul>
-    </section>
+    </Section>
 </template>
 
 <style scoped>
@@ -34,6 +38,7 @@
 
 <script setup>
 	import { ref, onMounted } from 'vue';
+	import Section from 'picocrank/vue/components/Section.vue';
 
     const props = defineProps({
         name: {

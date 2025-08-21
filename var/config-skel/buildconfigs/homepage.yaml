@@ -1,8 +1,10 @@
-name: homepage
+name: My links homepage
 
 outputdir: homepage
 
 template: links-homepage
+
+
 
 datafiles:
   links: data/sites.yml
