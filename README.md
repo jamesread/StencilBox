@@ -13,7 +13,7 @@ If you've ever used static site generators like Hugo, this is very similar. The 
 
 * [Use Cases](#use-cases)
 * [Screenshots](#screenshots)
-* [Installation Guide & Documentation](#installation-guide--documentation) 
+* [Installation Guide & Documentation](#installation-guide--documentation)
 * [No-Nonsense Software Principles](#no-nonsense-software-principles)
 * [AI usage declaration](#ai-usage-declaration)
 
@@ -38,7 +38,6 @@ The StencilBox docs can all be found here; [Installation Guide & Documentation](
 
 <p align = "center">
 <img src = "var/screenshots/mainpage-laptop_framed.png" />
-<img src = "var/screenshots/mainpage-phone_framed.png" />
 </p>
 
 ## No-Nonsense Software Principles

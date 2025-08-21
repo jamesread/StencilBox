@@ -1,3 +1,8 @@
 = StencilBox
 
 **Generate super speedy simple static sites, from sleek templates.**
+
+If you've ever used static site generators like Hugo, this is very similar. The emphesis of this is for the self hosted community. Think homepages of links, sidebars, etc.
+
+* xref:install/docker-compose.adoc[Installation Guide].
+* xref:getting-started.adoc[Getting Started Guide].

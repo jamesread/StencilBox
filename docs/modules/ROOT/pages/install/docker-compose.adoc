@@ -1,4 +1,6 @@
-= Docker Compose
+= Installation via Docker Compose
+
+Using docker-compose is the recommended way to install StencilBox. This will ensure that you have a consistent and easy way to manage your StencilBox instance. Below is the `docker-compose.yml` file you can use to set up StencilBox.
 
 .docker-compose.yml
 [source,yaml]
@@ -19,3 +21,28 @@ volumes:
     name: stencilbox-config
     external: false
 ----
+
+You should be able to save this `docker-compose.yml` file in a directory of your choice. Then you can start StencilBox with the following command:
+
+[source,bash]
+----
+docker-compose up -d
+----
+
+This command will start the StencilBox service in detached mode. You can then access StencilBox by navigating to `http://localhost:8080` in your web browser.
+
+== Next steps
+
+If you see a web interface when you navigate to `http://localhost:8080`, then StencilBox is running successfully. You can now proceed to the xref:getting-started.adoc[Getting Started Guide] to learn how to create your first static site with StencilBox.
+
+== Troubleshooting
+
+If you encounter any issues while running StencilBox, here are a few things to check:
+
+* Ensure that Docker and Docker Compose are installed and running on your machine.
+* Check the logs of the StencilBox container for any errors. You can do this with the command:
+[source,bash]
+----
+docker-compose logs stencilbox
+----
+* Get help from the community by visiting the xref:support.adoc[Support page].
