@@ -9,8 +9,6 @@ Generate super speedy simple static sites, from sleek templates.
 
 </div>
 
-If you've ever used static site generators like Hugo, this is very similar. The emphesis of this is for the self hosted community. Think sidebars, static links pages, etc.
-
 * [Use Cases](#use-cases)
 * [Screenshots](#screenshots)
 * [Installation Guide & Documentation](#installation-guide--documentation)
@@ -25,7 +23,7 @@ If you've ever used static site generators like Hugo, this is very similar. The 
 * **As a sysadmin**, I want to give my users who can understand a YAML file a simple way to create pages without needing to know about Git, worry about tooling, or hosting.
 * **As a developer**, I want data in YAML format to be rendered to a nice looking webpage (eg: XSLT).
 
-### FAQ 
+### FAQ
 <details>
 <summary>How does it compare to heimdall, homepage, and other similar tools?</summary>
 
