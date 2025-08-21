@@ -11,6 +11,12 @@ Generate super speedy simple static sites, from sleek templates.
 
 If you've ever used static site generators like Hugo, this is very similar. The emphesis of this is for the self hosted community. Think sidebars, static links pages, etc.
 
+* [Use Cases](#use-cases)
+* [Screenshots](#screenshots)
+* [Installation Guide & Documentation](#installation-guide--documentation) 
+* [No-Nonsense Software Principles](#no-nonsense-software-principles)
+* [AI usage declaration](#ai-usage-declaration)
+
 ## Use cases
 
 ### What can I use StencilBox for?
@@ -23,6 +29,10 @@ If you've ever used static site generators like Hugo, this is very similar. The 
 ### What should I not use StencilBox for?
 
 * StencilBox is very similar to Hugo, Jekyll, and other static site generators. However those are tailored for public websites, blogs, and other content that is meant to be shared with the world. StencilBox is meant for internal use, and is not a replacement for those tools.
+
+## Installation Guide & Documentation
+
+The StencilBox docs can all be found here; [Installation Guide & Documentation](https://jamesread.github.io/StencilBox/index.html)
 
 ## Screenshots
 
