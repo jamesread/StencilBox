@@ -1,0 +1,3 @@
+= Build URLs
+
+You can set `STENCILBOX_BUILD_URL_BASE` to specify the base URL for build URLs. This is useful if you are running Stencilbox behind a reverse proxy or in a different environment.

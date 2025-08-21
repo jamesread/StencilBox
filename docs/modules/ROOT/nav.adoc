@@ -4,7 +4,9 @@
 ** xref:install/docker-standalone.adoc[Docker (Standalone)]
 * xref:getting-started.adoc[Getting Started]
 * xref:buildconfigs/index.adoc[Build Configs]
+* xref:templates/index.adoc[Templates usage]
 * Templates (Built-in)
 ** xref:builtin-templates/links-homepage.adoc[Links Homepage]
 * xref:config/index.adoc[Configuration]
+* xref:config/build_urls.adoc[Build URLs]
 * xref:support.adoc[Support]

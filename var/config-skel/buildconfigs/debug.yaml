@@ -1,8 +1,0 @@
-name: debug
-
-outputdir: debug
-
-template: debug
-
-datafiles:
-  links: data/sites.yml

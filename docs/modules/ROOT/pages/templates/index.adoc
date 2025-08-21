@@ -1,0 +1,3 @@
+= Templates
+
+Templates are combined with buildconfigs to create new pages.
