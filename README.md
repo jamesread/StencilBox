@@ -41,7 +41,7 @@ StencilBox follows these principles:
 * **Invisible**: No usage tracking, no user tracking, no ads, and no telemetry.
 * **Internal**: No internet connection required for any functionality.
 
-# AI usage declaration
+## AI usage declaration
 
 This is a brief overview of the AI usage for the README. The full AI policy can be found in [AI.md](AI.md).
 
