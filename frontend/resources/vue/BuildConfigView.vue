@@ -70,38 +70,37 @@
 			<HugeiconsIcon :icon = "Rocket01Icon" size = "24" />
 		</button>
 
-		<dl>
-			<dt>Build status</dt>
-			<dd :class = "buildClass">{{ buildStatus }}</dd>
+		<dl v-if = "lastBuildUpdate">
+			<dt>Current build status</dt>
+			<dd :class = "lastBuildUpdate.cssClass">{{ lastBuildUpdate.status }}</dd>
 
-			<dt>Output directory</dt>
-			<dd>
-				<span v-if = "outputDirectory">
-					{{ outputDirectory }}
-					<span v-if = "inContainer">(container volume)</span>
-					<span v-else>(on host)</span>
-				</span>
-				<span v-else class = "subtle">Not available</span>
-			</dd>
+			<template v-if = "lastBuildUpdate.isComplete">
+				<dt>Output directory</dt>
+				<dd>
+					<span v-if = "lastBuildUpdate.baseOutputDir">
+						{{ lastBuildUpdate.baseOutputDir }}
+						<span v-if = "lastBuildUpdate.inContainer">(container volume)</span>
+						<span v-else>(on host)</span>
+					</span>
+					<span v-else class = "subtle">Not available</span>
+				</dd>
 
-			<dt>Output size</dt>
-			<dd>
-				<span v-if = "outputSizeHumanReadable">
-					{{ outputSizeHumanReadable }}
-				</span>
-				<span v-else class = "subtle">Not available</span>
-			</dd>
+				<dt>Output size</dt>
+				<dd>
+					{{ lastBuildUpdate.outputSizeHumanReadable }}
+				</dd>
 
-			<dt>Build URL</dt>
-			<dd>
-				<span v-if = "buildUrl">
-					<a :href = "buildUrl">{{ buildUrl }}</a>
-					(<a href = "https://jamesread.github.io/StencilBox/config/build_urls.html">Docs</a>)
-				</span>
-				<span v-else class = "subtle">
-					Not available
-				</span>
-			</dd>
+				<dt>Build URL</dt>
+				<dd>
+					<span v-if = "lastBuildUpdate.buildUrl">
+						<a :href = "lastBuildUpdate.buildUrl">{{ lastBuildUpdate.buildUrl }}</a>
+						(<a href = "https://jamesread.github.io/StencilBox/config/build_urls.html">Docs</a>)
+					</span>
+					<span v-else class = "subtle">
+						Not available
+					</span>
+				</dd>
+			</template>
 		</dl>
 	</Section>
 </template>
@@ -133,60 +132,33 @@
 	}
 
 	onMounted(() => {
-		console.log('Build config mounted:', config.value);
 		loadConfig();
 	});
 
-	const buildStatus = ref('unknown');
-	const buildClass = ref('unknown');
-	const buildUrl = ref(null);
-	const outputSizeHumanReadable = ref(null);
-	const outputDirectory = ref(null);
-	const inContainer = ref(false);
+    const lastBuildUpdate = ref(null);
 
 	async function startBuild() {
-	  buildStatus.value = 'Building...';
-	  buildClass.value = 'good';
-
-	  console.log('Starting build for config:', config.value.name);
-
-	  const result = await window.client.startBuild({
-		'configName': config.value.name,
-	  })
-
-      onBuildStarted(result)
+	  for await (const update of window.client.startBuild({ 'configName': config.value.name })) {
+	    onBuildUpdate(update);
+	  }
 	}
 
-	function onBuildStarted(response) {
-		console.log('Build started response:', response);
+	function onBuildUpdate(update) {
+	    update.cssClass = update.isError ? 'critical' : 'good';
 
-		if (!response.found) {
-		    buildStatus.value = 'Build config not found. Please check the configuration.';
-			buildClass.value = 'critical';
-			return;
-		}
+	    lastBuildUpdate.value = update;
 
-		buildStatus.value = response.status;
-		outputSizeHumanReadable.value = response.outputSizeHumanReadable;
-		outputDirectory.value = response.baseOutputDir;
-		inContainer.value = response.inContainer;
-
-		if (response.isError) {
-			buildClass.value = 'critical';
-		} else {
-			buildClass.value = 'good';
-		}
-
-		updateBuildUrl(response);
+		console.log('Build update:', update);
+		updateBuildUrl();
 	}
 
-	function updateBuildUrl(response) {
-        if (response.buildUrlBase == "") {
+	function updateBuildUrl() {
+        if (lastBuildUpdate.value.buildUrlBase == "") {
 			let l = window.location;
 
-			buildUrl.value = l.origin + '/' + response.relativePath;
+			lastBuildUpdate.value.buildUrl = l.origin + '/' + lastBuildUpdate.value.relativePath;
 		} else {
-			buildUrl.value = response.buildUrlBase + '/' + response.relativePath;
+			lastBuildUpdate.value.buildUrl = lastBuildUpdate.value.buildUrlBase + '/' + lastBuildUpdate.value.relativePath;
 		}
 
 	}

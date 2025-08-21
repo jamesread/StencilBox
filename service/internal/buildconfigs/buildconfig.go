@@ -29,6 +29,7 @@ type BuildConfig struct {
 
 type GitRepo struct {
 	URL string
+	Timeout float64
 }
 
 func GetConfigDir() (string, error) {

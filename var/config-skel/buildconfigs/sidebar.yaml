@@ -6,6 +6,7 @@ outputdir: sidebar
 
 repos:
   - url: https://github.com/homarr-labs/dashboard-icons.git
+    timeout: 300 # approx 1.3gb, can take 5 minutes (300 seconds) to download
 
 datafiles:
   links: data/sidebar-links.yaml

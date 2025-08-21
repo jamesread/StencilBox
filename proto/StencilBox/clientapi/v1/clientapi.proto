@@ -36,16 +36,17 @@ message BuildRequest {
   string config_name = 1;
 }
 
-message BuildResponse {
+message BuildUpdateResponse {
   string config_name = 1;
   string status = 2;
   bool found = 3;
   string relative_path = 4;
-  bool isError = 5;
+  bool is_error = 5;
   string build_url_base = 6;
   string output_size_human_readable = 7;
   bool in_container = 8;
   string base_output_dir = 9;
+  bool is_complete = 10;
 }
 
 message GetTemplatesRequest {
@@ -95,7 +96,7 @@ message GetTemplateResponse {
 service StencilBoxApiService {
   rpc Init(InitRequest) returns (InitResponse);
 
-  rpc StartBuild(BuildRequest) returns (BuildResponse);
+  rpc StartBuild(BuildRequest) returns (stream BuildUpdateResponse);
 
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse);
 

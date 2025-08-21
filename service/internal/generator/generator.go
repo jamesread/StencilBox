@@ -4,9 +4,11 @@ import (
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
 	"github.com/jamesread/golure/pkg/dirs"
 	"github.com/jamesread/golure/pkg/git"
+	"github.com/jamesread/golure/pkg/easyexec"
 	"errors"
 
 	"fmt"
+	"math"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -25,12 +27,11 @@ type BuildStatus struct {
 	OutputSizeHumanReadable string
 }
 
-func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus {
-	buildStatus := &BuildStatus{
-		IsError: false,
-	}
+func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
+	updateChannel <- fmt.Sprintf("Starting build for project %s", cfg.Name)
 
 	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
+	temporaryOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir + "_tmp")
 
 	log.WithFields(log.Fields{
 		"name":	   cfg.Name,
@@ -39,6 +40,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 	}).Infof("Starting build for project")
 
 	os.MkdirAll(finalOutputDir, 0755)
+	os.MkdirAll(temporaryOutputDir, 0755)
 
 	indexPath := filepath.Join(FindTemplateDir(), cfg.Template, "index.html")
 
@@ -47,8 +49,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 	if err != nil {
 		buildStatus.IsError = true
 		buildStatus.Message = "Failed to parse template: " + err.Error()
-
-		return buildStatus
+        return
 	}
 
 	datafiles := make(map[string]any)
@@ -61,7 +62,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 		if err != nil {
 			buildStatus.IsError = true
 			buildStatus.Message = "Error reading datafile " + name + ": " + err.Error()
-			return buildStatus
+			return
 		}
 
 		if dat == nil {
@@ -73,11 +74,11 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 
 	log.Infof("Datafiles loaded: %+v", datafiles)
 
-	outfile, err := os.Create(finalOutputDir + "/index.html")
+	outfile, err := os.Create(temporaryOutputDir + "/index.html")
 
 	if err != nil {
 		log.Errorf("Error creating output file: %v", err)
-		return buildStatus
+		return
 	}
 
 	err = tmpl.Execute(outfile, datafiles)
@@ -85,22 +86,70 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig) *BuildStatus 
 	if err != nil {
 		buildStatus.IsError = true
 		buildStatus.Message = "Error executing template: " + err.Error()
-		return buildStatus
+		return
 	}
 
-	copyLayers(finalOutputDir)
-	cloneRepos(cfg.Repos, finalOutputDir)
+	repoStorageDir := getRepoStorageDir(cfg)
+
+	copyLayers(temporaryOutputDir)
+	cloneRepos(cfg.Repos, repoStorageDir, updateChannel)
+
+	lnRepos(temporaryOutputDir, repoStorageDir)
+
+	updateChannel <- "Running Vite build..."
+
+	runVite(temporaryOutputDir, finalOutputDir, cfg.OutputDir)
+
+	updateChannel <- "Build completed!"
 
 	buildStatus.Message = "Build completed successfully"
 	buildStatus.IsError = false
 	buildStatus.BuildUrlBase = getBuildUrlBase()
 	buildStatus.OutputSizeHumanReadable = getDirectorySizeHumanReadable(finalOutputDir)
 
-	return buildStatus
+    close(updateChannel)
+
+	return
+}
+
+func getRepoStorageDir(cfg *buildconfigs.BuildConfig) string {
+	repoStorageDir := filepath.Join(filepath.Dir(cfg.Path), "repos")
+
+	// Check if the directory exists
+	if _, err := os.Stat(repoStorageDir); os.IsNotExist(err) {
+		os.MkdirAll(repoStorageDir, 0755)
+	}
+
+	log.Infof("repoPath:" + repoStorageDir)
+
+	return repoStorageDir
+}
+
+func lnRepos(finalOutputDir string, repoStorageDir string) {
+	repoLinkPath := filepath.Join(finalOutputDir, "repos")
+
+	err := os.Symlink(repoStorageDir, repoLinkPath)
+
+	if err != nil {
+		log.Errorf("Error creating symlink to repo storage directory: %v", err)
+		return
+	}
+}
+
+func runVite(temporaryOutputDir string, finalOutputDir string, base string) {
+	log.Info("Running Vite build...")
+	req := &easyexec.ExecRequest{
+		Executable: "vite",
+		Args: []string{"build", "--outDir", finalOutputDir, "--base", "/" + base + "/"},
+		WorkingDirectory: temporaryOutputDir,
+	}
+
+	res := easyexec.ExecWithRequest(req)
+
+	log.Infof("Vite build completed with exit code %d", res.ExitCode)
 }
 
 func getDirectorySizeHumanReadable(dir string) string {
-	// Get the size of the getDirectorySizeHumanReadable
 	var size int64 = 0
 
 	err := filepath.Walk(dir, func(_ string, info os.FileInfo, _ error) error {
@@ -114,7 +163,6 @@ func getDirectorySizeHumanReadable(dir string) string {
 		log.Errorf("Error calculating directory size: %v", err)
 		return "unknown"
 	}
-
 
 	return formatSize(size)
 }
@@ -139,15 +187,32 @@ func getBuildUrlBase() string {
 	return ""
 }
 
-func cloneRepos(repos []buildconfigs.GitRepo, outputDir string) {
+func cloneRepos(repos []buildconfigs.GitRepo, outputDir string, updateChannel chan string) {
 	for _, repo := range repos {
-		res := git.CloneOrPull(repo.URL, outputDir)
+		updateChannel <- fmt.Sprintf("Cloning repo %s", repo.URL)
 
-		if res.WasCloned {
-			log.Infof("Cloned repo %s to %s", repo.URL, outputDir)
-		} else {
-			log.Infof("Pulled repo %s in %s", repo.URL, outputDir)
-		}
+        cloneRepo(repo, outputDir)
+	}
+}
+
+func cloneRepo(repo buildconfigs.GitRepo, outputDir string) {
+	repo.Timeout = math.Max(repo.Timeout, 60.0)
+
+	log.Infof("Cloning or pulling repo %s with timeout %f seconds", repo.URL, repo.Timeout)
+
+	req := &git.CloneOrPullRequest{
+		GitUrl: repo.URL,
+		LocalDir: outputDir,
+		Timeout: repo.Timeout,
+		Log: true,
+	}
+
+	res := git.CloneOrPull(req)
+
+	if res.WasCloned {
+		log.Infof("Cloned repo %s to %s", repo.URL, outputDir)
+	} else {
+		log.Infof("Pulled repo %s in %s", repo.URL, outputDir)
 	}
 }
 
@@ -166,12 +231,12 @@ func findLayersDir() string {
 	return dir
 }
 
-func copyLayers(finalOutputDir string) {
+func copyLayers(outputDir string) {
 	layersDir := findLayersDir()
 
 	layerBaseDir := filepath.Join(layersDir, "base")
 
-	copyFile(layerBaseDir, finalOutputDir, "style.css")
+	copyFile(layerBaseDir, outputDir, "style.css")
 }
 
 func FindTemplateDir() string {

@@ -115,29 +115,47 @@ func readTemplates() map[string]*Template {
 	return templates
 }
 
-func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.BuildRequest]) (*connect.Response[pb.BuildResponse], error) {
-	response := &pb.BuildResponse{
+func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.BuildRequest], srv *connect.ServerStream[pb.BuildUpdateResponse]) (error) {
+	response := &pb.BuildUpdateResponse{
 		ConfigName: req.Msg.ConfigName,
-		Status:     "Build started",
+		Status:     "Build starting",
 	}
 
 	buildConfig, found := c.buildConfigs[req.Msg.ConfigName]
 
-	if found {
-		buildstatus := generator.Generate(c.BaseOutputDir, buildConfig)
+	updateChan := make(chan string)
 
-		response.Status = buildstatus.Message
-		response.IsError = buildstatus.IsError
-		response.BuildUrlBase = buildstatus.BuildUrlBase
-		response.OutputSizeHumanReadable = buildstatus.OutputSizeHumanReadable
-		response.BaseOutputDir = c.BaseOutputDir
-		response.InContainer = inContainer()
+	if !found {
+		log.Errorf("Build config %s not found", req.Msg.ConfigName)
+		response.IsError = true
+		response.Status = "Build config not found"
+		srv.Send(response)
+		return connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.ConfigName))
 	}
 
+	buildStatus := &generator.BuildStatus{}
+	go generator.Generate(c.BaseOutputDir, buildConfig, buildStatus, updateChan)
+
+	for update := range updateChan {
+		log.Infof("Build update: %s", update)
+
+		response.Status = update
+		srv.Send(response)
+	}
+
+	log.Infof("Build completed for config %s", req.Msg.ConfigName)
+	response.IsError = buildStatus.IsError
+	response.BuildUrlBase = buildStatus.BuildUrlBase
+	response.OutputSizeHumanReadable = buildStatus.OutputSizeHumanReadable
+	response.BaseOutputDir = c.BaseOutputDir
+	response.InContainer = inContainer()
 	response.RelativePath = buildConfig.OutputDir
 	response.Found = found
+	response.IsComplete = true
+	response.Status = "Build completed"
+	srv.Send(response)
 
-	return connect.NewResponse(response), nil
+	return nil
 }
 
 func (c *ClientApi) GetBuildConfigs(ctx context.Context, req *connect.Request[pb.GetBuildConfigsRequest]) (*connect.Response[pb.GetBuildConfigsResponse], error) {

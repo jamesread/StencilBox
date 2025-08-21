@@ -152,9 +152,9 @@ export declare type BuildRequest = Message<"StencilBox.clientapi.v1.BuildRequest
 export declare const BuildRequestSchema: GenMessage<BuildRequest>;
 
 /**
- * @generated from message StencilBox.clientapi.v1.BuildResponse
+ * @generated from message StencilBox.clientapi.v1.BuildUpdateResponse
  */
-export declare type BuildResponse = Message<"StencilBox.clientapi.v1.BuildResponse"> & {
+export declare type BuildUpdateResponse = Message<"StencilBox.clientapi.v1.BuildUpdateResponse"> & {
   /**
    * @generated from field: string config_name = 1;
    */
@@ -176,7 +176,7 @@ export declare type BuildResponse = Message<"StencilBox.clientapi.v1.BuildRespon
   relativePath: string;
 
   /**
-   * @generated from field: bool isError = 5;
+   * @generated from field: bool is_error = 5;
    */
   isError: boolean;
 
@@ -199,13 +199,18 @@ export declare type BuildResponse = Message<"StencilBox.clientapi.v1.BuildRespon
    * @generated from field: string base_output_dir = 9;
    */
   baseOutputDir: string;
+
+  /**
+   * @generated from field: bool is_complete = 10;
+   */
+  isComplete: boolean;
 };
 
 /**
- * Describes the message StencilBox.clientapi.v1.BuildResponse.
- * Use `create(BuildResponseSchema)` to create a new message.
+ * Describes the message StencilBox.clientapi.v1.BuildUpdateResponse.
+ * Use `create(BuildUpdateResponseSchema)` to create a new message.
  */
-export declare const BuildResponseSchema: GenMessage<BuildResponse>;
+export declare const BuildUpdateResponseSchema: GenMessage<BuildUpdateResponse>;
 
 /**
  * @generated from message StencilBox.clientapi.v1.GetTemplatesRequest
@@ -391,9 +396,9 @@ export declare const StencilBoxApiService: GenService<{
    * @generated from rpc StencilBox.clientapi.v1.StencilBoxApiService.StartBuild
    */
   startBuild: {
-    methodKind: "unary";
+    methodKind: "server_streaming";
     input: typeof BuildRequestSchema;
-    output: typeof BuildResponseSchema;
+    output: typeof BuildUpdateResponseSchema;
   },
   /**
    * @generated from rpc StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates

@@ -9,6 +9,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "vite": "^6.3.5"
+    "vite": "^7.1.3"
   }
 }

@@ -2,7 +2,9 @@ FROM alpine
 
 LABEL org.opencontainers.image.source=https://github.com/jamesread/StencilBox
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git npm
+
+ENV PATH="/app/tools/node_modules/.bin:${PATH}"
 
 COPY var/config-skel/ /config/
 COPY var/tools/ /app/tools/
