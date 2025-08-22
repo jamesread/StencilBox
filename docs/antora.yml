@@ -1,7 +1,7 @@
 ---
 name: ROOT
 title: StencilBox
-version: ''
+version: 'main'
 start_page: index.adoc
 asciidoc:
   attributes:

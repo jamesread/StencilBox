@@ -2,7 +2,7 @@
 
 This template simply shows a page of links grouped by category. This might be useful for a homepage, or a page of links to your favorite sites.
 
-image::homepage-built.png[Built Page]
+image::homepage-built.png[Built Page, role="screenshot"]
 
 == Datafile structure
 

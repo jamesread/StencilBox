@@ -1,0 +1,50 @@
+= Service Status page
+
+The service status page template is useful for quickly displaying the status of a number of services. This fits the StencilBox philosophy very well - a YAML data file is used to define the services and their status, and the template generates a simple, clean status page that can be hosted anywhere.
+
+StencilBox does not contain any functionality to automatically check the status of services, or update the data file. That is left up to you.
+
+image::status-page.png[Status Page Built Page, role="screenshot"]
+
+== Datafile structure
+
+[source,yaml]
+.buildconfigs/data/services.yaml
+----
+title: Service Status
+
+services:
+  - name: Firewall
+    status: good
+
+  - name: Primary File Server
+    status: good
+
+  - name: Backup File Server
+    status: critical
+
+  - name: Web Server
+    status: warning
+
+  - name: Database Server
+    status: good
+
+lastUpdated: 2024-10-01T12:00:00Z
+----
+
+== Example Build Config
+
+[source,yaml]
+.buildconfigs/iframe-sidebar.yaml
+----
+name: Status page of Services
+
+outputdir: status
+
+template: status-page
+
+datafiles:
+  status: data/services.yaml
+----
+
+The data file contains a title for the page, a list of services with their status, and a timestamp for when the status was last updated. The status can be one of; "good", "warning", "critical" or "unknown".

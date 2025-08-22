@@ -46,8 +46,14 @@ However those are tailored for public websites, blogs, and they send to be run i
 ## Screenshots
 
 <p align = "center">
+The admin interface, showing the build configs.<br />
 <img src = "var/screenshots/mainpage-laptop_framed.png" />
+
+Template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/iframe-sidebar.html">iframe-sidebar</strong><br />
+<img src = "var/marketing/iframe-sidebar.png" />
 </p>
+
+
 
 ## Installation Guide & Documentation
 

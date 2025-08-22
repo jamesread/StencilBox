@@ -1,1 +1,53 @@
 = iframe Sidebar
+
+The iframe Sidebar template creates a simple sidebar with an iframe, to display multiple websites. The sidebar keeps the iframes loaded, so you can quickly switch between them.
+
+This is very useful for when you have a workflow that requires you to open the same set of websites repeatedly and you want to be able to quickly switch between them.
+
+There is also a simple "close" button to hide the sidebar when you don't need it anymore.
+
+image::iframe-sidebar.png[iframe Sidebar Built Page, role="screenshot"]
+
+== Datafile structure
+
+[source,yaml]
+.buildconfigs/data/sites.yaml
+----
+links:
+  - url: https://github.com
+	title: GitHub
+	icon: repos/dashboard-icons/png/github.png
+
+  - url: https://gitlab.com
+	title: GitLab
+	icon: repos/dashboard-icons/png/gitlab.png
+
+  - url: https://grafana.com
+	title: Grafana
+	icon: repos/dashboard-icons/png/grafana.png
+
+  - url: https://prometheus.io
+	title: Prometheus
+	icon: repos/dashboard-icons/png/prometheus.png
+----
+
+You can see that the data file contains icons from a "dashboard-icons" repository. StencilBox can be setup to clone repositories at build time, and only include the files from that repository that you need. To do this you need to add a "repos" section to your build config. Here is an example build config that uses this template and data file.
+
+[source,yaml]
+.buildconfigs/iframe-sidebar.yaml
+----
+name: My sidebar of apps
+
+template: iframe-sidebar
+
+outputdir: sidebar
+
+repos:
+  - url: https://github.com/homarr-labs/dashboard-icons.git
+    timeout: 300 # approx 1.3gb, can take 5 minutes (300 seconds) to download
+
+datafiles:
+  links: data/sidebar-links.yaml
+----
+
+The **dashboard-icons** repository contains a large number of icons for various web applications, but it's almost 1.3Gb in size! Luckily, during build time, the "Vite" build tool that StencilBox uses will only include the files that are actually used in the final build, so the final output will be much, much smaller.

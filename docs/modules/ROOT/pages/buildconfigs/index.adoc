@@ -1,4 +1,4 @@
-= Build configs
+= Build Configs
 
 A Build Config is a YAML file that tells StencilBox how to build a set of pages. Build Configs rely on a template to provide the basic structure of the page, and will often pull in data from data files.
 
