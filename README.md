@@ -45,14 +45,19 @@ However those are tailored for public websites, blogs, and they send to be run i
 
 ## Screenshots
 
-<p align = "center">
-The admin interface, showing the build configs.<br />
+<p align = "center" style = "text-align: center;">
+The admin interface, showing the build configs:<br />
 <img src = "var/screenshots/mainpage-laptop_framed.png" />
 
-Template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/iframe-sidebar.html">iframe-sidebar</strong><br />
+A sidebar of links, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/iframe-sidebar.html">iframe-sidebar</strong></a><br />
 <img src = "var/marketing/iframe-sidebar.png" />
-</p>
 
+A homepage of links, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/links-homepage.html">links-homepage</strong></a><br />
+<img src = "var/marketing/homepage-built.png" />
+
+Build Config: status page, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/status-dashboard.html">status-page</strong></a><br />
+<img src = "var/marketing/status-page.png" />
+</p>
 
 
 ## Installation Guide & Documentation
