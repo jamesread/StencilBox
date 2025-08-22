@@ -55,7 +55,7 @@ The admin interface, showing the build configs:<br />
 <strong>Example 2:</strong> A homepage of links, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/links-homepage.html">links-homepage</strong></a><br />
 <img src = "var/marketing/homepage-built.png" />
 
-<strong>Example 3:</strong> status page, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/status-dashboard.html">status-page</strong></a><br />
+<strong>Example 3:</strong> status page, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/status-page.html">status-page</strong></a><br />
 <img src = "var/marketing/status-page.png" />
 </p>
 
