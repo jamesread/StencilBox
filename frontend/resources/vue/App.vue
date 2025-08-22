@@ -1,6 +1,6 @@
 <template>
 	<Header
-		logoUrl="/resources/images/logo.png"
+		:logoUrl="logo"
 		title="StencilBox"
 		@toggleSidebar="sidebar.toggle()"
 		/>
@@ -30,6 +30,8 @@ import {
 	Settings01Icon,
 	Configuration01Icon
 } from '@hugeicons/core-free-icons';
+
+import logo from '../images/logo.png';
 
 import Breadcrumbs from 'picocrank/vue/components/Breadcrumbs.vue';
 import Sidebar from 'picocrank/vue/components/Sidebar.vue';

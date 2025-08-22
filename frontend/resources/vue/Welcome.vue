@@ -1,7 +1,15 @@
 <template>
-	<section>
-		<SectionHeader title = "Welcome to StencilBox!" subtitle = "Use the sidebar to navigate to the different sections of the app." />
-	</section>
+	<Section title = "Welcome">
+		<p><strong>Generate super speedy simple static sites, from sleek templates.</strong></p>
+
+		<p>Here's a quick list of suggestions for things you can build with StencilBox:</p>
+		<ul>
+			<li>Build a "homepage", "service catalog" or "landing page" for links that you can easily update from YAML (and loads super duper quickly!)</li>
+			<li>Build a quick "site switching sidebar" for your team, so they can easily find the right site.</li>
+			<li>Build automated reports from data files, like a status page.</li>
+			<li>Build pretty documentation out of YAML data files, like a FAQ, or make a config file easy to view.</li>
+		</ul>
+	</Section>
 
 	<section>
 		<h2>
@@ -21,4 +29,6 @@
 <script setup>
 import { HugeiconsIcon } from '@hugeicons/vue';
 import { File01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
+
+import Section from 'picocrank/vue/components/Section.vue';
 </script>

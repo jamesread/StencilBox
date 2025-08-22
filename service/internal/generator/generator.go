@@ -30,6 +30,8 @@ type BuildStatus struct {
 func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
 	updateChannel <- fmt.Sprintf("Starting build for project %s", cfg.Name)
 
+    defer close(updateChannel)
+
 	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
 	temporaryOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir + "_tmp")
 
@@ -47,12 +49,14 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 	tmpl, err := template.ParseFiles(indexPath)
 
 	if err != nil {
+		updateChannel <- "Failed to parse template: " + err.Error()
+
 		buildStatus.IsError = true
 		buildStatus.Message = "Failed to parse template: " + err.Error()
         return
 	}
 
-	datafiles := make(map[string]any)
+	templateData := make(map[string]any)
 
 	for name, path := range cfg.Datafiles {
 		log.Infof("Adding datafile %v with path %v", name, path)
@@ -69,10 +73,10 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 			continue
 		}
 
-		datafiles[name] = dat
+		templateData[name] = dat
 	}
 
-	log.Infof("Datafiles loaded: %+v", datafiles)
+	log.Infof("Datafiles loaded: %+v", templateData)
 
 	outfile, err := os.Create(temporaryOutputDir + "/index.html")
 
@@ -81,7 +85,13 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 		return
 	}
 
-	err = tmpl.Execute(outfile, datafiles)
+	repoStorageDir := getRepoStorageDir(cfg)
+	cloneRepos(cfg.Repos, repoStorageDir, updateChannel)
+
+	templateData["hooks"] = buildRepoHooks(cfg, updateChannel)
+	templateData["buildconfig"] = cfg
+
+	err = tmpl.Execute(outfile, templateData)
 
 	if err != nil {
 		buildStatus.IsError = true
@@ -89,10 +99,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 		return
 	}
 
-	repoStorageDir := getRepoStorageDir(cfg)
-
 	copyLayers(temporaryOutputDir)
-	cloneRepos(cfg.Repos, repoStorageDir, updateChannel)
 
 	lnRepos(temporaryOutputDir, repoStorageDir)
 
@@ -107,9 +114,53 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 	buildStatus.BuildUrlBase = getBuildUrlBase()
 	buildStatus.OutputSizeHumanReadable = getDirectorySizeHumanReadable(finalOutputDir)
 
-    close(updateChannel)
-
 	return
+}
+
+func buildRepoHooks(cfg *buildconfigs.BuildConfig, updateChannel chan string) *map[string]string {
+	updateChannel <- "Building repo hooks..."
+
+	hooks := make(map[string]string)
+
+	for _, repo := range cfg.Repos {
+		repoName := filepath.Base(repo.URL)
+		repoName = repoName[:len(repoName)-len(filepath.Ext(repoName))]
+
+		appendHookData("head", &hooks, &repo, cfg)
+		appendHookData("body", &hooks, &repo, cfg)
+	}
+
+	return &hooks
+}
+
+func appendHookData(hookName string, hooks *map[string]string, repo *buildconfigs.GitRepo, cfg *buildconfigs.BuildConfig) {
+	if _, ok := (*hooks)[hookName]; ok {
+		(*hooks)[hookName] = ""
+	}
+
+	(*hooks)[hookName] += getHookData(hookName, repo, cfg) + "\n"
+}
+
+func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.BuildConfig) string {
+	log.Infof("Getting hook data for %v, repo: %s", hookName, repo.URL)
+
+	repoPath := filepath.Join(getRepoStorageDir(cfg), filepath.Base(repo.URL))
+
+	htmlFilename := filepath.Join(repoPath, hookName + ".html")
+
+	if _, err := os.Stat(htmlFilename); errors.Is(err, os.ErrNotExist) {
+		log.Infof("No %s hook file found for repo %s", hookName, repo.URL)
+		return ""
+	}
+
+	contents, err := os.ReadFile(htmlFilename)
+
+	if err != nil {
+		log.Errorf("Error reading %s hook file for repo %s: %v", hookName, repo.URL, err)
+		return ""
+	}
+
+	return string(contents)
 }
 
 func getRepoStorageDir(cfg *buildconfigs.BuildConfig) string {
@@ -137,7 +188,6 @@ func lnRepos(finalOutputDir string, repoStorageDir string) {
 }
 
 func runVite(temporaryOutputDir string, finalOutputDir string, base string) {
-	log.Info("Running Vite build...")
 	req := &easyexec.ExecRequest{
 		Executable: "vite",
 		Args: []string{"build", "--outDir", finalOutputDir, "--base", "/" + base + "/"},

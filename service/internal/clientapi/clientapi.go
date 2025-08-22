@@ -152,7 +152,7 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	response.RelativePath = buildConfig.OutputDir
 	response.Found = found
 	response.IsComplete = true
-	response.Status = "Build completed"
+
 	srv.Send(response)
 
 	return nil
@@ -260,7 +260,8 @@ func (c *ClientApi) GetBuildConfig(ctx context.Context, req *connect.Request[pb.
 			Name:         buildConfig.Name,
 			Template:     buildConfig.Template,
 			Filename:     buildConfig.Filename,
-			Path:         buildConfig.Path,
+			Path:         filepath.Dir(buildConfig.Path),
+			DatafilesPath:filepath.Dir(buildConfig.Path),
 			InContainer:  inContainer(),
 			ErrorMessage: buildConfig.ErrorMessage,
 			OutputDir:    buildConfig.OutputDir,

@@ -45,9 +45,16 @@
 			</dd>
 
 			<dt>
-				Datafiles
+				<abbr title = "YAML files that provide data to the template during the build process.">
+				   Data Files
+				</abbr>
 			</dt>
 			<dd>
+				<p>
+					{{ config.datafilesPath }}
+					<span v-if = "config.datafilesPathInContainer">(container volume)</span>
+					<span v-else>(on host)</span>
+				</p>
 				<ul v-if = "Object.keys(config.datafiles).length > 0">
 					<li v-for="datafile in config.datafiles" :key="datafile">
 						<span>{{ datafile }}</span>
@@ -58,11 +65,11 @@
 		</dl>
 
 		<p>
-			This is defined in your build config yaml.
+			All this information comes from your build config file.
 		</p>
 	</Section>
 
-	<Section title = "Build">
+	<Section title = "Build" id = "build">
 		<p v-if="config">Click the button below to build the project.</p>
 
 		<button v-if="config" class = "start-build-button" type = "submit" @click = "startBuild(config)">

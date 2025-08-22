@@ -30,6 +30,7 @@ message BuildConfig {
   string path = 7;
   string error_message = 8;
   bool in_container = 9;
+  string datafiles_path = 10;
 }
 
 message BuildRequest {

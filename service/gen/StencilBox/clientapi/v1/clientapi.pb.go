@@ -196,6 +196,7 @@ type BuildConfig struct {
 	Path          string                 `protobuf:"bytes,7,opt,name=path,proto3" json:"path,omitempty"`
 	ErrorMessage  string                 `protobuf:"bytes,8,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
 	InContainer   bool                   `protobuf:"varint,9,opt,name=in_container,json=inContainer,proto3" json:"in_container,omitempty"`
+	DatafilesPath string                 `protobuf:"bytes,10,opt,name=datafiles_path,json=datafilesPath,proto3" json:"datafiles_path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -291,6 +292,13 @@ func (x *BuildConfig) GetInContainer() bool {
 		return x.InContainer
 	}
 	return false
+}
+
+func (x *BuildConfig) GetDatafilesPath() string {
+	if x != nil {
+		return x.DatafilesPath
+	}
+	return ""
 }
 
 type BuildRequest struct {
@@ -915,7 +923,7 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12+\n" +
 	"\x11documentation_url\x18\x04 \x01(\tR\x10documentationUrl\x12#\n" +
 	"\rbuild_configs\x18\x05 \x03(\tR\fbuildConfigs\x12 \n" +
-	"\vdescription\x18\x06 \x01(\tR\vdescription\"\xfb\x02\n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\"\xa2\x03\n" +
 	"\vBuildConfig\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\btemplate\x18\x02 \x01(\tR\btemplate\x12\x1d\n" +
@@ -926,7 +934,9 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\bfilename\x18\x06 \x01(\tR\bfilename\x12\x12\n" +
 	"\x04path\x18\a \x01(\tR\x04path\x12#\n" +
 	"\rerror_message\x18\b \x01(\tR\ferrorMessage\x12!\n" +
-	"\fin_container\x18\t \x01(\bR\vinContainer\x1a<\n" +
+	"\fin_container\x18\t \x01(\bR\vinContainer\x12%\n" +
+	"\x0edatafiles_path\x18\n" +
+	" \x01(\tR\rdatafilesPath\x1a<\n" +
 	"\x0eDatafilesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"/\n" +

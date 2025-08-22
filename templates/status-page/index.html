@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+
+<head>
+	<link rel = "stylesheet" href = "style.css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Status Page</title>
+
+	{{ .hooks.head }}
+
+<style type = "text/css">
+    main {
+        margin: auto;
+		border-radius: 1em;
+		background-color: white;
+		padding: 1em;
+		max-width: 420px;
+		box-shadow: 0 0 12px #cbcbcb;
+	}
+
+	table {
+		border-collapse: collapse;
+		width: 100%;
+	}
+
+	th, td {
+		border: 1px solid #ccc;
+		padding: 0.5em;
+		text-align: left;
+	}
+
+	h2 {
+		text-align: center;
+	}
+
+	.good {
+		color: green;
+		font-weight: bold;
+	}
+
+	.critical {
+		color: red;
+		font-weight: bold;
+	}
+
+	.maintenance {
+		color: orange;
+		font-weight: bold;
+	}
+
+	.unknown {
+		color: gray;
+		font-weight: bold;
+	}
+
+	.warning {
+		color: darkorange;
+		font-weight: bold;
+	}
+</style>
+
+</head>
+<body class = "status-page">
+	<header>
+		<h1>{{ .status.title }}</h1>
+	</header>
+
+	<main>
+		<p><strong>Last update:</strong> {{ .status.lastUpdated }}</p>
+		<table>
+			<thead>
+				<tr>
+					<th>Service</th>
+					<th>Status</th>
+				</tr>
+			</head>
+
+			<tbody>
+				{{ range .status.services }}
+				<tr>
+					<td>{{ .name }}</td>
+					<td class = "{{ .status }}">{{ .status }}</td>
+				</tr>
+				{{ end }}
+			</tbody>
+		</table>
+	</main>
+</body>

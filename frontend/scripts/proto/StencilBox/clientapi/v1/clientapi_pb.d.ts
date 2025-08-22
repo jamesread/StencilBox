@@ -127,6 +127,11 @@ export declare type BuildConfig = Message<"StencilBox.clientapi.v1.BuildConfig">
    * @generated from field: bool in_container = 9;
    */
   inContainer: boolean;
+
+  /**
+   * @generated from field: string datafiles_path = 10;
+   */
+  datafilesPath: string;
 };
 
 /**

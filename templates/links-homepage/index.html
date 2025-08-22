@@ -3,7 +3,9 @@
 <head>
 	<link rel = "stylesheet" href = "style.css" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Homepage</title>
+	<title>{{ .title }}</title>
+
+	{{ .hooks.head }}
 </head>
 <body class = "links-homepage">
 	<header>

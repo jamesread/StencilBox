@@ -1,0 +1,8 @@
+name: Status page of Services
+
+outputdir: status
+
+template: status-page
+
+datafiles:
+  status: data/services.yaml

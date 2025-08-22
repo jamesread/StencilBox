@@ -1,0 +1,19 @@
+title: Service Status
+
+services:
+  - name: Firewall
+    status: good
+
+  - name: Primary File Server
+    status: good
+
+  - name: Backup File Server
+    status: critical
+
+  - name: Web Server
+    status: warning
+
+  - name: Database Server
+    status: good
+
+lastUpdated: 2024-10-01T12:00:00Z
