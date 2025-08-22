@@ -1,12 +1,9 @@
 <template>
-	<header>
-		<div class="flex-row" id = "sidebar-button">
-			<img src="../images/logo.png" class="logo" />
-			<h1>StencilBox</h1>
-		</div>
-
-		<Breadcrumbs />
-	</header>
+	<Header
+		logoUrl="/resources/images/logo.png"
+		title="StencilBox"
+		@toggleSidebar="sidebar.toggle()"
+		/>
 
 	<div id="layout">
 		<Sidebar ref="sidebar" />
@@ -36,6 +33,7 @@ import {
 
 import Breadcrumbs from 'picocrank/vue/components/Breadcrumbs.vue';
 import Sidebar from 'picocrank/vue/components/Sidebar.vue';
+import Header from 'picocrank/vue/components/Header.vue';
 
 const sidebar = ref(null);
 
