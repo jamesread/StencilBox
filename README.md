@@ -23,7 +23,7 @@ Build YAML into super speedy simple static sites, with sleek templates.
 * **As a sysadmin**, I want to give my users who can understand a YAML file a simple way to create pages without needing to know about Git, worry about tooling, or hosting.
 * **As a developer**, I want data in YAML format to be rendered to a nice looking webpage (eg: XSLT).
 
-See the **Screenshots** 
+See the **Screenshots** for 3 more examples of pages built with StencilBox.
 
 ### FAQ
 <details>
