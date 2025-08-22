@@ -4,7 +4,7 @@
 ** xref:install/docker-standalone.adoc[Docker (Standalone)]
 * xref:getting-started.adoc[Getting Started]
 * xref:buildconfigs/index.adoc[Build Configs]
-//* xref:templates/index.adoc[Templates usage]
+* xref:templates/index.adoc[Templates]
 * xref:builtin-templates/index.adoc[Templates (Built-In)]
 ** xref:builtin-templates/links-homepage.adoc[Links Homepage]
 ** xref:builtin-templates/iframe-sidebar.adoc[IFrame Sidebar]

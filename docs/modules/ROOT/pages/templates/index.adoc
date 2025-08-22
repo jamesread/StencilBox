@@ -1,3 +1,23 @@
 = Templates
 
-Templates are combined with buildconfigs to create new pages.
+Templates define the actual structure of the page - they're basically just HTML with YAML placeholders built in. When a build starts, it looks for a template to combine with data in the build config to generate the final HTML page. To understand this better, chec out the xref:getting-started.adoc[Getting Started] guide.
+
+== Using built-in templates
+
+There are a few built-in templates that come with the application. You can find them in the xref:builtin-templates/index.adoc[Built-In Templates] section of the documentation.
+
+== Creating a Template
+
+If you want to create your own template, the best way is to create your own Git repository and add your template files there. You can then reference that repository in your build config. See xref:repos/index.adoc[Custom Repos] for more information.
+
+== Template hooks
+
+Templates can define "hooks" - these are special placeholders that allow you to insert custom HTML or JavaScript into specific parts of the template. This is useful for adding custom functionality or styling to your pages without having to modify the entire template.
+
+When you add a repo in your build config, StencilBox will look for "hooks" when building the page. If it finds any, it will replace them with the content you provide in your build config.
+
+The following hooks are available:
+
+* `{{head}}` - Inserts content into the `<head>` section of the HTML document. This is useful for adding custom stylesheets or meta tags.
+* `{{body}}` - Inserts content immediately after the opening `<body>` tag. This is useful for adding elements that should appear at the very top of the page.
+

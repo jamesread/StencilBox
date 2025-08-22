@@ -6,8 +6,6 @@
 
 	<link rel = "stylesheet" type = "text/css" href = "style.css" />
 
-	{{ .hooks.head }}
-
 <style type = "text/css">
 
 body {
@@ -43,8 +41,13 @@ iframe {
 	background-color: white;
 }
 </style>
+
+	{{ .hooks.head }}
+
 </head>
 <body>
+	{{ .hooks.body }}
+
 	<div id = "sidebar">
 		<ul>
 		{{ range .links.links }}

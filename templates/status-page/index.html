@@ -5,8 +5,6 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Status Page</title>
 
-	{{ .hooks.head }}
-
 <style type = "text/css">
     main {
         margin: auto;
@@ -58,13 +56,17 @@
 	}
 </style>
 
+	{{ .hooks.head }}
 </head>
 <body class = "status-page">
+	{{ .hooks.body }}
+
 	<header>
 		<h1>{{ .status.title }}</h1>
 	</header>
 
 	<main>
+
 		<p><strong>Last update:</strong> {{ .status.lastUpdated }}</p>
 		<table>
 			<thead>

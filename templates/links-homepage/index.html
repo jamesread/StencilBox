@@ -8,11 +8,13 @@
 	{{ .hooks.head }}
 </head>
 <body class = "links-homepage">
+	{{ .hooks.body }}
 	<header>
 	<h1>{{ .links.title }}</h1>
 	</header>
 
 	<main class = "grid">
+
 	{{ range .links.categories }}
 		<div class = "linklist">
 
