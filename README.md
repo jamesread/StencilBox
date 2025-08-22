@@ -2,7 +2,7 @@
   <img alt = "project logo" src = "logo.png" width = "128" />
   <h1>StencilBox</h1>
 
-Generate super speedy simple static sites, from sleek templates.
+Build YAML into super speedy simple static sites, with sleek templates.
 
 ![Maturity Badge](https://img.shields.io/badge/maturity-beta-orange)
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
@@ -23,6 +23,8 @@ Generate super speedy simple static sites, from sleek templates.
 * **As a sysadmin**, I want to give my users who can understand a YAML file a simple way to create pages without needing to know about Git, worry about tooling, or hosting.
 * **As a developer**, I want data in YAML format to be rendered to a nice looking webpage (eg: XSLT).
 
+See the **Screenshots** 
+
 ### FAQ
 <details>
 <summary>How does it compare to heimdall, homepage, and other similar tools?</summary>
@@ -37,9 +39,9 @@ StencilBox is similar in concept to those tools, with the following differences 
 <details>
   <summary>How does it compare to Hugo, Jekyll, and other static site generators?</summary>
 
-  StencilBox is also very similar in concept to many other static site generators.
+  StencilBox is also very similar in concept to many other static site generators, but it's focus on YAML data files and providing a simple repeatable workflow for multiple sites is a key difference. 
 
-However those are tailored for public websites, blogs, and they send to be run in a command line / CI system. StencilBox provides a handy API, and WebUI, and is pretty flexible to generate any type of static site.
+Many other tools are focussed on text content (typically via Markdown) - which is geat for public websites, blogs and similar. StencilBox doesn't support Markdown (yet), and it's main purpose is to turn data into sites, rather than content. Hugo and Jekyll **can do this**, they're excellent tools, but StencilBox was built after trying to use those tools and finding them too complex for the simple use cases StencilBox targets.
 
 </details>
 
