@@ -9,6 +9,8 @@ import (
 
 	"fmt"
 	"math"
+	"strings"
+	"net/url"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -27,7 +29,21 @@ type BuildStatus struct {
 	OutputSizeHumanReadable string
 }
 
+type BuildContext struct {
+	BuildConfig *buildconfigs.BuildConfig
+    BuildStatus *BuildStatus
+	UpdateChannel chan string
+	TemplateData map[string]any
+}
+
 func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
+	ctx := &BuildContext{
+		BuildConfig: cfg,
+		BuildStatus: buildStatus,
+		UpdateChannel: updateChannel,
+		TemplateData: make(map[string]any),
+	}
+
 	updateChannel <- fmt.Sprintf("Starting build for project %s", cfg.Name)
 
     defer close(updateChannel)
@@ -86,7 +102,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 	}
 
 	repoStorageDir := getRepoStorageDir(cfg)
-	cloneRepos(cfg.Repos, repoStorageDir, updateChannel)
+	cloneRepos(ctx, repoStorageDir)
 
 	templateData["hooks"] = buildRepoHooks(cfg, updateChannel)
 	templateData["buildconfig"] = cfg
@@ -105,7 +121,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 
 	updateChannel <- "Running Vite build..."
 
-	runVite(temporaryOutputDir, finalOutputDir, cfg.OutputDir)
+	runVite(ctx, temporaryOutputDir, finalOutputDir, cfg.OutputDir)
 
 	updateChannel <- "Build completed!"
 
@@ -142,11 +158,24 @@ func appendHookData(hookName string, hooks *map[string]string, repo *buildconfig
 }
 
 func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.BuildConfig) string {
-	log.Infof("Getting hook data for %v, repo: %s", hookName, repo.URL)
+	repoUrl, err := url.Parse(repo.URL)
 
-	repoPath := filepath.Join(getRepoStorageDir(cfg), filepath.Base(repo.URL))
+	if err != nil {
+		log.Errorf("Error parsing repo URL %s: %v", repo.URL, err)
+		return ""
+	}
+
+	repoDirectory := filepath.Base(filepath.Clean(repoUrl.Path))
+
+	if strings.HasSuffix(repoDirectory, ".git") {
+		repoDirectory = repoDirectory[:len(repoDirectory)-4]
+	}
+
+	repoPath := filepath.Join(getRepoStorageDir(cfg), repoDirectory)
 
 	htmlFilename := filepath.Join(repoPath, hookName + ".html")
+
+	log.Infof("Getting hook data for %v, repo: %s filename: %v", hookName, repo.URL, htmlFilename)
 
 	if _, err := os.Stat(htmlFilename); errors.Is(err, os.ErrNotExist) {
 		log.Infof("No %s hook file found for repo %s", hookName, repo.URL)
@@ -181,22 +210,31 @@ func lnRepos(finalOutputDir string, repoStorageDir string) {
 
 	err := os.Symlink(repoStorageDir, repoLinkPath)
 
-	if err != nil {
-		log.Errorf("Error creating symlink to repo storage directory: %v", err)
+	if os.IsExist(err) {
+		return
+	} else if err != nil {
+		log.Errorf("Error creating symlink for repos: %v", err)
 		return
 	}
 }
 
-func runVite(temporaryOutputDir string, finalOutputDir string, base string) {
+func runVite(ctx *BuildContext, temporaryOutputDir string, finalOutputDir string, base string) {
 	req := &easyexec.ExecRequest{
 		Executable: "vite",
 		Args: []string{"build", "--outDir", finalOutputDir, "--base", "/" + base + "/"},
 		WorkingDirectory: temporaryOutputDir,
+		Log: true,
 	}
 
 	res := easyexec.ExecWithRequest(req)
 
-	log.Infof("Vite build completed with exit code %d", res.ExitCode)
+	if res.ExitCode != 0 {
+		ctx.BuildStatus.IsError = true
+		ctx.UpdateChannel <- fmt.Sprintf("Vite build failed with exit code %d", res.ExitCode)
+		ctx.UpdateChannel <- fmt.Sprintf("Vite output:\n%s", res.Output)
+	} else {
+		ctx.UpdateChannel <- "Vite build completed successfully"
+	}
 }
 
 func getDirectorySizeHumanReadable(dir string) string {
@@ -237,9 +275,9 @@ func getBuildUrlBase() string {
 	return ""
 }
 
-func cloneRepos(repos []buildconfigs.GitRepo, outputDir string, updateChannel chan string) {
-	for _, repo := range repos {
-		updateChannel <- fmt.Sprintf("Cloning repo %s", repo.URL)
+func cloneRepos(ctx *BuildContext, outputDir string) {
+	for _, repo := range ctx.BuildConfig.Repos {
+		ctx.UpdateChannel <- fmt.Sprintf("Cloning repo %s", repo.URL)
 
         cloneRepo(repo, outputDir)
 	}

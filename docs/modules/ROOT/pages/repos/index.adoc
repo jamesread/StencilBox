@@ -15,18 +15,23 @@ template: iframe-sidebar
 outputdir: sidebar
 
 repos:
-  - url: https://github.com/homarr-labs/dashboard-icons.git
-    timeout: 300 # approx 1.3gb, can take 5 minutes (300 seconds) to download
+  - url: https://github.com/jamesread/StencilBox-custom-repo-example.git
+	timeout: 60 # smaller repo, should be quick to download
 
 datafiles:
   links: data/sidebar-links.yaml
 ----
 
-In the example above, we are adding a custom repo that contains icons for the apps we want to link to in our sidebar. The `timeout` field is optional and specifies how long (in seconds) StencilBox should wait for the repo to clone before timing out. This is useful for large repositories that may take longer to clone.
+In the example above we're adding a custom repo that contains a custom template and some hook files. When Built, the page looks like this - a green theme background, and a custom content block on the page too;
+
+image::custom-repo-added.png[Custom repo example]
 
 == Using repos during builds
 
 When you add a repo in your build config, StencilBox will clone the repository to a temporary location during the build process. How these repos are used depends on the content;
 
-* If the repo contains `body.html` or `head.html` files, these are treated as "tooks" and will be injected directly into the template at the appropriate hook locations. These can contain any valid HTML (including `<script>` tags for JavaScript, or `<style>` tags for CSS).
+* If the repo contains `body.html` or `head.html` files, these are treated as "hooks" and will be injected directly into the template at the appropriate hook locations. These can contain any valid HTML (including `<script>` tags for JavaScript, or `<style>` tags for CSS).
 * If the repo contains a template, then you can reference that template in your build config by setting the `template` field to the path of the repo. eg: `repos/my-custom-repo`. 
+
+Custom repos can contain basically anything you want. 
+

@@ -1,6 +1,7 @@
 <template>
 	<Header
 		:logoUrl="logo"
+		breadcrumbs
 		title="StencilBox"
 		@toggleSidebar="sidebar.toggle()"
 		/>
