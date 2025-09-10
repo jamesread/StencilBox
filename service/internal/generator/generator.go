@@ -36,6 +36,16 @@ type BuildContext struct {
 	TemplateData map[string]any
 }
 
+func getNewTemplater() *template.Template {
+	funcMap := template.FuncMap{
+		"upper": strings.ToUpper,
+		"lower": strings.ToLower,
+		"replace": strings.ReplaceAll,
+	}
+
+	return template.New("index.html").Funcs(funcMap).Option("missingkey=zero")
+}
+
 func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
 	ctx := &BuildContext{
 		BuildConfig: cfg,
@@ -60,9 +70,12 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 	os.MkdirAll(finalOutputDir, 0755)
 	os.MkdirAll(temporaryOutputDir, 0755)
 
+
+	var err error
+
 	indexPath := filepath.Join(FindTemplateDir(), cfg.Template, "index.html")
 
-	tmpl, err := template.ParseFiles(indexPath)
+	tmpl, err := getNewTemplater().ParseFiles(indexPath)
 
 	if err != nil {
 		updateChannel <- "Failed to parse template: " + err.Error()
@@ -106,6 +119,8 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 
 	templateData["hooks"] = buildRepoHooks(cfg, updateChannel)
 	templateData["buildconfig"] = cfg
+
+	log.Infof("Template data: %+v", templateData)
 
 	err = tmpl.Execute(outfile, templateData)
 
@@ -187,6 +202,10 @@ func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.
 	if err != nil {
 		log.Errorf("Error reading %s hook file for repo %s: %v", hookName, repo.URL, err)
 		return ""
+	}
+
+	if contents == nil || len(contents) == 0 {
+//		return ""
 	}
 
 	return string(contents)
