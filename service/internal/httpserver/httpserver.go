@@ -31,8 +31,11 @@ func getNewApiHandler() (string, http.Handler, *clientapi.ClientApi) {
 	apiServer := clientapi.NewServer()
 
 	path, handler := clientapiconnect.NewStencilBoxApiServiceHandler(apiServer)
+	handler = withCors(http.StripPrefix("/api", handler))
 
-	return path, withCors(handler), apiServer
+	log.Infof("API path: /api/%s", path)
+
+	return path, handler, apiServer
 }
 
 func findWebuiDir() string {
@@ -48,6 +51,8 @@ func findWebuiDir() string {
 	if err != nil {
 		log.Warnf("Did not find the webui directory, you will probably get 404 errors.")
 	}
+
+	log.Infof("WebUI path: %s", webuidir)
 
 	return webuidir
 }
@@ -84,7 +89,7 @@ func getOutputHandler(dir string) http.Handler {
 	return http.FileServer(http.Dir(dir))
 }
 
-func Start() {
+func getHttpServerAddress() string {
 	address := os.Getenv("STENCILBOX_ADDRESS")
 
 	if address == "" {
@@ -92,29 +97,22 @@ func Start() {
 	}
 
 	log.WithFields(log.Fields{
-		"address": address,
+		"STENCILBOX_ADDRESS env var": address,
 	}).Info("Starting HTTP server")
 
-	apipath, apihandler, apiServer := getNewApiHandler()
+	return address
+}
 
-	log.Infof("API path: %s", apipath)
+func Start() {
+	apiPath, apiHandler, apiServer := getNewApiHandler()
 
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("/api"+apipath, func(w http.ResponseWriter, r *http.Request) {
-		http.StripPrefix("/api", apihandler).ServeHTTP(w, r)
-	})
-
-	webuiPath := findWebuiDir()
-
-	log.Infof("WebUI path: %s", webuiPath)
-
-	mux.Handle("/webui/", getNewWebUIHandler(webuiPath))
-
+	mux.Handle("/api"+apiPath, apiHandler)
+	mux.Handle("/webui/", getNewWebUIHandler(findWebuiDir()))
 	mux.Handle("/", getOutputHandler(apiServer.BaseOutputDir))
 
 	srv := &http.Server{
-		Addr:    address,
+		Addr:    getHttpServerAddress(),
 		Handler: mux,
 	}
 
