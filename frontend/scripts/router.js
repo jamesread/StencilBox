@@ -8,12 +8,22 @@ import TemplateView from '../resources/vue/TemplateView.vue'
 import TemplateAdd from '../resources/vue/TemplateAdd.vue'
 import SystemDetails from '../resources/vue/SystemDetails.vue'
 
+import {
+	Notification03Icon,
+	CodeSquareIcon,
+	Settings01Icon,
+	Configuration01Icon
+} from '@hugeicons/core-free-icons';
+
+
 const routes = [
   {
     path: '/',
     name: 'welcome',
     component: Welcome,
     meta: {
+      title: 'Welcome',
+      icon: Notification03Icon,
       breadcrumbs: () => [
         { name: 'Welcome' }
       ]
@@ -24,6 +34,8 @@ const routes = [
     name: 'buildConfigList',
     component: BuildConfigList,
     meta: {
+      title: 'Build Configs',
+      icon: Configuration01Icon,
       breadcrumbs: () => [
         { name: 'Build Configs' }
       ]
@@ -35,6 +47,7 @@ const routes = [
     component: BuildConfigView,
     props: true,
     meta: {
+      title: 'View Build Config',
       breadcrumbs: () => [
         { name: 'Build Configs', href: '/build-configs' },
         { name: 'View Build Config' }
@@ -46,6 +59,8 @@ const routes = [
     name: 'templateList',
     component: TemplateList,
     meta: {
+      title: 'Templates',
+      icon: CodeSquareIcon,
       breadcrumbs: () => [
         { name: 'Templates' }
       ]
@@ -79,6 +94,8 @@ const routes = [
     name: 'systemDetails',
     component: SystemDetails,
     meta: {
+      title: 'System Details',
+      icon: Settings01Icon,
       breadcrumbs: () => [
         { name: 'System Details' }
       ]

@@ -145,8 +145,17 @@
     const lastBuildUpdate = ref(null);
 
 	async function startBuild() {
-	  for await (const update of window.client.startBuild({ 'configName': config.value.name })) {
-	    onBuildUpdate(update);
+	  try {
+		  for await (const update of window.client.startBuild({ 'configName': config.value.name })) {
+			onBuildUpdate(update);
+		  }
+	  }  catch (error) {
+		  lastBuildUpdate.value = {
+			  status: 'Error starting build: ' + error.message,
+			  isError: true,
+			  isComplete: false,
+			  cssClass: 'critical'
+		  };
 	  }
 	}
 

@@ -25,12 +25,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import {
-	Notification03Icon,
-	CodeSquareIcon,
-	Settings01Icon,
-	Configuration01Icon
-} from '@hugeicons/core-free-icons';
 
 import logo from '../images/logo.png';
 
@@ -41,10 +35,10 @@ import Header from 'picocrank/vue/components/Header.vue';
 const sidebar = ref(null);
 
 onMounted(() => {
-	sidebar.value.addNavigationLink({ title: 'Welcome', id: 'welcome', path: '/', icon: Notification03Icon });
-	sidebar.value.addNavigationLink({ title: 'Build Configs', id: 'buildConfigs', path: '/build-configs', icon: Configuration01Icon });
-	sidebar.value.addNavigationLink({ title: 'Templates', id: 'templates', path: '/templates', icon: CodeSquareIcon });
-	sidebar.value.addNavigationLink({ title: 'System Details', id: 'system', path: '/system', icon: Settings01Icon });
+    sidebar.value.addRouterLink('welcome');
+	sidebar.value.addRouterLink('buildConfigList');
+	sidebar.value.addRouterLink('templateList');
+	sidebar.value.addRouterLink('systemDetails');
 	sidebar.value.toggle();
 	sidebar.value.stick();
 });
