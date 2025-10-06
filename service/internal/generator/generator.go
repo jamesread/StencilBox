@@ -1,17 +1,18 @@
 package generator
 
 import (
+	"errors"
+
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
 	"github.com/jamesread/golure/pkg/dirs"
-	"github.com/jamesread/golure/pkg/git"
 	"github.com/jamesread/golure/pkg/easyexec"
-	"errors"
+	"github.com/jamesread/golure/pkg/git"
 
 	"fmt"
 	"math"
-	"strings"
 	"net/url"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -23,23 +24,23 @@ import (
 )
 
 type BuildStatus struct {
-	IsError bool
-	Message string
-	BuildUrlBase string
+	IsError                 bool
+	Message                 string
+	BuildUrlBase            string
 	OutputSizeHumanReadable string
 }
 
 type BuildContext struct {
-	BuildConfig *buildconfigs.BuildConfig
-    BuildStatus *BuildStatus
+	BuildConfig   *buildconfigs.BuildConfig
+	BuildStatus   *BuildStatus
 	UpdateChannel chan string
-	TemplateData map[string]any
+	TemplateData  map[string]any
 }
 
 func getNewTemplater() *template.Template {
 	funcMap := template.FuncMap{
-		"upper": strings.ToUpper,
-		"lower": strings.ToLower,
+		"upper":   strings.ToUpper,
+		"lower":   strings.ToLower,
 		"replace": strings.ReplaceAll,
 	}
 
@@ -48,28 +49,27 @@ func getNewTemplater() *template.Template {
 
 func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
 	ctx := &BuildContext{
-		BuildConfig: cfg,
-		BuildStatus: buildStatus,
+		BuildConfig:   cfg,
+		BuildStatus:   buildStatus,
 		UpdateChannel: updateChannel,
-		TemplateData: make(map[string]any),
+		TemplateData:  make(map[string]any),
 	}
 
 	updateChannel <- fmt.Sprintf("Starting build for project %s", cfg.Name)
 
-    defer close(updateChannel)
+	defer close(updateChannel)
 
 	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
-	temporaryOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir + "_tmp")
+	temporaryOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir+"_tmp")
 
 	log.WithFields(log.Fields{
-		"name":	   cfg.Name,
-		"outputDir": cfg.OutputDir,
+		"name":           cfg.Name,
+		"outputDir":      cfg.OutputDir,
 		"finalOutputDir": finalOutputDir,
 	}).Infof("Starting build for project")
 
 	os.MkdirAll(finalOutputDir, 0755)
 	os.MkdirAll(temporaryOutputDir, 0755)
-
 
 	var err error
 
@@ -82,7 +82,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 
 		buildStatus.IsError = true
 		buildStatus.Message = "Failed to parse template: " + err.Error()
-        return
+		return
 	}
 
 	templateData := make(map[string]any)
@@ -188,7 +188,7 @@ func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.
 
 	repoPath := filepath.Join(getRepoStorageDir(cfg), repoDirectory)
 
-	htmlFilename := filepath.Join(repoPath, hookName + ".html")
+	htmlFilename := filepath.Join(repoPath, hookName+".html")
 
 	log.Infof("Getting hook data for %v, repo: %s filename: %v", hookName, repo.URL, htmlFilename)
 
@@ -205,7 +205,7 @@ func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.
 	}
 
 	if contents == nil || len(contents) == 0 {
-//		return ""
+		//		return ""
 	}
 
 	return string(contents)
@@ -239,10 +239,10 @@ func lnRepos(finalOutputDir string, repoStorageDir string) {
 
 func runVite(ctx *BuildContext, temporaryOutputDir string, finalOutputDir string, base string) {
 	req := &easyexec.ExecRequest{
-		Executable: "vite",
-		Args: []string{"build", "--outDir", finalOutputDir, "--base", "/" + base + "/"},
+		Executable:       "vite",
+		Args:             []string{"build", "--outDir", finalOutputDir, "--base", "./"},
 		WorkingDirectory: temporaryOutputDir,
-		Log: true,
+		Log:              true,
 	}
 
 	res := easyexec.ExecWithRequest(req)
@@ -298,7 +298,7 @@ func cloneRepos(ctx *BuildContext, outputDir string) {
 	for _, repo := range ctx.BuildConfig.Repos {
 		ctx.UpdateChannel <- fmt.Sprintf("Cloning repo %s", repo.URL)
 
-        cloneRepo(repo, outputDir)
+		cloneRepo(repo, outputDir)
 	}
 }
 
@@ -308,10 +308,10 @@ func cloneRepo(repo buildconfigs.GitRepo, outputDir string) {
 	log.Infof("Cloning or pulling repo %s with timeout %f seconds", repo.URL, repo.Timeout)
 
 	req := &git.CloneOrPullRequest{
-		GitUrl: repo.URL,
+		GitUrl:   repo.URL,
 		LocalDir: outputDir,
-		Timeout: repo.Timeout,
-		Log: true,
+		Timeout:  repo.Timeout,
+		Log:      true,
 	}
 
 	res := git.CloneOrPull(req)
