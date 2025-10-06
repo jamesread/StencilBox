@@ -136,7 +136,7 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 
 	updateChannel <- "Running Vite build..."
 
-	runVite(ctx, temporaryOutputDir, finalOutputDir, cfg.OutputDir)
+	runVite(ctx, temporaryOutputDir, finalOutputDir)
 
 	updateChannel <- "Build completed!"
 
@@ -144,8 +144,6 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 	buildStatus.IsError = false
 	buildStatus.BuildUrlBase = getBuildUrlBase()
 	buildStatus.OutputSizeHumanReadable = getDirectorySizeHumanReadable(finalOutputDir)
-
-	return
 }
 
 func buildRepoHooks(cfg *buildconfigs.BuildConfig, updateChannel chan string) *map[string]string {
@@ -205,7 +203,7 @@ func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.
 	}
 
 	if contents == nil || len(contents) == 0 {
-		//		return ""
+		return ""
 	}
 
 	return string(contents)
@@ -237,7 +235,7 @@ func lnRepos(finalOutputDir string, repoStorageDir string) {
 	}
 }
 
-func runVite(ctx *BuildContext, temporaryOutputDir string, finalOutputDir string, base string) {
+func runVite(ctx *BuildContext, temporaryOutputDir string, finalOutputDir string) {
 	req := &easyexec.ExecRequest{
 		Executable:       "vite",
 		Args:             []string{"build", "--outDir", finalOutputDir, "--base", "./"},
