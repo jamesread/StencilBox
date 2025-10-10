@@ -2,7 +2,7 @@
   <img alt = "project logo" src = "logo.png" width = "128" />
   <h1>StencilBox</h1>
 
-Build YAML into super speedy simple static sites, with sleek templates.
+Build data driven super speedy simple static sites, with sleek templates.
 
 ![Maturity Badge](https://img.shields.io/badge/maturity-beta-orange)
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
