@@ -56,8 +56,11 @@
 					<span v-else>(on host)</span>
 				</p>
 				<ul v-if = "Object.keys(config.datafiles).length > 0">
-					<li v-for="datafile in config.datafiles" :key="datafile">
-						<span>{{ datafile }}</span>
+					<li v-for="(path, name) in config.datafiles" :key="name">
+						<router-link :to="{ name: 'dataFileView', params: { buildConfigName: config.name, datafileName: name } }" class="link">
+							{{ name }}
+						</router-link>
+						<span class="subtle"> ({{ path }})</span>
 					</li>
 				</ul>
 				<span v-else class = "subtle">No datafiles defined</span>
@@ -110,6 +113,13 @@
 			</template>
 		</dl>
 	</Section>
+
+	<BuildHistory
+		v-if="config"
+		:configName="config.name"
+		:outputDir="config.outputDir"
+		ref="historyComponent"
+	/>
 </template>
 
 <script setup>
@@ -117,6 +127,7 @@
 	import { HugeiconsIcon } from '@hugeicons/vue';
 	import { LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
 	import Section from 'picocrank/vue/components/Section.vue';
+	import BuildHistory from './BuildHistory.vue';
 
 	const props = defineProps({
 		name: {
@@ -126,6 +137,7 @@
 	});
 
 	const config = ref(null);
+	const historyComponent = ref(null);
 
 	async function loadConfig() {
 		try {
@@ -166,6 +178,11 @@
 
 		console.log('Build update:', update);
 		updateBuildUrl();
+
+		// Refresh history when build completes
+		if (update.isComplete && historyComponent.value) {
+			historyComponent.value.refresh();
+		}
 	}
 
 	function updateBuildUrl() {

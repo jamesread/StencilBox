@@ -1,1 +1,11 @@
 configVersion: 1
+
+# Authentication configuration
+# When enabled, protects /api/* and /webui/* routes with HTTP Basic Authentication
+# The output directory (/) remains public for serving built sites
+# Uses httpauthshim configuration format - see https://github.com/jamesread/httpauthshim
+auth: {}
+
+# For advanced auth configuration (OAuth2, JWT, mTLS, etc.), use the full auth config structure
+# See httpauthshim documentation for all available options:
+# https://github.com/jamesread/httpauthshim

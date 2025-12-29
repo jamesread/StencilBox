@@ -21,9 +21,18 @@
 		<h2>{{ .title }}</h2>
 
 			{{ range .links }}
-				<a href = "{{ .url }}">{{ .title }}</a>
+				<a href = "{{ .url }}">
+					{{ if .icon }}
+						<img src = "{{ .icon }}" alt = "" class = "favicon" />
+					{{ end }}
+					{{ .title }}
+				</a>
 			{{ end }}
 		</div>
 	{{ end }}
 	</main>
+
+	<footer>
+		<p>Last built: {{ .buildDateFormatted }}</p>
+	</footer>
 </body>

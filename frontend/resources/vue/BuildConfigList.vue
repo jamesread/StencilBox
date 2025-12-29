@@ -11,8 +11,12 @@
 					<HugeiconsIcon :icon = "LinkSquare01Icon" size = "24" />
 				</a>
 
-				<button class = "neutral" disabled>
-					Git Pull
+				<button
+					class = "neutral"
+					:disabled="!canGitPull || isPulling"
+					@click="handleGitPull"
+				>
+					{{ isPulling ? 'Pulling...' : 'Git Pull' }}
 					<HugeiconsIcon :icon = "GitCommitIcon" size = "24" />
 				</button>
 			</template>
@@ -75,7 +79,7 @@
 	</Section>
 
 	<dialog ref="errorDialog" class = "bad">
-		<h2>Error loading build config</h2>
+		<h2>Error</h2>
 		<p v-if="errorMessage">{{ errorMessage }}</p>
 		<p v-else>Unknown error</p>
 
@@ -103,6 +107,8 @@ const router = useRouter();
 const status = ref(null);
 const errorDialog = ref(null);
 const errorMessage = ref(null);
+const canGitPull = ref(false);
+const isPulling = ref(false);
 
 async function getBuildConfigs() {
 	try {
@@ -116,9 +122,38 @@ async function getBuildConfigs() {
 		});
 
 		buildConfigs.value = configs;
+		canGitPull.value = response.canGitPull;
 		console.log('Build configs loaded:', buildConfigs.value);
 	} catch (error) {
 		console.error('Error loading build configs:', error);
+	}
+}
+
+async function handleGitPull() {
+	if (!canGitPull.value || isPulling.value) {
+		return;
+	}
+
+	isPulling.value = true;
+	try {
+		const response = await window.client.gitPull({});
+
+		if (response.success) {
+			// Reload build configs after successful pull
+			await getBuildConfigs();
+			// Show success message (you might want to add a toast/notification here)
+			console.log('Git pull successful:', response.message);
+		} else {
+			// Show error message
+			errorMessage.value = response.message || 'Git pull failed';
+			errorDialog.value.showModal();
+		}
+	} catch (error) {
+		console.error('Error performing git pull:', error);
+		errorMessage.value = 'Git pull failed: ' + error.message;
+		errorDialog.value.showModal();
+	} finally {
+		isPulling.value = false;
 	}
 }
 

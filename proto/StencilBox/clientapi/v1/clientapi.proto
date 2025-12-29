@@ -94,6 +94,66 @@ message GetTemplateResponse {
   Template template = 1;
 }
 
+message BuildHistoryEntry {
+  int64 timestamp = 1;
+  string status = 2;
+  bool is_error = 3;
+  string output_size_human_readable = 4;
+  string build_url = 5;
+  bool is_auto_rebuild = 6;
+}
+
+message GetBuildHistoryRequest {
+  string config_name = 1;
+}
+
+message GetBuildHistoryResponse {
+  repeated BuildHistoryEntry entries = 1;
+}
+
+message GetCurrentUserRequest {
+}
+
+message GetCurrentUserResponse {
+  string username = 1;
+  bool is_authenticated = 2;
+}
+
+message GitPullRequest {
+}
+
+message GitPullResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DataFile {
+  string name = 1;
+  string path = 2;
+  string build_config_name = 3;
+  string build_config_path = 4;
+}
+
+message ListDataFilesRequest {
+}
+
+message ListDataFilesResponse {
+  repeated DataFile data_files = 1;
+  bool can_git_pull = 2;
+}
+
+message GetDataFileRequest {
+  string build_config_name = 1;
+  string datafile_name = 2;
+}
+
+message GetDataFileResponse {
+  string content = 1;
+  string path = 2;
+  string build_config_name = 3;
+  string datafile_name = 4;
+}
+
 service StencilBoxApiService {
   rpc Init(InitRequest) returns (InitResponse);
 
@@ -108,4 +168,14 @@ service StencilBoxApiService {
   rpc GetBuildConfigs(GetBuildConfigsRequest) returns (GetBuildConfigsResponse);
 
   rpc GetBuildConfig(GetBuildConfigRequest) returns (GetBuildConfigResponse);
+
+  rpc GetBuildHistory(GetBuildHistoryRequest) returns (GetBuildHistoryResponse);
+
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+
+  rpc GitPull(GitPullRequest) returns (GitPullResponse);
+
+  rpc ListDataFiles(ListDataFilesRequest) returns (ListDataFilesResponse);
+
+  rpc GetDataFile(GetDataFileRequest) returns (GetDataFileResponse);
 }

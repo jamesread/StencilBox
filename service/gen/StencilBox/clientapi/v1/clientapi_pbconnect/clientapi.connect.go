@@ -54,6 +54,21 @@ const (
 	// StencilBoxApiServiceGetBuildConfigProcedure is the fully-qualified name of the
 	// StencilBoxApiService's GetBuildConfig RPC.
 	StencilBoxApiServiceGetBuildConfigProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetBuildConfig"
+	// StencilBoxApiServiceGetBuildHistoryProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetBuildHistory RPC.
+	StencilBoxApiServiceGetBuildHistoryProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetBuildHistory"
+	// StencilBoxApiServiceGetCurrentUserProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetCurrentUser RPC.
+	StencilBoxApiServiceGetCurrentUserProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetCurrentUser"
+	// StencilBoxApiServiceGitPullProcedure is the fully-qualified name of the StencilBoxApiService's
+	// GitPull RPC.
+	StencilBoxApiServiceGitPullProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GitPull"
+	// StencilBoxApiServiceListDataFilesProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ListDataFiles RPC.
+	StencilBoxApiServiceListDataFilesProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ListDataFiles"
+	// StencilBoxApiServiceGetDataFileProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetDataFile RPC.
+	StencilBoxApiServiceGetDataFileProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetDataFile"
 )
 
 // StencilBoxApiServiceClient is a client for the StencilBox.clientapi.v1.StencilBoxApiService
@@ -66,6 +81,11 @@ type StencilBoxApiServiceClient interface {
 	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
 	GetBuildConfigs(context.Context, *connect.Request[v1.GetBuildConfigsRequest]) (*connect.Response[v1.GetBuildConfigsResponse], error)
 	GetBuildConfig(context.Context, *connect.Request[v1.GetBuildConfigRequest]) (*connect.Response[v1.GetBuildConfigResponse], error)
+	GetBuildHistory(context.Context, *connect.Request[v1.GetBuildHistoryRequest]) (*connect.Response[v1.GetBuildHistoryResponse], error)
+	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error)
+	GitPull(context.Context, *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error)
+	ListDataFiles(context.Context, *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error)
+	GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error)
 }
 
 // NewStencilBoxApiServiceClient constructs a client for the
@@ -122,6 +142,36 @@ func NewStencilBoxApiServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetBuildConfig")),
 			connect.WithClientOptions(opts...),
 		),
+		getBuildHistory: connect.NewClient[v1.GetBuildHistoryRequest, v1.GetBuildHistoryResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetBuildHistoryProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetBuildHistory")),
+			connect.WithClientOptions(opts...),
+		),
+		getCurrentUser: connect.NewClient[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetCurrentUserProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetCurrentUser")),
+			connect.WithClientOptions(opts...),
+		),
+		gitPull: connect.NewClient[v1.GitPullRequest, v1.GitPullResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGitPullProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GitPull")),
+			connect.WithClientOptions(opts...),
+		),
+		listDataFiles: connect.NewClient[v1.ListDataFilesRequest, v1.ListDataFilesResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceListDataFilesProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListDataFiles")),
+			connect.WithClientOptions(opts...),
+		),
+		getDataFile: connect.NewClient[v1.GetDataFileRequest, v1.GetDataFileResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetDataFileProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetDataFile")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -134,6 +184,11 @@ type stencilBoxApiServiceClient struct {
 	getStatus       *connect.Client[v1.GetStatusRequest, v1.GetStatusResponse]
 	getBuildConfigs *connect.Client[v1.GetBuildConfigsRequest, v1.GetBuildConfigsResponse]
 	getBuildConfig  *connect.Client[v1.GetBuildConfigRequest, v1.GetBuildConfigResponse]
+	getBuildHistory *connect.Client[v1.GetBuildHistoryRequest, v1.GetBuildHistoryResponse]
+	getCurrentUser  *connect.Client[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse]
+	gitPull         *connect.Client[v1.GitPullRequest, v1.GitPullResponse]
+	listDataFiles   *connect.Client[v1.ListDataFilesRequest, v1.ListDataFilesResponse]
+	getDataFile     *connect.Client[v1.GetDataFileRequest, v1.GetDataFileResponse]
 }
 
 // Init calls StencilBox.clientapi.v1.StencilBoxApiService.Init.
@@ -171,6 +226,31 @@ func (c *stencilBoxApiServiceClient) GetBuildConfig(ctx context.Context, req *co
 	return c.getBuildConfig.CallUnary(ctx, req)
 }
 
+// GetBuildHistory calls StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory.
+func (c *stencilBoxApiServiceClient) GetBuildHistory(ctx context.Context, req *connect.Request[v1.GetBuildHistoryRequest]) (*connect.Response[v1.GetBuildHistoryResponse], error) {
+	return c.getBuildHistory.CallUnary(ctx, req)
+}
+
+// GetCurrentUser calls StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser.
+func (c *stencilBoxApiServiceClient) GetCurrentUser(ctx context.Context, req *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error) {
+	return c.getCurrentUser.CallUnary(ctx, req)
+}
+
+// GitPull calls StencilBox.clientapi.v1.StencilBoxApiService.GitPull.
+func (c *stencilBoxApiServiceClient) GitPull(ctx context.Context, req *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error) {
+	return c.gitPull.CallUnary(ctx, req)
+}
+
+// ListDataFiles calls StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles.
+func (c *stencilBoxApiServiceClient) ListDataFiles(ctx context.Context, req *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error) {
+	return c.listDataFiles.CallUnary(ctx, req)
+}
+
+// GetDataFile calls StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile.
+func (c *stencilBoxApiServiceClient) GetDataFile(ctx context.Context, req *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error) {
+	return c.getDataFile.CallUnary(ctx, req)
+}
+
 // StencilBoxApiServiceHandler is an implementation of the
 // StencilBox.clientapi.v1.StencilBoxApiService service.
 type StencilBoxApiServiceHandler interface {
@@ -181,6 +261,11 @@ type StencilBoxApiServiceHandler interface {
 	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
 	GetBuildConfigs(context.Context, *connect.Request[v1.GetBuildConfigsRequest]) (*connect.Response[v1.GetBuildConfigsResponse], error)
 	GetBuildConfig(context.Context, *connect.Request[v1.GetBuildConfigRequest]) (*connect.Response[v1.GetBuildConfigResponse], error)
+	GetBuildHistory(context.Context, *connect.Request[v1.GetBuildHistoryRequest]) (*connect.Response[v1.GetBuildHistoryResponse], error)
+	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error)
+	GitPull(context.Context, *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error)
+	ListDataFiles(context.Context, *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error)
+	GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error)
 }
 
 // NewStencilBoxApiServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -232,6 +317,36 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetBuildConfig")),
 		connect.WithHandlerOptions(opts...),
 	)
+	stencilBoxApiServiceGetBuildHistoryHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetBuildHistoryProcedure,
+		svc.GetBuildHistory,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetBuildHistory")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetCurrentUserHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetCurrentUserProcedure,
+		svc.GetCurrentUser,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetCurrentUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGitPullHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGitPullProcedure,
+		svc.GitPull,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GitPull")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceListDataFilesHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceListDataFilesProcedure,
+		svc.ListDataFiles,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListDataFiles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetDataFileHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetDataFileProcedure,
+		svc.GetDataFile,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetDataFile")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/StencilBox.clientapi.v1.StencilBoxApiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StencilBoxApiServiceInitProcedure:
@@ -248,6 +363,16 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 			stencilBoxApiServiceGetBuildConfigsHandler.ServeHTTP(w, r)
 		case StencilBoxApiServiceGetBuildConfigProcedure:
 			stencilBoxApiServiceGetBuildConfigHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetBuildHistoryProcedure:
+			stencilBoxApiServiceGetBuildHistoryHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetCurrentUserProcedure:
+			stencilBoxApiServiceGetCurrentUserHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGitPullProcedure:
+			stencilBoxApiServiceGitPullHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceListDataFilesProcedure:
+			stencilBoxApiServiceListDataFilesHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetDataFileProcedure:
+			stencilBoxApiServiceGetDataFileHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -283,4 +408,24 @@ func (UnimplementedStencilBoxApiServiceHandler) GetBuildConfigs(context.Context,
 
 func (UnimplementedStencilBoxApiServiceHandler) GetBuildConfig(context.Context, *connect.Request[v1.GetBuildConfigRequest]) (*connect.Response[v1.GetBuildConfigResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetBuildHistory(context.Context, *connect.Request[v1.GetBuildHistoryRequest]) (*connect.Response[v1.GetBuildHistoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GitPull(context.Context, *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GitPull is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ListDataFiles(context.Context, *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile is not implemented"))
 }

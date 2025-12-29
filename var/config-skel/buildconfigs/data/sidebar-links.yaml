@@ -1,16 +1,13 @@
 links:
-  - title: GitHub
-    url: https://github.com
-    icon: repos/dashboard-icons/png/github.png
-
-  - title: GitLab
-    url: https://gitlab.com
-    icon: repos/dashboard-icons/png/gitlab.png
-
-  - title: Grafana
-    url: https://grafana.com
-    icon: repos/dashboard-icons/png/grafana.png
-
-  - title: Prometheus
-    url: https://prometheus.io
-    icon: repos/dashboard-icons/png/prometheus.png
+    - icon: repos/dashboard-icons/png/github.png
+      title: GitHub
+      url: https://github.com
+    - icon: repos/dashboard-icons/png/gitlab.png
+      title: GitLab
+      url: https://gitlab.com
+    - icon: repos/dashboard-icons/png/grafana.png
+      title: Grafana
+      url: https://grafana.com
+    - icon: repos/dashboard-icons/png/prometheus.png
+      title: foobar
+      url: google.com

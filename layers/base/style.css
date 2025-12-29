@@ -47,6 +47,16 @@ body.links-homepage a {
   padding: 1em;
   background-color: white;
   box-shadow: 0 0 1em #ccc;
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+}
+
+body.links-homepage a .favicon {
+  width: 1.5em;
+  height: 1.5em;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 body.links-homepage a:hover {
@@ -58,21 +68,45 @@ body.links-homepage a:focus {
   font-weight: bold;
 }
 
+body.links-homepage footer {
+  text-align: center;
+  padding: 2em 1em;
+  margin-top: 2em;
+}
+
+body.links-homepage footer p {
+  color: #888;
+  font-size: 0.85em;
+  opacity: 0.7;
+  margin: 0;
+}
+
 div.linklist {
   width: 100%;
 }
 
 h1 {
   text-align: center;
-  text-shadow: 0 0 5px #7e7e7e;
+  font-size: 2.5em;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 1em 0 0.5em 0;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.links-homepage header {
+  margin-bottom: 2em;
 }
 
 h2 {
-  font-size: 1.4em;
+  font-size: 0.9em;
   text-align: center;
-  color: #535353;
-  text-shadow: 0 0 5px #7e7e7e;
-  font-weight: normal;
+  color: #34495e;
+  font-weight: 500;
+  margin: 1.5em 0 1em 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 ul {

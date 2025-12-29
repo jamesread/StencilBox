@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jamesread/golure/pkg/dirs"
+	"github.com/jamesread/golure/pkg/git"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
@@ -54,6 +56,67 @@ func CanGitPull() bool {
 	_, err = os.Stat(gitDir)
 
 	return err == nil
+}
+
+// GitPull performs a git pull on the build configurations directory
+func GitPull() error {
+	dir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+
+	// Check if it's a git repository
+	if !CanGitPull() {
+		return os.ErrNotExist
+	}
+
+	// Get the remote URL from git config
+	gitConfigPath := filepath.Join(dir, ".git", "config")
+	configData, err := os.ReadFile(gitConfigPath)
+	if err != nil {
+		return err
+	}
+
+	// Parse the config to find the remote URL
+	remoteURL := ""
+	lines := strings.Split(string(configData), "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(line, "[remote \"origin\"]") {
+			// Look for the url line in the next few lines
+			for j := i + 1; j < len(lines) && j < i+10; j++ {
+				if strings.HasPrefix(lines[j], "\turl = ") {
+					remoteURL = strings.TrimPrefix(lines[j], "\turl = ")
+					break
+				}
+				if strings.HasPrefix(lines[j], "[") {
+					// We've hit the next section
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if remoteURL == "" {
+		return os.ErrNotExist
+	}
+
+	// Use git.CloneOrPull to pull the latest changes
+	req := &git.CloneOrPullRequest{
+		GitUrl:   remoteURL,
+		LocalDir: dir,
+		Timeout:  60.0,
+		Log:      true,
+	}
+
+	res := git.CloneOrPull(req)
+	if res.WasCloned {
+		log.Infof("Cloned repo %s to %s", remoteURL, dir)
+	} else {
+		log.Infof("Pulled repo %s in %s", remoteURL, dir)
+	}
+
+	return nil
 }
 
 func ReadConfigFiles() map[string]*BuildConfig {

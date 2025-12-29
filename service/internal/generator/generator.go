@@ -2,25 +2,22 @@ package generator
 
 import (
 	"errors"
-
-	"github.com/jamesread/StencilBox/internal/buildconfigs"
-	"github.com/jamesread/golure/pkg/dirs"
-	"github.com/jamesread/golure/pkg/easyexec"
-	"github.com/jamesread/golure/pkg/git"
-
 	"fmt"
 	"math"
 	"net/url"
 	"os"
-	"strings"
-
-	log "github.com/sirupsen/logrus"
-
-	"gopkg.in/yaml.v3"
-
 	"path/filepath"
-
+	"strings"
 	"text/template"
+	"time"
+
+	"github.com/jamesread/StencilBox/internal/buildconfigs"
+	"github.com/jamesread/StencilBox/internal/scraper"
+	"github.com/jamesread/golure/pkg/dirs"
+	"github.com/jamesread/golure/pkg/easyexec"
+	"github.com/jamesread/golure/pkg/git"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type BuildStatus struct {
@@ -107,6 +104,18 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 
 	log.Infof("Datafiles loaded: %+v", templateData)
 
+	// Process links data to add favicons
+	if linksData, ok := templateData["links"]; ok {
+		updateChannel <- "Fetching favicons for links..."
+		processedLinks, err := processLinksWithFavicons(linksData, temporaryOutputDir, updateChannel)
+		if err != nil {
+			log.Warnf("Failed to process links with favicons: %v", err)
+			// Continue with original data if favicon processing fails
+		} else {
+			templateData["links"] = processedLinks
+		}
+	}
+
 	outfile, err := os.Create(temporaryOutputDir + "/index.html")
 
 	if err != nil {
@@ -119,6 +128,11 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 
 	templateData["hooks"] = buildRepoHooks(cfg, updateChannel)
 	templateData["buildconfig"] = cfg
+
+	// Add build date/time to templateData
+	buildTime := time.Now()
+	templateData["buildDate"] = buildTime.Format(time.RFC3339)
+	templateData["buildDateFormatted"] = buildTime.Format("January 2, 2006 at 3:04 PM MST")
 
 	log.Infof("Template data: %+v", templateData)
 
@@ -367,13 +381,113 @@ func copyFile(fromDir string, toDir string, filename string) {
 	log.Infof("Copied %v to %v", filename, toDir)
 }
 
+func processLinksWithFavicons(linksData any, outputDir string, updateChannel chan string) (any, error) {
+	// Create icons directory
+	iconsDir := filepath.Join(outputDir, "icons")
+	err := os.MkdirAll(iconsDir, 0755)
+	if err != nil {
+		return linksData, fmt.Errorf("failed to create icons directory: %w", err)
+	}
+
+	// Convert to map for processing
+	dataMap, ok := linksData.(map[string]any)
+	if !ok {
+		return linksData, fmt.Errorf("links data is not a map")
+	}
+
+	// Process categories
+	if categories, ok := dataMap["categories"].([]any); ok {
+		for catIdx, category := range categories {
+			catMap, ok := category.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			if links, ok := catMap["links"].([]any); ok {
+				for linkIdx, link := range links {
+					linkMap, ok := link.(map[string]any)
+					if !ok {
+						continue
+					}
+
+					// Get URL from link
+					linkURL, ok := linkMap["url"].(string)
+					if !ok || linkURL == "" {
+						continue
+					}
+
+					// Generate a safe filename for the favicon
+					safeFilename := sanitizeFilename(linkURL)
+
+					// Check if favicon already exists
+					iconPath := filepath.Join(iconsDir, safeFilename)
+					if _, err := os.Stat(iconPath); err == nil {
+						// Favicon already exists, use it
+						linkMap["icon"] = "icons/" + safeFilename
+						links[linkIdx] = linkMap
+						continue
+					}
+
+					// Fetch favicon
+					updateChannel <- fmt.Sprintf("Fetching favicon for %s...", linkURL)
+					faviconURL, err := scraper.GetFaviconURL(linkURL)
+					if err != nil {
+						log.Debugf("Failed to get favicon for %s: %v", linkURL, err)
+						// Continue without icon if fetch fails
+						continue
+					}
+
+					// Download and save favicon
+					iconFilename, err := scraper.DownloadFavicon(faviconURL, iconsDir, safeFilename)
+					if err != nil {
+						log.Debugf("Failed to download favicon for %s: %v", linkURL, err)
+						// Continue without icon if download fails
+						continue
+					}
+
+					// Add icon property to link
+					linkMap["icon"] = "icons/" + iconFilename
+					links[linkIdx] = linkMap
+				}
+				catMap["links"] = links
+				categories[catIdx] = catMap
+			}
+		}
+		dataMap["categories"] = categories
+	}
+
+	return dataMap, nil
+}
+
+func sanitizeFilename(urlStr string) string {
+	// Remove protocol
+	urlStr = strings.TrimPrefix(urlStr, "http://")
+	urlStr = strings.TrimPrefix(urlStr, "https://")
+
+	// Replace invalid filename characters
+	urlStr = strings.ReplaceAll(urlStr, "/", "_")
+	urlStr = strings.ReplaceAll(urlStr, ":", "_")
+	urlStr = strings.ReplaceAll(urlStr, "?", "_")
+	urlStr = strings.ReplaceAll(urlStr, "&", "_")
+	urlStr = strings.ReplaceAll(urlStr, "=", "_")
+	urlStr = strings.ReplaceAll(urlStr, "#", "_")
+	urlStr = strings.ReplaceAll(urlStr, "%", "_")
+
+	// Limit length
+	if len(urlStr) > 100 {
+		urlStr = urlStr[:100]
+	}
+
+	return urlStr
+}
+
 func readDatafile(path string, buildconfigPath string) (any, error) {
 	path = filepath.Join(buildconfigPath, path)
 
 	content, err := os.ReadFile(path)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to read datafile: %v", path))
+		return nil, fmt.Errorf("failed to read datafile: %v", path)
 	}
 
 	var data any
@@ -381,7 +495,7 @@ func readDatafile(path string, buildconfigPath string) (any, error) {
 	err = yaml.Unmarshal(content, &data)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to unmarshal datafile: %v", path))
+		return nil, fmt.Errorf("failed to unmarshal datafile: %v", path)
 	}
 
 	return data, nil

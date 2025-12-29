@@ -7,6 +7,8 @@ import TemplateList from '../resources/vue/TemplateList.vue'
 import TemplateView from '../resources/vue/TemplateView.vue'
 import TemplateAdd from '../resources/vue/TemplateAdd.vue'
 import SystemDetails from '../resources/vue/SystemDetails.vue'
+import DataFileList from '../resources/vue/DataFileList.vue'
+import DataFileView from '../resources/vue/DataFileView.vue'
 
 import {
 	Notification03Icon,
@@ -98,6 +100,29 @@ const routes = [
       icon: Settings01Icon,
       breadcrumbs: () => [
         { name: 'System Details' }
+      ]
+    }
+  },
+  {
+    path: '/data-files',
+    name: 'dataFileList',
+    component: DataFileList,
+    meta: {
+      title: 'Data Files',
+      breadcrumbs: () => [
+        { name: 'Data Files' }
+      ]
+    }
+  },
+  {
+    path: '/data-file/:buildConfigName/:datafileName',
+    name: 'dataFileView',
+    component: DataFileView,
+    props: true,
+    meta: {
+      breadcrumbs: () => [
+        { name: 'Data Files', href: '/data-files' },
+        { name: 'View Data File' }
       ]
     }
   }
