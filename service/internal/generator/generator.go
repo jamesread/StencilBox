@@ -356,6 +356,7 @@ func copyLayers(outputDir string) {
 	layerBaseDir := filepath.Join(layersDir, "base")
 
 	copyFile(layerBaseDir, outputDir, "style.css")
+	copyFile(layerBaseDir, outputDir, "favicon.png")
 }
 
 func FindTemplateDir() string {
@@ -389,6 +390,12 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 		return linksData, fmt.Errorf("failed to create icons directory: %w", err)
 	}
 
+	// Copy placeholder icon once
+	placeholderIconPath := ensurePlaceholderIcon(iconsDir)
+	if placeholderIconPath == "" {
+		log.Warnf("Failed to copy placeholder icon, links without favicons will not have icons")
+	}
+
 	// Convert to map for processing
 	dataMap, ok := linksData.(map[string]any)
 	if !ok {
@@ -416,6 +423,16 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 						continue
 					}
 
+					// Check if icon is already explicitly set in the data file
+					if existingIcon, hasIcon := linkMap["icon"]; hasIcon {
+						if iconStr, ok := existingIcon.(string); ok && iconStr != "" {
+							// Icon is explicitly set, use it as-is
+							log.Debugf("Using explicitly set icon for %s: %s", linkURL, iconStr)
+							links[linkIdx] = linkMap
+							continue
+						}
+					}
+
 					// Generate a safe filename for the favicon
 					safeFilename := sanitizeFilename(linkURL)
 
@@ -433,7 +450,11 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 					faviconURL, err := scraper.GetFaviconURL(linkURL)
 					if err != nil {
 						log.Debugf("Failed to get favicon for %s: %v", linkURL, err)
-						// Continue without icon if fetch fails
+						// Use placeholder icon if fetch fails
+						if placeholderIconPath != "" {
+							linkMap["icon"] = placeholderIconPath
+							links[linkIdx] = linkMap
+						}
 						continue
 					}
 
@@ -441,7 +462,11 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 					iconFilename, err := scraper.DownloadFavicon(faviconURL, iconsDir, safeFilename)
 					if err != nil {
 						log.Debugf("Failed to download favicon for %s: %v", linkURL, err)
-						// Continue without icon if download fails
+						// Use placeholder icon if download fails
+						if placeholderIconPath != "" {
+							linkMap["icon"] = placeholderIconPath
+							links[linkIdx] = linkMap
+						}
 						continue
 					}
 
@@ -457,6 +482,38 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 	}
 
 	return dataMap, nil
+}
+
+func ensurePlaceholderIcon(iconsDir string) string {
+	placeholderFilename := "placeholder.png"
+	placeholderPath := filepath.Join(iconsDir, placeholderFilename)
+
+	// Check if placeholder already exists
+	if _, err := os.Stat(placeholderPath); err == nil {
+		return "icons/" + placeholderFilename
+	}
+
+	// Try to copy favicon.png from layers/base as placeholder
+	layersDir := findLayersDir()
+	layerBaseDir := filepath.Join(layersDir, "base")
+	sourcePath := filepath.Join(layerBaseDir, "favicon.png")
+
+	// Read the source favicon
+	contents, err := os.ReadFile(sourcePath)
+	if err != nil {
+		log.Debugf("Failed to read placeholder icon from %s: %v", sourcePath, err)
+		return ""
+	}
+
+	// Write to icons directory
+	err = os.WriteFile(placeholderPath, contents, 0644)
+	if err != nil {
+		log.Debugf("Failed to write placeholder icon: %v", err)
+		return ""
+	}
+
+	log.Debugf("Copied placeholder icon to %s", placeholderPath)
+	return "icons/" + placeholderFilename
 }
 
 func sanitizeFilename(urlStr string) string {
