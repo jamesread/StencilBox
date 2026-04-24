@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@antora/lunr-extension": "^1.0.0-alpha.10",
+    "@antora/lunr-extension": "^1.0.0-alpha.13",
     "antora": "^3.1.14",
     "asciidoctor-kroki": "^0.18.1"
   },
