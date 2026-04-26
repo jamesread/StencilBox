@@ -6,6 +6,7 @@ import (
 	"github.com/jamesread/StencilBox/internal/config"
 	clientapiconnect "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
 	auth "github.com/jamesread/httpauthshim"
+	"github.com/jamesread/httpauthshim/sessions"
 
 	connectcors "connectrpc.com/cors"
 
@@ -159,7 +160,7 @@ func setupAuth() (*auth.AuthShimContext, error) {
 		return nil, nil
 	}
 
-	authCtx, err := auth.NewAuthShimContext(authCfg)
+	authCtx, err := auth.NewAuthShimContext(authCfg, sessions.NewSessionStorage(nil))
 	if err != nil {
 		return nil, err
 	}
