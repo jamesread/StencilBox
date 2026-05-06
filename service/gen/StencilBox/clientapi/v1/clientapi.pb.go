@@ -917,8 +917,10 @@ type BuildHistoryEntry struct {
 	OutputSizeHumanReadable string                 `protobuf:"bytes,4,opt,name=output_size_human_readable,json=outputSizeHumanReadable,proto3" json:"output_size_human_readable,omitempty"`
 	BuildUrl                string                 `protobuf:"bytes,5,opt,name=build_url,json=buildUrl,proto3" json:"build_url,omitempty"`
 	IsAutoRebuild           bool                   `protobuf:"varint,6,opt,name=is_auto_rebuild,json=isAutoRebuild,proto3" json:"is_auto_rebuild,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// Wall-clock build duration from start to completion (milliseconds).
+	DurationMs    int64 `protobuf:"varint,7,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BuildHistoryEntry) Reset() {
@@ -991,6 +993,13 @@ func (x *BuildHistoryEntry) GetIsAutoRebuild() bool {
 		return x.IsAutoRebuild
 	}
 	return false
+}
+
+func (x *BuildHistoryEntry) GetDurationMs() int64 {
+	if x != nil {
+		return x.DurationMs
+	}
+	return 0
 }
 
 type GetBuildHistoryRequest struct {
@@ -1604,14 +1613,16 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\x12GetTemplateRequest\x12#\n" +
 	"\rtemplate_name\x18\x01 \x01(\tR\ftemplateName\"T\n" +
 	"\x13GetTemplateResponse\x12=\n" +
-	"\btemplate\x18\x01 \x01(\v2!.StencilBox.clientapi.v1.TemplateR\btemplate\"\xe6\x01\n" +
+	"\btemplate\x18\x01 \x01(\v2!.StencilBox.clientapi.v1.TemplateR\btemplate\"\x87\x02\n" +
 	"\x11BuildHistoryEntry\x12\x1c\n" +
 	"\ttimestamp\x18\x01 \x01(\x03R\ttimestamp\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x19\n" +
 	"\bis_error\x18\x03 \x01(\bR\aisError\x12;\n" +
 	"\x1aoutput_size_human_readable\x18\x04 \x01(\tR\x17outputSizeHumanReadable\x12\x1b\n" +
 	"\tbuild_url\x18\x05 \x01(\tR\bbuildUrl\x12&\n" +
-	"\x0fis_auto_rebuild\x18\x06 \x01(\bR\risAutoRebuild\"9\n" +
+	"\x0fis_auto_rebuild\x18\x06 \x01(\bR\risAutoRebuild\x12\x1f\n" +
+	"\vduration_ms\x18\a \x01(\x03R\n" +
+	"durationMs\"9\n" +
 	"\x16GetBuildHistoryRequest\x12\x1f\n" +
 	"\vconfig_name\x18\x01 \x01(\tR\n" +
 	"configName\"_\n" +

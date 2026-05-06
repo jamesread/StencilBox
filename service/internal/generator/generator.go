@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -20,6 +21,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// totalBuildTimeout is the maximum wall-clock time for a single generate run (template, favicons, git, vite).
+const totalBuildTimeout = 10 * time.Minute
+
 type BuildStatus struct {
 	IsError                 bool
 	Message                 string
@@ -28,10 +32,11 @@ type BuildStatus struct {
 }
 
 type BuildContext struct {
-	BuildConfig   *buildconfigs.BuildConfig
-	BuildStatus   *BuildStatus
-	UpdateChannel chan string
-	TemplateData  map[string]any
+	Ctx            context.Context
+	BuildConfig    *buildconfigs.BuildConfig
+	BuildStatus    *BuildStatus
+	UpdateChannel  chan string
+	TemplateData   map[string]any
 }
 
 func getNewTemplater() *template.Template {
@@ -44,12 +49,19 @@ func getNewTemplater() *template.Template {
 	return template.New("index.html").Funcs(funcMap).Option("missingkey=zero")
 }
 
-func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
-	ctx := &BuildContext{
-		BuildConfig:   cfg,
-		BuildStatus:   buildStatus,
-		UpdateChannel: updateChannel,
-		TemplateData:  make(map[string]any),
+func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
+	if parentCtx == nil {
+		parentCtx = context.Background()
+	}
+	deadlineCtx, cancel := context.WithTimeout(parentCtx, totalBuildTimeout)
+	defer cancel()
+
+	bctx := &BuildContext{
+		Ctx:            deadlineCtx,
+		BuildConfig:    cfg,
+		BuildStatus:    buildStatus,
+		UpdateChannel:  updateChannel,
+		TemplateData:   make(map[string]any),
 	}
 
 	updateChannel <- fmt.Sprintf("Starting build for project %s", cfg.Name)
@@ -82,6 +94,10 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 		return
 	}
 
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+		return
+	}
+
 	templateData := make(map[string]any)
 
 	for name, path := range cfg.Datafiles {
@@ -102,18 +118,30 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 		templateData[name] = dat
 	}
 
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+		return
+	}
+
 	log.Infof("Datafiles loaded: %+v", templateData)
 
 	// Process links data to add favicons
 	if linksData, ok := templateData["links"]; ok {
 		updateChannel <- "Fetching favicons for links..."
-		processedLinks, err := processLinksWithFavicons(linksData, temporaryOutputDir, updateChannel)
+		processedLinks, err := processLinksWithFavicons(deadlineCtx, linksData, temporaryOutputDir, updateChannel)
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+				abortBuild(deadlineCtx, buildStatus, updateChannel)
+				return
+			}
 			log.Warnf("Failed to process links with favicons: %v", err)
 			// Continue with original data if favicon processing fails
 		} else {
 			templateData["links"] = processedLinks
 		}
+	}
+
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+		return
 	}
 
 	outfile, err := os.Create(temporaryOutputDir + "/index.html")
@@ -124,7 +152,11 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 	}
 
 	repoStorageDir := getRepoStorageDir(cfg)
-	cloneRepos(ctx, repoStorageDir)
+	cloneRepos(bctx, repoStorageDir)
+
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+		return
+	}
 
 	templateData["hooks"] = buildRepoHooks(cfg, updateChannel)
 	templateData["buildconfig"] = cfg
@@ -144,13 +176,25 @@ func Generate(baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *
 		return
 	}
 
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+		return
+	}
+
 	copyLayers(temporaryOutputDir)
 
 	lnRepos(temporaryOutputDir, repoStorageDir)
 
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+		return
+	}
+
 	updateChannel <- "Running Vite build..."
 
-	runVite(ctx, temporaryOutputDir, finalOutputDir)
+	runVite(bctx, temporaryOutputDir, finalOutputDir)
+
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+		return
+	}
 
 	updateChannel <- "Build completed!"
 
@@ -231,7 +275,7 @@ func getRepoStorageDir(cfg *buildconfigs.BuildConfig) string {
 		os.MkdirAll(repoStorageDir, 0755)
 	}
 
-	log.Infof("repoPath:" + repoStorageDir)
+	log.Infof("repoPath: %s", repoStorageDir)
 
 	return repoStorageDir
 }
@@ -249,22 +293,27 @@ func lnRepos(finalOutputDir string, repoStorageDir string) {
 	}
 }
 
-func runVite(ctx *BuildContext, temporaryOutputDir string, finalOutputDir string) {
+func runVite(bctx *BuildContext, temporaryOutputDir string, finalOutputDir string) {
+	if abortBuild(bctx.Ctx, bctx.BuildStatus, bctx.UpdateChannel) {
+		return
+	}
+
 	req := &easyexec.ExecRequest{
 		Executable:       "vite",
 		Args:             []string{"build", "--outDir", finalOutputDir, "--base", "./"},
 		WorkingDirectory: temporaryOutputDir,
 		Log:              true,
+		Timeout:          remainingSubprocessSeconds(bctx.Ctx),
 	}
 
 	res := easyexec.ExecWithRequest(req)
 
 	if res.ExitCode != 0 {
-		ctx.BuildStatus.IsError = true
-		ctx.UpdateChannel <- fmt.Sprintf("Vite build failed with exit code %d", res.ExitCode)
-		ctx.UpdateChannel <- fmt.Sprintf("Vite output:\n%s", res.Output)
+		bctx.BuildStatus.IsError = true
+		bctx.UpdateChannel <- fmt.Sprintf("Vite build failed with exit code %d", res.ExitCode)
+		bctx.UpdateChannel <- fmt.Sprintf("Vite output:\n%s", res.Output)
 	} else {
-		ctx.UpdateChannel <- "Vite build completed successfully"
+		bctx.UpdateChannel <- "Vite build completed successfully"
 	}
 }
 
@@ -306,16 +355,58 @@ func getBuildUrlBase() string {
 	return ""
 }
 
-func cloneRepos(ctx *BuildContext, outputDir string) {
-	for _, repo := range ctx.BuildConfig.Repos {
-		ctx.UpdateChannel <- fmt.Sprintf("Cloning repo %s", repo.URL)
+// abortBuild reports context cancellation or deadline expiry and returns true if the build should stop.
+func abortBuild(ctx context.Context, buildStatus *BuildStatus, updateChannel chan string) bool {
+	if ctx.Err() == nil {
+		return false
+	}
+	if buildStatus.IsError {
+		return true
+	}
+	buildStatus.IsError = true
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		buildStatus.Message = fmt.Sprintf("Build exceeded the maximum time limit (%v)", totalBuildTimeout)
+	} else {
+		buildStatus.Message = "Build cancelled: " + ctx.Err().Error()
+	}
+	updateChannel <- buildStatus.Message
+	return true
+}
 
-		cloneRepo(repo, outputDir)
+// remainingSubprocessSeconds returns seconds left before the build context deadline (minimum 10 for easyexec).
+func remainingSubprocessSeconds(ctx context.Context) float64 {
+	d, ok := ctx.Deadline()
+	if !ok {
+		return totalBuildTimeout.Seconds()
+	}
+	rem := time.Until(d)
+	if rem <= 0 {
+		return 10
+	}
+	s := rem.Seconds()
+	if s < 10 {
+		return 10
+	}
+	return s
+}
+
+func cloneRepos(bctx *BuildContext, outputDir string) {
+	for _, repo := range bctx.BuildConfig.Repos {
+		if abortBuild(bctx.Ctx, bctx.BuildStatus, bctx.UpdateChannel) {
+			return
+		}
+		bctx.UpdateChannel <- fmt.Sprintf("Cloning repo %s", repo.URL)
+
+		cloneRepo(bctx.Ctx, repo, outputDir)
 	}
 }
 
-func cloneRepo(repo buildconfigs.GitRepo, outputDir string) {
-	repo.Timeout = math.Max(repo.Timeout, 60.0)
+func cloneRepo(ctx context.Context, repo buildconfigs.GitRepo, outputDir string) {
+	repoTimeout := math.Max(repo.Timeout, 60.0)
+	if rem := remainingSubprocessSeconds(ctx); rem < repoTimeout {
+		repoTimeout = rem
+	}
+	repo.Timeout = repoTimeout
 
 	log.Infof("Cloning or pulling repo %s with timeout %f seconds", repo.URL, repo.Timeout)
 
@@ -382,7 +473,48 @@ func copyFile(fromDir string, toDir string, filename string) {
 	log.Infof("Copied %v to %v", filename, toDir)
 }
 
-func processLinksWithFavicons(linksData any, outputDir string, updateChannel chan string) (any, error) {
+// countFaviconFetchJobs returns how many links will run a remote favicon fetch (same preconditions as the fetch loop).
+func countFaviconFetchJobs(dataMap map[string]any, iconsDir string) int {
+	n := 0
+	categories, ok := dataMap["categories"].([]any)
+	if !ok {
+		return 0
+	}
+	for _, category := range categories {
+		catMap, ok := category.(map[string]any)
+		if !ok {
+			continue
+		}
+		links, ok := catMap["links"].([]any)
+		if !ok {
+			continue
+		}
+		for _, link := range links {
+			linkMap, ok := link.(map[string]any)
+			if !ok {
+				continue
+			}
+			linkURL, ok := linkMap["url"].(string)
+			if !ok || linkURL == "" {
+				continue
+			}
+			if existingIcon, hasIcon := linkMap["icon"]; hasIcon {
+				if iconStr, ok := existingIcon.(string); ok && iconStr != "" {
+					continue
+				}
+			}
+			safeFilename := sanitizeFilename(linkURL)
+			iconPath := filepath.Join(iconsDir, safeFilename)
+			if _, err := os.Stat(iconPath); err == nil {
+				continue
+			}
+			n++
+		}
+	}
+	return n
+}
+
+func processLinksWithFavicons(ctx context.Context, linksData any, outputDir string, updateChannel chan string) (any, error) {
 	// Create icons directory
 	iconsDir := filepath.Join(outputDir, "icons")
 	err := os.MkdirAll(iconsDir, 0755)
@@ -402,9 +534,15 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 		return linksData, fmt.Errorf("links data is not a map")
 	}
 
+	totalFaviconJobs := countFaviconFetchJobs(dataMap, iconsDir)
+	faviconJob := 0
+
 	// Process categories
 	if categories, ok := dataMap["categories"].([]any); ok {
 		for catIdx, category := range categories {
+			if err := ctx.Err(); err != nil {
+				return linksData, err
+			}
 			catMap, ok := category.(map[string]any)
 			if !ok {
 				continue
@@ -412,6 +550,9 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 
 			if links, ok := catMap["links"].([]any); ok {
 				for linkIdx, link := range links {
+					if err := ctx.Err(); err != nil {
+						return linksData, err
+					}
 					linkMap, ok := link.(map[string]any)
 					if !ok {
 						continue
@@ -446,7 +587,8 @@ func processLinksWithFavicons(linksData any, outputDir string, updateChannel cha
 					}
 
 					// Fetch favicon
-					updateChannel <- fmt.Sprintf("Fetching favicon for %s...", linkURL)
+					faviconJob++
+					updateChannel <- fmt.Sprintf("Fetching favicon (%d of %d): %s", faviconJob, totalFaviconJobs, linkURL)
 					faviconURL, err := scraper.GetFaviconURL(linkURL)
 					if err != nil {
 						log.Debugf("Failed to get favicon for %s: %v", linkURL, err)

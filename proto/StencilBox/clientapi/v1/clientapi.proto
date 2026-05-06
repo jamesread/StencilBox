@@ -101,6 +101,8 @@ message BuildHistoryEntry {
   string output_size_human_readable = 4;
   string build_url = 5;
   bool is_auto_rebuild = 6;
+  // Wall-clock build duration from start to completion (milliseconds).
+  int64 duration_ms = 7;
 }
 
 message GetBuildHistoryRequest {

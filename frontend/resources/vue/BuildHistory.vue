@@ -18,6 +18,12 @@
 				<span v-else class="annotation">Manual</span>
 			</template>
 
+			<template #cell-durationMs="{ row }">
+				<span :class="row.durationMs === undefined || row.durationMs === null ? 'subtle' : ''">
+					{{ formatBuildDuration(row.durationMs) }}
+				</span>
+			</template>
+
 			<template #cell-outputSize="{ row, value }">
 				<span v-if="row.outputSizeHumanReadable">{{ row.outputSizeHumanReadable }}</span>
 				<span v-else class="subtle">N/A</span>
@@ -53,11 +59,37 @@ const history = ref([]);
 
 const headers = [
 	{ label: 'Time', key: 'timestamp', sortable: true },
+	{ label: 'Duration', key: 'durationMs', sortable: true },
 	{ label: 'Status', key: 'status', sortable: false },
 	{ label: 'Type', key: 'type', sortable: false },
 	{ label: 'Output Size', key: 'outputSize', sortable: false },
 	{ label: 'Build URL', key: 'buildUrl', sortable: false }
 ];
+
+function formatBuildDuration(durationMs) {
+	if (durationMs === undefined || durationMs === null) {
+		return 'N/A';
+	}
+	const ms = typeof durationMs === 'bigint' ? Number(durationMs) : durationMs;
+	if (!Number.isFinite(ms) || ms < 0) {
+		return 'N/A';
+	}
+	if (ms < 1000) {
+		return `${ms} ms`;
+	}
+	const sec = ms / 1000;
+	if (sec < 60) {
+		return sec < 10 ? `${sec.toFixed(1)} s` : `${Math.round(sec)} s`;
+	}
+	const min = Math.floor(sec / 60);
+	const remSec = Math.floor(sec % 60);
+	if (min < 60) {
+		return `${min}m ${remSec}s`;
+	}
+	const h = Math.floor(min / 60);
+	const remMin = min % 60;
+	return `${h}h ${remMin}m`;
+}
 
 function formatTimestamp(timestamp) {
 	if (!timestamp) return 'N/A';

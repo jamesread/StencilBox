@@ -17,6 +17,9 @@ import (
 	"golang.org/x/net/html"
 )
 
+// faviconFetchTimeout bounds each HTTP request used when resolving and downloading link favicons during builds.
+const faviconFetchTimeout = 8 * time.Second
+
 func normalizeURL(rawURL string) string {
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
@@ -33,7 +36,7 @@ func normalizeURL(rawURL string) string {
 
 func fetchPageContent(pageURL string) (string, error) {
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: faviconFetchTimeout,
 	}
 	req, err := http.NewRequest("GET", pageURL, nil)
 	if err != nil {
@@ -186,7 +189,7 @@ func DownloadFavicon(faviconURL, saveDir, filename string) (string, error) {
 	} else {
 		// Regular HTTP URL - download it
 		client := &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: faviconFetchTimeout,
 		}
 		req, err := http.NewRequest("GET", faviconURL, nil)
 		if err != nil {

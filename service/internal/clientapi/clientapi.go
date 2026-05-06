@@ -174,7 +174,8 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	}
 
 	buildStatus := &generator.BuildStatus{}
-	go generator.Generate(c.BaseOutputDir, buildConfig, buildStatus, updateChan)
+	buildStarted := time.Now()
+	go generator.Generate(ctx, c.BaseOutputDir, buildConfig, buildStatus, updateChan)
 
 	for update := range updateChan {
 		log.Infof("Build update: %s", update)
@@ -196,7 +197,7 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	srv.Send(response)
 
 	// Record build history
-	c.recordBuildHistory(req.Msg.ConfigName, buildStatus, buildConfig.OutputDir, false)
+	c.recordBuildHistory(req.Msg.ConfigName, buildStatus, buildConfig.OutputDir, false, time.Since(buildStarted))
 
 	return nil
 }
@@ -344,7 +345,8 @@ func (c *ClientApi) autoRebuild(configName string) {
 
 	// Run the build in a goroutine
 	go func() {
-		generator.Generate(c.BaseOutputDir, buildConfig, buildStatus, updateChan)
+		buildStarted := time.Now()
+		generator.Generate(context.Background(), c.BaseOutputDir, buildConfig, buildStatus, updateChan)
 
 		// Log all updates
 		for update := range updateChan {
@@ -358,12 +360,12 @@ func (c *ClientApi) autoRebuild(configName string) {
 		}
 
 		// Record build history
-		c.recordBuildHistory(configName, buildStatus, buildConfig.OutputDir, true)
+		c.recordBuildHistory(configName, buildStatus, buildConfig.OutputDir, true, time.Since(buildStarted))
 	}()
 }
 
 // recordBuildHistory records a build completion in the history
-func (c *ClientApi) recordBuildHistory(configName string, buildStatus *generator.BuildStatus, relativePath string, isAutoRebuild bool) {
+func (c *ClientApi) recordBuildHistory(configName string, buildStatus *generator.BuildStatus, relativePath string, isAutoRebuild bool, duration time.Duration) {
 	c.historyMu.Lock()
 	defer c.historyMu.Unlock()
 
@@ -376,6 +378,7 @@ func (c *ClientApi) recordBuildHistory(configName string, buildStatus *generator
 		IsError:                 buildStatus.IsError,
 		OutputSizeHumanReadable: buildStatus.OutputSizeHumanReadable,
 		IsAutoRebuild:           isAutoRebuild,
+		DurationMs:              duration.Milliseconds(),
 	}
 
 	// Build the build URL
