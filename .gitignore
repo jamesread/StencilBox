@@ -6,3 +6,4 @@ data/*
 build/
 dist/
 tmp/
+.vite

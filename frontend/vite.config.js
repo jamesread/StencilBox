@@ -3,6 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import Components from 'unplugin-vue-components/vite'
 
 export default defineConfig({
+  // Match production (`make` / `vite build --base '/webui/'`) and `createWebHistory('/webui')`
+  // so deep links like `/webui/build-configs` resolve to `index.html` on refresh in dev.
+  base: '/webui/',
   server: {
     proxy: {
       '/api': {

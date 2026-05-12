@@ -83,9 +83,21 @@
 		<div v-if="config" class="build-log-panel">
 			<div class="build-log-toolbar">
 				<span class="subtle">Build output — newest at bottom; scroll for full history (saved for this browser session).</span>
-				<button type="button" class="button build-log-clear" @click="clearBuildLog">
-					Clear log
-				</button>
+				<div class="build-log-toolbar-actions">
+					<span v-if="copyLogFeedback" class="subtle build-log-copy-feedback">{{ copyLogFeedback }}</span>
+					<button
+						type="button"
+						class="button build-log-copy"
+						:disabled="buildLogLines.length === 0"
+						@click="copyBuildLog"
+					>
+						Copy log
+						<HugeiconsIcon :icon="Copy01Icon" size="24" />
+					</button>
+					<button type="button" class="button build-log-clear" @click="clearBuildLog">
+						Clear log
+					</button>
+				</div>
 			</div>
 			<div
 				ref="buildLogEl"
@@ -149,9 +161,9 @@
 </template>
 
 <script setup>
-	import { ref, onMounted, nextTick, watch } from 'vue';
+	import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 	import { HugeiconsIcon } from '@hugeicons/vue';
-	import { LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
+	import { Copy01Icon, LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
 	import Section from 'picocrank/vue/components/Section.vue';
 	import BuildHistory from './BuildHistory.vue';
 
@@ -173,6 +185,51 @@
 	let logIdSeq = 0;
 
 	const lastBuildUpdate = ref(null);
+	const copyLogFeedback = ref('');
+	let copyFeedbackTimer = 0;
+
+	function buildLogAsPlainText() {
+		return buildLogLines.value
+			.map((line) => `[${line.clock}] ${line.elapsed} ${line.text}`)
+			.join('\n');
+	}
+
+	function showCopyLogFeedback(message) {
+		if (copyFeedbackTimer) {
+			clearTimeout(copyFeedbackTimer);
+		}
+		copyLogFeedback.value = message;
+		copyFeedbackTimer = window.setTimeout(() => {
+			copyLogFeedback.value = '';
+			copyFeedbackTimer = 0;
+		}, 2000);
+	}
+
+	async function copyBuildLog() {
+		const text = buildLogAsPlainText();
+		if (!text) {
+			return;
+		}
+		try {
+			if (navigator.clipboard && window.isSecureContext) {
+				await navigator.clipboard.writeText(text);
+			} else {
+				const ta = document.createElement('textarea');
+				ta.value = text;
+				ta.setAttribute('readonly', '');
+				ta.style.position = 'fixed';
+				ta.style.left = '-9999px';
+				document.body.appendChild(ta);
+				ta.select();
+				document.execCommand('copy');
+				document.body.removeChild(ta);
+			}
+			showCopyLogFeedback('Copied to clipboard.');
+		} catch (e) {
+			console.warn('Could not copy build log:', e);
+			showCopyLogFeedback('Could not copy.');
+		}
+	}
 
 	function buildLogStorageKey(configName) {
 		return BUILD_LOG_STORAGE_PREFIX + configName;
@@ -298,6 +355,12 @@
 		loadConfig();
 	});
 
+	onUnmounted(() => {
+		if (copyFeedbackTimer) {
+			clearTimeout(copyFeedbackTimer);
+		}
+	});
+
 	watch(
 		() => props.name,
 		() => {
@@ -309,6 +372,7 @@
 		if (!config.value) {
 			return;
 		}
+		clearBuildLog();
 		buildSessionStartMs = performance.now();
 		appendBuildLogLine(`── Build started: ${config.value.name} ──`, 'banner');
 		try {
@@ -370,6 +434,19 @@
 	margin-bottom: 0.35rem;
 }
 
+.build-log-toolbar-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem 0.75rem;
+}
+
+.build-log-copy-feedback {
+	white-space: nowrap;
+}
+
+.build-log-copy,
 .build-log-clear {
 	font-size: 0.9em;
 }
