@@ -5,12 +5,11 @@
 			breadcrumbs
 			title="StencilBox"
 			:username="currentUsername"
-			@toggleSidebar="sidebar.toggle()"
+			:sidebarEnabled="false"
+			@logoClick="goHome"
 			/>
 
 		<div id="layout">
-			<Sidebar ref="sidebar" />
-
 			<div id = "content">
 				<main>
 					<router-view />
@@ -28,17 +27,20 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 import logo from '../images/logo.png';
 
-import Breadcrumbs from 'picocrank/vue/components/Breadcrumbs.vue';
 import Navigation from 'picocrank/vue/components/Navigation.vue';
-import Sidebar from 'picocrank/vue/components/Sidebar.vue';
 import Header from 'picocrank/vue/components/Header.vue';
 
+const router = useRouter();
 const navigation = ref(null);
-const sidebar = ref(null);
 const currentUsername = ref('');
+
+function goHome() {
+	router.push({ name: 'welcome' });
+}
 
 async function loadCurrentUser() {
 	try {
@@ -53,18 +55,12 @@ async function loadCurrentUser() {
 }
 
 onMounted(() => {
-	// Add links to Navigation component instead of Sidebar
 	navigation.value.addRouterLink('welcome');
 	navigation.value.addRouterLink('buildConfigList');
 	navigation.value.addRouterLink('templateList');
 	navigation.value.addRouterLink('dataFileList');
 	navigation.value.addRouterLink('systemDetails');
 
-	// Sidebar will automatically read from Navigation component
-	sidebar.value.toggle();
-	sidebar.value.stick();
-
-	// Load current user info
 	loadCurrentUser();
 });
 

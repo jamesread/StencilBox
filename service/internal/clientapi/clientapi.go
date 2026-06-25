@@ -71,7 +71,25 @@ func NewServer(authCtx *auth.AuthShimContext) *ClientApi {
 		}
 	}
 
+	api.queueStartupBuilds()
+
 	return api
+}
+
+func (c *ClientApi) queueStartupBuilds() {
+	for name, cfg := range c.buildConfigs {
+		if !cfg.BuildOnStartup() {
+			continue
+		}
+
+		if cfg.ErrorMessage != "" {
+			log.Warnf("Skipping startup build for config %s: %s", name, cfg.ErrorMessage)
+			continue
+		}
+
+		log.Infof("Queueing startup build for config: %s", name)
+		c.autoRebuild(name)
+	}
 }
 
 func findOutputDir() string {
@@ -343,12 +361,11 @@ func (c *ClientApi) autoRebuild(configName string) {
 	updateChan := make(chan string)
 	buildStatus := &generator.BuildStatus{}
 
-	// Run the build in a goroutine
+	// Run the build in a goroutine; read updates concurrently so Generate does not block on the channel.
 	go func() {
 		buildStarted := time.Now()
-		generator.Generate(context.Background(), c.BaseOutputDir, buildConfig, buildStatus, updateChan)
+		go generator.Generate(context.Background(), c.BaseOutputDir, buildConfig, buildStatus, updateChan)
 
-		// Log all updates
 		for update := range updateChan {
 			log.Infof("[Auto-rebuild %s] %s", configName, update)
 		}
@@ -359,7 +376,6 @@ func (c *ClientApi) autoRebuild(configName string) {
 			log.Infof("Auto-rebuild completed successfully for %s", configName)
 		}
 
-		// Record build history
 		c.recordBuildHistory(configName, buildStatus, buildConfig.OutputDir, true, time.Since(buildStarted))
 	}()
 }

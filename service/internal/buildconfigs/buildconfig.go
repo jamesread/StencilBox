@@ -25,8 +25,19 @@ type BuildConfig struct {
 
 	PostProcessors []string
 
+	OnStartup *bool
+
 	//  Internal
 	Path string
+}
+
+// BuildOnStartup reports whether this config should be built when StencilBox starts.
+// Defaults to true when onstartup is omitted from the config file.
+func (cfg *BuildConfig) BuildOnStartup() bool {
+	if cfg.OnStartup == nil {
+		return true
+	}
+	return *cfg.OnStartup
 }
 
 type GitRepo struct {

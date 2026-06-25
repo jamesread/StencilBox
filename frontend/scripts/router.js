@@ -14,7 +14,8 @@ import {
 	Notification03Icon,
 	CodeSquareIcon,
 	Settings01Icon,
-	Configuration01Icon
+	Configuration01Icon,
+	File01Icon
 } from '@hugeicons/core-free-icons';
 
 
@@ -38,6 +39,7 @@ const routes = [
     meta: {
       title: 'Build Configs',
       icon: Configuration01Icon,
+      description: 'View and manage YAML build configurations',
       breadcrumbs: () => [
         { name: 'Build Configs' }
       ]
@@ -63,6 +65,7 @@ const routes = [
     meta: {
       title: 'Templates',
       icon: CodeSquareIcon,
+      description: 'Browse built-in and custom site templates',
       breadcrumbs: () => [
         { name: 'Templates' }
       ]
@@ -98,6 +101,7 @@ const routes = [
     meta: {
       title: 'System Details',
       icon: Settings01Icon,
+      description: 'Paths, version info, and system status',
       breadcrumbs: () => [
         { name: 'System Details' }
       ]
@@ -109,6 +113,8 @@ const routes = [
     component: DataFileList,
     meta: {
       title: 'Data Files',
+      icon: File01Icon,
+      description: 'View data files used by your builds',
       breadcrumbs: () => [
         { name: 'Data Files' }
       ]

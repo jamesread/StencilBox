@@ -2,6 +2,10 @@
 	<Section title = "Welcome">
 		<p><strong>Generate super speedy simple static sites, from sleek templates.</strong></p>
 
+		<NavigationGrid filter-type="route" :filter="mainNavLinks" />
+	</Section>
+
+	<Section title = "Ideas">
 		<p>Here's a quick list of suggestions for things you can build with StencilBox:</p>
 		<ul>
 			<li>Build a "homepage", "service catalog" or "landing page" for links that you can easily update from YAML (and loads super duper quickly!)</li>
@@ -31,4 +35,16 @@ import { HugeiconsIcon } from '@hugeicons/vue';
 import { File01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 
 import Section from 'picocrank/vue/components/Section.vue';
+import NavigationGrid from 'picocrank/vue/components/NavigationGrid.vue';
+
+const mainNavRouteNames = new Set([
+	'buildConfigList',
+	'templateList',
+	'dataFileList',
+	'systemDetails',
+]);
+
+function mainNavLinks(link) {
+	return mainNavRouteNames.has(link.name);
+}
 </script>
