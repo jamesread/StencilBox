@@ -6,3 +6,5 @@ If you've ever used static site generators like Hugo, this is very similar. The 
 
 * xref:install/docker-compose.adoc[Installation Guide].
 * xref:getting-started.adoc[Getting Started Guide].
+
+This documentation site is llm.txt compatible. See https://jamesread.github.io/StencilBox/llm.txt[llm.txt] and https://jamesread.github.io/StencilBox/llm-full.txt[llm-full.txt].

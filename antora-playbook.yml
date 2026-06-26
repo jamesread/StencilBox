@@ -1,6 +1,7 @@
 ---
 site:
   title: StencilBox docs
+  url: https://jamesread.github.io/StencilBox/
   start_page: ROOT::index.adoc
   robots: allow
 content:

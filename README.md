@@ -39,7 +39,7 @@ StencilBox is similar in concept to those tools, with the following differences 
 <details>
   <summary>How does it compare to Hugo, Jekyll, and other static site generators?</summary>
 
-  StencilBox is also very similar in concept to many other static site generators, but it's focus on YAML data files and providing a simple repeatable workflow for multiple sites is a key difference. 
+  StencilBox is also very similar in concept to many other static site generators, but it's focus on YAML data files and providing a simple repeatable workflow for multiple sites is a key difference.
 
 Many other tools are focussed on text content (typically via Markdown) - which is geat for public websites, blogs and similar. StencilBox doesn't support Markdown (yet), and it's main purpose is to turn data into sites, rather than content. Hugo and Jekyll **can do this**, they're excellent tools, but StencilBox was built after trying to use those tools and finding them too complex for the simple use cases StencilBox targets.
 
@@ -65,6 +65,8 @@ The admin interface, showing the build configs:<br />
 ## Installation Guide & Documentation
 
 The StencilBox docs can all be found here; [Installation Guide & Documentation](https://jamesread.github.io/StencilBox/index.html)
+
+This documentation site is llm.txt compatible: [llm.txt](https://jamesread.github.io/StencilBox/llm.txt) and [llm-full.txt](https://jamesread.github.io/StencilBox/llm-full.txt).
 
 ## No-Nonsense Software Principles
 
