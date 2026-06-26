@@ -462,6 +462,19 @@ func copyFile(fromDir string, toDir string, filename string) {
 	log.Infof("Copied %v to %v", filename, toDir)
 }
 
+// linkFaviconBaseURL returns the URL used to fetch a link's favicon. When url_internal is set it
+// is used instead of url so favicons can be resolved from an internal endpoint that does not
+// require reverse-proxy authentication.
+func linkFaviconBaseURL(linkMap map[string]any) string {
+	if internalURL, ok := linkMap["url_internal"].(string); ok && internalURL != "" {
+		return internalURL
+	}
+	if linkURL, ok := linkMap["url"].(string); ok {
+		return linkURL
+	}
+	return ""
+}
+
 // countFaviconFetchJobs returns how many links will run a remote favicon fetch (same preconditions as the fetch loop).
 func countFaviconFetchJobs(dataMap map[string]any, iconsDir string) int {
 	n := 0
@@ -572,12 +585,14 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 						continue
 					}
 
+					faviconBaseURL := linkFaviconBaseURL(linkMap)
+
 					// Fetch favicon
 					faviconJob++
-					updateChannel <- fmt.Sprintf("Fetching favicon (%d of %d): %s", faviconJob, totalFaviconJobs, linkURL)
-					faviconURL, err := scraper.GetFaviconURL(linkURL)
+					updateChannel <- fmt.Sprintf("Fetching favicon (%d of %d): %s", faviconJob, totalFaviconJobs, faviconBaseURL)
+					faviconURL, err := scraper.GetFaviconURL(faviconBaseURL)
 					if err != nil {
-						log.Debugf("Failed to get favicon for %s: %v", linkURL, err)
+						log.Debugf("Failed to get favicon for %s: %v", faviconBaseURL, err)
 						// Use placeholder icon if fetch fails
 						if placeholderIconPath != "" {
 							linkMap["icon"] = placeholderIconPath

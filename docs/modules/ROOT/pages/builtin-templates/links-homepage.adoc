@@ -23,6 +23,10 @@ categories:
     - url: stackoverflow.com
       title: Stack Overflow
 
+    - url: https://grafana.example.com
+      url_internal: http://grafana.internal:3000
+      title: Grafana
+
   - title: Funny sites
     links:
       - url: xkcd.com
@@ -31,6 +35,11 @@ categories:
       - url: theonion.com
         title: The Onion
 ----
+
+Each link requires a `url` (used for the hyperlink) and `title`. Optional fields:
+
+* `url_internal` -- when set, used as the base URL to fetch the favicon during build instead of `url`. Use this when the public URL sits behind a reverse proxy that requires authentication but an internal URL is reachable from the build environment.
+* `icon` -- path or URL to a favicon; when set, automatic favicon fetching is skipped.
 
 == Example Build Config
 
