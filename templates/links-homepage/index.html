@@ -24,7 +24,7 @@
 			{{ range .links }}
 				<a href = "{{ .url }}">
 					{{ if .icon }}
-						<img src = "{{ .icon }}" alt = "" class = "favicon" />
+						{{ linkIconHTML .icon "favicon" "" }}
 					{{ end }}
 					{{ .title }}
 				</a>

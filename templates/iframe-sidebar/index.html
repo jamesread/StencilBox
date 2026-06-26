@@ -54,7 +54,7 @@ iframe {
 		{{ range .links.links }}
 		<li>
 			<a href = "#" onclick = "changeTab(this, '{{ .url }}', '{{ .title }}')">
-			<img src = "{{ .icon }}" width = "32" />
+			{{ linkIconHTML .icon "" "style=\"width:32px;height:32px\"" }}
 			<span class = "title">{{ .title }}</span>
 		</a>
 		{{ end }}

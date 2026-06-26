@@ -218,18 +218,21 @@ func DownloadFavicon(faviconURL, saveDir, filename string) (string, error) {
 		mimeType = resp.Header.Get("Content-Type")
 	}
 
-	// Determine file extension from filename, MIME type, or default
-	ext := filepath.Ext(filename)
+	// Determine file extension from filename, favicon URL, MIME type, or default.
+	ext := imageFileExt(filename)
+	if ext == "" && faviconURL != "" {
+		ext = imageFileExt(faviconURL)
+	}
 	if ext == "" {
 		if mimeType != "" {
-			// Try to get extension from MIME type
-			exts, err := mime.ExtensionsByType(mimeType)
+			mediaType, _, _ := strings.Cut(mimeType, ";")
+			mediaType = strings.TrimSpace(mediaType)
+			exts, err := mime.ExtensionsByType(mediaType)
 			if err == nil && len(exts) > 0 {
-				ext = exts[0] // Use first extension
+				ext = exts[0]
 			}
 		}
 
-		// Fallback to manual detection if mime package didn't help
 		if ext == "" {
 			if strings.Contains(mimeType, "png") {
 				ext = ".png"
@@ -243,6 +246,8 @@ func DownloadFavicon(faviconURL, saveDir, filename string) (string, error) {
 				ext = ".ico" // default
 			}
 		}
+	}
+	if imageFileExt(filename) == "" {
 		filename = filename + ext
 	}
 
@@ -290,6 +295,42 @@ func getFavicon(node *html.Node) string {
 	}
 
 	return ""
+}
+
+var knownImageExtensions = map[string]bool{
+	".png":  true,
+	".jpg":  true,
+	".jpeg": true,
+	".gif":  true,
+	".svg":  true,
+	".ico":  true,
+	".webp": true,
+}
+
+func imageFileExt(path string) string {
+	path = strings.Split(path, "?")[0]
+	path = strings.Split(path, "#")[0]
+	ext := strings.ToLower(filepath.Ext(path))
+	if knownImageExtensions[ext] {
+		return ext
+	}
+	return ""
+}
+
+// IsSVGContent reports whether path points to a file whose contents look like SVG.
+func IsSVGContent(path string) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	trimmed := strings.TrimSpace(string(data))
+	if strings.HasPrefix(trimmed, "<svg") {
+		return true
+	}
+	if strings.HasPrefix(trimmed, "<?xml") {
+		return strings.Contains(strings.ToLower(trimmed), "<svg")
+	}
+	return false
 }
 
 func searchLinksForFavicon(sel *goquery.Selection) string {

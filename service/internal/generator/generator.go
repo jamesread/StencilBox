@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
@@ -37,16 +36,6 @@ type BuildContext struct {
 	BuildStatus    *BuildStatus
 	UpdateChannel  chan string
 	TemplateData   map[string]any
-}
-
-func getNewTemplater() *template.Template {
-	funcMap := template.FuncMap{
-		"upper":   strings.ToUpper,
-		"lower":   strings.ToLower,
-		"replace": strings.ReplaceAll,
-	}
-
-	return template.New("index.html").Funcs(funcMap).Option("missingkey=zero")
 }
 
 func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
@@ -84,7 +73,7 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 
 	indexPath := filepath.Join(FindTemplateDir(), cfg.Template, "index.html")
 
-	tmpl, err := getNewTemplater().ParseFiles(indexPath)
+	tmpl, err := getNewTemplater(temporaryOutputDir).ParseFiles(indexPath)
 
 	if err != nil {
 		updateChannel <- "Failed to parse template: " + err.Error()
@@ -504,8 +493,7 @@ func countFaviconFetchJobs(dataMap map[string]any, iconsDir string) int {
 				}
 			}
 			safeFilename := sanitizeFilename(linkURL)
-			iconPath := filepath.Join(iconsDir, safeFilename)
-			if _, err := os.Stat(iconPath); err == nil {
+			if findExistingIconFile(iconsDir, safeFilename) != "" {
 				continue
 			}
 			n++
@@ -578,10 +566,8 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 					safeFilename := sanitizeFilename(linkURL)
 
 					// Check if favicon already exists
-					iconPath := filepath.Join(iconsDir, safeFilename)
-					if _, err := os.Stat(iconPath); err == nil {
-						// Favicon already exists, use it
-						linkMap["icon"] = "icons/" + safeFilename
+					if existingIcon := findExistingIconFile(iconsDir, safeFilename); existingIcon != "" {
+						linkMap["icon"] = "icons/" + existingIcon
 						links[linkIdx] = linkMap
 						continue
 					}
@@ -678,6 +664,25 @@ func sanitizeFilename(urlStr string) string {
 	}
 
 	return urlStr
+}
+
+func findExistingIconFile(iconsDir, baseName string) string {
+	if baseName == "" {
+		return ""
+	}
+
+	if _, err := os.Stat(filepath.Join(iconsDir, baseName)); err == nil {
+		return baseName
+	}
+
+	for _, ext := range []string{".svg", ".png", ".jpg", ".jpeg", ".ico", ".gif", ".webp"} {
+		filename := baseName + ext
+		if _, err := os.Stat(filepath.Join(iconsDir, filename)); err == nil {
+			return filename
+		}
+	}
+
+	return ""
 }
 
 func readDatafile(path string, buildconfigPath string) (any, error) {
