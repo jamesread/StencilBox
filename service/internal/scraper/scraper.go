@@ -20,7 +20,7 @@ import (
 // faviconFetchTimeout bounds each HTTP request used when resolving and downloading link favicons during builds.
 const faviconFetchTimeout = 8 * time.Second
 
-func normalizeURL(rawURL string) string {
+func NormalizeURL(rawURL string) string {
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
 		return ""
@@ -87,7 +87,7 @@ func resolveFaviconURL(faviconURL, pageURL string) string {
 
 // GetFaviconURL fetches the favicon URL from a webpage
 func GetFaviconURL(pageURL string) (string, error) {
-	normalizedURL := normalizeURL(pageURL)
+	normalizedURL := NormalizeURL(pageURL)
 	if normalizedURL == "" {
 		return "", fmt.Errorf("invalid URL: %s", pageURL)
 	}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
+	"github.com/jamesread/StencilBox/internal/buildinfo"
 	"github.com/jamesread/StencilBox/internal/scraper"
 	"github.com/jamesread/golure/pkg/dirs"
 	"github.com/jamesread/golure/pkg/easyexec"
@@ -150,10 +151,11 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	templateData["hooks"] = buildRepoHooks(cfg, updateChannel)
 	templateData["buildconfig"] = cfg
 
-	// Add build date/time to templateData
+	// Add build date/time and StencilBox version to templateData
 	buildTime := time.Now()
 	templateData["buildDate"] = buildTime.Format(time.RFC3339)
 	templateData["buildDateFormatted"] = buildTime.Format("January 2, 2006 at 3:04 PM MST")
+	templateData["version"] = buildinfo.Version
 
 	log.Infof("Template data: %+v", templateData)
 
@@ -535,6 +537,8 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 		return linksData, fmt.Errorf("links data is not a map")
 	}
 
+	normalizeLinksDataURLs(dataMap)
+
 	totalFaviconJobs := countFaviconFetchJobs(dataMap, iconsDir)
 	faviconJob := 0
 
@@ -625,6 +629,39 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 	}
 
 	return dataMap, nil
+}
+
+// normalizeLinksDataURLs ensures scheme-less link URLs become absolute https:// hrefs.
+func normalizeLinksDataURLs(dataMap map[string]any) {
+	normalizeLinkSlice := func(links []any) {
+		for _, link := range links {
+			linkMap, ok := link.(map[string]any)
+			if !ok {
+				continue
+			}
+			linkURL, ok := linkMap["url"].(string)
+			if !ok || linkURL == "" {
+				continue
+			}
+			linkMap["url"] = scraper.NormalizeURL(linkURL)
+		}
+	}
+
+	if categories, ok := dataMap["categories"].([]any); ok {
+		for _, category := range categories {
+			catMap, ok := category.(map[string]any)
+			if !ok {
+				continue
+			}
+			if links, ok := catMap["links"].([]any); ok {
+				normalizeLinkSlice(links)
+			}
+		}
+	}
+
+	if links, ok := dataMap["links"].([]any); ok {
+		normalizeLinkSlice(links)
+	}
 }
 
 func ensurePlaceholderIcon(iconsDir string) string {

@@ -49,3 +49,38 @@ func TestLinkFaviconBaseURL(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeLinksDataURLs(t *testing.T) {
+	t.Parallel()
+
+	data := map[string]any{
+		"categories": []any{
+			map[string]any{
+				"title": "tech",
+				"links": []any{
+					map[string]any{"url": "xkcd.com", "title": "XKCD"},
+					map[string]any{"url": "https://github.com", "title": "GitHub"},
+				},
+			},
+		},
+		"links": []any{
+			map[string]any{"url": "google.com", "title": "Google"},
+		},
+	}
+
+	normalizeLinksDataURLs(data)
+
+	categories := data["categories"].([]any)
+	catLinks := categories[0].(map[string]any)["links"].([]any)
+	if got := catLinks[0].(map[string]any)["url"]; got != "https://xkcd.com" {
+		t.Fatalf("category link url = %q, want https://xkcd.com", got)
+	}
+	if got := catLinks[1].(map[string]any)["url"]; got != "https://github.com" {
+		t.Fatalf("category link url = %q, want https://github.com", got)
+	}
+
+	flatLinks := data["links"].([]any)
+	if got := flatLinks[0].(map[string]any)["url"]; got != "https://google.com" {
+		t.Fatalf("flat link url = %q, want https://google.com", got)
+	}
+}

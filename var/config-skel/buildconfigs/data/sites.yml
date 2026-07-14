@@ -1,16 +1,156 @@
 title: My Favorite Sites
 
 categories:
-  - title: tech sites
+  - title: Tech community
     links:
-    - url: github.com
-      title: GitHub
+      - url: news.ycombinator.com
+        title: Hacker News
 
-    - url: slashdot.com
-      title: Slashdot
+      - url: lobste.rs
+        title: Lobsters
 
-    - url: stackoverflow.com
-      title: Stack Overflow
+      - url: slashdot.org
+        title: Slashdot
+
+  - title: Tech news
+    links:
+      - url: arstechnica.com
+        title: Ars Technica
+
+      - url: theregister.com
+        title: The Register
+
+      - url: lwn.net
+        title: LWN.net
+
+      - url: osnews.com
+        title: OSNews
+
+  - title: Code forges
+    links:
+      - url: github.com
+        title: GitHub
+
+      - url: gitlab.com
+        title: GitLab
+
+      - url: stackoverflow.com
+        title: Stack Overflow
+
+  - title: Languages & docs
+    links:
+      - url: developer.mozilla.org
+        title: MDN Web Docs
+
+      - url: go.dev
+        title: Go
+
+      - url: rust-lang.org
+        title: Rust
+
+  - title: Containers & cloud
+    links:
+      - url: docs.docker.com
+        title: Docker Docs
+
+      - url: kubernetes.io
+        title: Kubernetes
+
+      - url: cloudflare.com/learning
+        title: Cloudflare Learning
+
+  - title: Self-hosting guides
+    links:
+      - url: selfh.st
+        title: selfh.st
+
+      - url: github.com/awesome-selfhosted/awesome-selfhosted
+        title: Awesome Selfhosted
+
+      - url: linuxserver.io
+        title: LinuxServer.io
+
+  - title: Homelab infrastructure
+    links:
+      - url: proxmox.com
+        title: Proxmox
+
+      - url: truenas.com
+        title: TrueNAS
+
+      - url: portainer.io
+        title: Portainer
+
+  - title: Self-hosted apps
+    links:
+      - url: jellyfin.org
+        title: Jellyfin
+
+      - url: nextcloud.com
+        title: Nextcloud
+
+      - url: home-assistant.io
+        title: Home Assistant
+
+      - url: n8n.io
+        title: n8n
+
+  - title: Sync & secrets
+    links:
+      - url: syncthing.net
+        title: Syncthing
+
+      - url: github.com/dani-garcia/vaultwarden
+        title: Vaultwarden
+
+  - title: Privacy
+    links:
+      - url: privacyguides.org
+        title: Privacy Guides
+
+      - url: mozilla.org
+        title: Mozilla
+
+      - url: fsf.org
+        title: Free Software Foundation
+
+  - title: Open source
+    links:
+      - url: opensource.org
+        title: Open Source Initiative
+
+      - url: wikipedia.org
+        title: Wikipedia
+
+      - url: archive.org
+        title: Internet Archive
+
+  - title: Communication
+    links:
+      - url: matrix.org
+        title: Matrix
+
+      - url: joinmastodon.org
+        title: Mastodon
+
+  - title: Linux & standards
+    links:
+      - url: wiki.archlinux.org
+        title: Arch Wiki
+
+      - url: kernel.org
+        title: Linux Kernel
+
+      - url: rfc-editor.org
+        title: RFC Editor
+
+  - title: Security & TLS
+    links:
+      - url: openssl.org
+        title: OpenSSL
+
+      - url: letsencrypt.org
+        title: Let's Encrypt
 
   - title: Funny sites
     links:
@@ -19,3 +159,12 @@ categories:
 
       - url: theonion.com
         title: The Onion
+
+      - url: thedailywtf.com
+        title: The Daily WTF
+
+      - url: commitstrip.com
+        title: CommitStrip
+
+      - url: monkeyuser.com
+        title: MonkeyUser

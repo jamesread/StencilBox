@@ -1,10 +1,24 @@
 <!DOCTYPE html>
 
 <head>
+	<meta charset="utf-8" />
 	<link rel = "stylesheet" href = "style.css" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>{{ .links.title }}</title>
 	<link rel="icon" type="image/png" href="favicon.png" />
+	<script>
+		(function () {
+			var view = localStorage.getItem('stencilbox-links-view');
+			if (view !== 'icons' && view !== 'list') {
+				view = 'list';
+			}
+			var theme = localStorage.getItem('stencilbox-links-theme');
+			if (theme !== 'dark' && theme !== 'light') {
+				theme = 'light';
+			}
+			document.documentElement.classList.add('view-' + view, 'theme-' + theme);
+		})();
+	</script>
 
 	{{ .hooks.head }}
 </head>
@@ -26,7 +40,7 @@
 					{{ if .icon }}
 						{{ linkIconHTML .icon "favicon" "" }}
 					{{ end }}
-					{{ .title }}
+					<span class="link-title">{{ .title }}</span>
 				</a>
 			{{ end }}
 		</div>
@@ -34,6 +48,103 @@
 	</main>
 
 	<footer>
-		<p>Last built: {{ .buildDateFormatted }}</p>
+		<button type="button" class="options-open" aria-haspopup="dialog" aria-controls="page-options">Options</button>
+		<p>Last built: {{ .buildDateFormatted }} · StencilBox {{ .version }}</p>
 	</footer>
+
+	<dialog id="page-options" class="options-dialog">
+		<form method="dialog" class="options-dialog-form">
+			<header class="options-dialog-header">
+				<h3>Options</h3>
+				<button type="submit" class="options-dialog-close" value="close" aria-label="Close options">×</button>
+			</header>
+			<div class="options-dialog-body">
+				<section class="options-group">
+					<h4>View</h4>
+					<div class="segmented-control" role="group" aria-label="View mode">
+						<button type="button" class="segmented-control-btn" data-pref="view" data-value="list" aria-pressed="true">List</button>
+						<button type="button" class="segmented-control-btn" data-pref="view" data-value="icons" aria-pressed="false">Icons</button>
+					</div>
+				</section>
+				<section class="options-group">
+					<h4>Theme</h4>
+					<div class="segmented-control" role="group" aria-label="Color theme">
+						<button type="button" class="segmented-control-btn" data-pref="theme" data-value="light" aria-pressed="true">Light</button>
+						<button type="button" class="segmented-control-btn" data-pref="theme" data-value="dark" aria-pressed="false">Dark</button>
+					</div>
+				</section>
+			</div>
+		</form>
+	</dialog>
+
+	<script>
+		(function () {
+			var prefs = {
+				view: {
+					key: 'stencilbox-links-view',
+					values: ['list', 'icons'],
+					fallback: 'list'
+				},
+				theme: {
+					key: 'stencilbox-links-theme',
+					values: ['light', 'dark'],
+					fallback: 'light'
+				}
+			};
+			var dialog = document.getElementById('page-options');
+			var openBtn = document.querySelector('.options-open');
+
+			function isAllowed(pref, value) {
+				return prefs[pref].values.indexOf(value) !== -1;
+			}
+
+			function currentValue(pref) {
+				var prefix = pref + '-';
+				for (var i = 0; i < document.documentElement.classList.length; i++) {
+					var cls = document.documentElement.classList[i];
+					if (cls.indexOf(prefix) === 0) {
+						var value = cls.slice(prefix.length);
+						if (isAllowed(pref, value)) {
+							return value;
+						}
+					}
+				}
+				return prefs[pref].fallback;
+			}
+
+			function setPref(pref, value) {
+				if (!isAllowed(pref, value)) {
+					value = prefs[pref].fallback;
+				}
+				prefs[pref].values.forEach(function (allowed) {
+					document.documentElement.classList.remove(pref + '-' + allowed);
+				});
+				document.documentElement.classList.add(pref + '-' + value);
+				localStorage.setItem(prefs[pref].key, value);
+				document.querySelectorAll('.segmented-control-btn[data-pref="' + pref + '"]').forEach(function (btn) {
+					btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === value ? 'true' : 'false');
+				});
+			}
+
+			document.querySelectorAll('.segmented-control-btn').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					setPref(btn.getAttribute('data-pref'), btn.getAttribute('data-value'));
+				});
+			});
+
+			Object.keys(prefs).forEach(function (pref) {
+				setPref(pref, currentValue(pref));
+			});
+
+			openBtn.addEventListener('click', function () {
+				dialog.showModal();
+			});
+
+			dialog.addEventListener('click', function (event) {
+				if (event.target === dialog) {
+					dialog.close();
+				}
+			});
+		})();
+	</script>
 </body>

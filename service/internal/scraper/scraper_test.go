@@ -7,6 +7,26 @@ import (
 	"testing"
 )
 
+func TestNormalizeURL(t *testing.T) {
+	tests := []struct {
+		raw  string
+		want string
+	}{
+		{"", ""},
+		{"  ", ""},
+		{"xkcd.com", "https://xkcd.com"},
+		{"https://xkcd.com", "https://xkcd.com"},
+		{"http://example.com", "http://example.com"},
+		{"  github.com/foo  ", "https://github.com/foo"},
+	}
+
+	for _, tt := range tests {
+		if got := NormalizeURL(tt.raw); got != tt.want {
+			t.Errorf("NormalizeURL(%q) = %q, want %q", tt.raw, got, tt.want)
+		}
+	}
+}
+
 func TestImageFileExt(t *testing.T) {
 	tests := []struct {
 		path string
