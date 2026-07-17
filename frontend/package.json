@@ -11,13 +11,13 @@
   "dependencies": {
     "@connectrpc/connect": "^2.1.2",
     "@connectrpc/connect-web": "^2.1.2",
-    "@hugeicons/core-free-icons": "^4.2.1",
+    "@hugeicons/core-free-icons": "^4.2.2",
     "@hugeicons/vue": "^1.0.7",
-    "@vitejs/plugin-vue": "^6.0.7",
-    "picocrank": "^1.17.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "picocrank": "^1.19.0",
     "unplugin-vue-components": "^32.1.0",
-    "vite": "^8.1.0",
-    "vue-router": "^5.1.0",
+    "vite": "^8.1.5",
+    "vue-router": "^5.2.0",
     "yaml": "^2.9.0"
   }
 }
