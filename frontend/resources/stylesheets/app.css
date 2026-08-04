@@ -1,10 +1,6 @@
 @import 'femtocrank/style.css';
 @import 'femtocrank/dark.css' screen and (prefers-color-scheme: dark);
 
-header .image-and-title {
-	cursor: pointer;
-}
-
 section.small {
 	margin: auto;
 	max-width: 720px;
