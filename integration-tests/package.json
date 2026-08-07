@@ -1,0 +1,15 @@
+{
+  "name": "stencilbox-integration-tests",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "description": "Integration tests for StencilBox's web UI.",
+  "scripts": {
+    "test:run": "node run-tests.js"
+  },
+  "devDependencies": {
+    "mocha": "^11.7.6",
+    "selenium-webdriver": "^4.46.0",
+    "wait-on": "^9.0.10"
+  }
+}

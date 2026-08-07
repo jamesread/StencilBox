@@ -7,8 +7,14 @@ option go_package = "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1
 message InitRequest {
 }
 
+message SearchHints {
+  // Lightweight build config names for the header search index.
+  repeated string build_configs = 1;
+}
+
 message InitResponse {
   string version = 1;
+  SearchHints search_hints = 2;
 }
 
 message Template {

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jamesread/StencilBox/internal/config"
 	"github.com/jamesread/golure/pkg/dirs"
 	"github.com/jamesread/golure/pkg/git"
 	log "github.com/sirupsen/logrus"
@@ -46,6 +47,10 @@ type GitRepo struct {
 }
 
 func GetConfigDir() (string, error) {
+	if dir := config.OverrideDir(); dir != "" {
+		return filepath.Join(dir, "buildconfigs"), nil
+	}
+
 	directoriesToSearch := []string{
 		"/config/buildconfigs/",
 		"../var/config-skel/buildconfigs/",

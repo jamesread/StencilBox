@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 
@@ -122,7 +123,21 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 		}
 	}
 
+	response.SearchHints = c.buildSearchHints()
+
 	return connect.NewResponse(response), nil
+}
+
+func (c *ClientApi) buildSearchHints() *pb.SearchHints {
+	hints := &pb.SearchHints{}
+
+	for name := range c.buildConfigs {
+		hints.BuildConfigs = append(hints.BuildConfigs, name)
+	}
+
+	sort.Strings(hints.BuildConfigs)
+
+	return hints
 }
 
 type TemplateMetadata struct {

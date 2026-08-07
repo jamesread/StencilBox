@@ -15,7 +15,22 @@ type Config struct {
 	Auth          *authpublic.Config `yaml:"auth"`
 }
 
+// overrideDir is set via -configdir and takes priority over search paths.
+var overrideDir string
+
+func SetConfigDir(dir string) {
+	overrideDir = dir
+}
+
+func OverrideDir() string {
+	return overrideDir
+}
+
 func GetConfigPath() string {
+	if overrideDir != "" {
+		return filepath.Join(overrideDir, "config.yaml")
+	}
+
 	directoriesToSearch := []string{
 		"/config/config.yaml",
 		"../var/config-skel/config.yaml",

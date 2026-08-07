@@ -93,6 +93,8 @@
 			};
 			var dialog = document.getElementById('page-options');
 			var openBtn = document.querySelector('.options-open');
+			var grid = document.querySelector('main.grid');
+			var recenterFrame = 0;
 
 			function isAllowed(pref, value) {
 				return prefs[pref].values.indexOf(value) !== -1;
@@ -112,6 +114,65 @@
 				return prefs[pref].fallback;
 			}
 
+			function centerColumns() {
+				if (!grid) {
+					return;
+				}
+
+				grid.style.width = '';
+				grid.style.columnCount = '';
+
+				var items = grid.querySelectorAll('.linklist');
+				if (!items.length) {
+					return;
+				}
+
+				var leftPositions = [];
+				var minLeft = Infinity;
+				var maxRight = -Infinity;
+				for (var i = 0; i < items.length; i++) {
+					var rect = items[i].getBoundingClientRect();
+					if (rect.width === 0 && rect.height === 0) {
+						continue;
+					}
+					minLeft = Math.min(minLeft, rect.left);
+					maxRight = Math.max(maxRight, rect.right);
+					var left = Math.round(rect.left);
+					if (leftPositions.indexOf(left) === -1) {
+						leftPositions.push(left);
+					}
+				}
+
+				var usedCols = leftPositions.length;
+				if (!usedCols || !isFinite(minLeft) || !isFinite(maxRight)) {
+					return;
+				}
+
+				var style = getComputedStyle(grid);
+				var paddingLeft = parseFloat(style.paddingLeft) || 0;
+				var paddingRight = parseFloat(style.paddingRight) || 0;
+				var available = grid.getBoundingClientRect().width - paddingLeft - paddingRight;
+				var contentWidth = maxRight - minLeft;
+				if (contentWidth >= available - 1) {
+					return;
+				}
+
+				grid.style.columnCount = String(usedCols);
+				grid.style.width = contentWidth + 'px';
+			}
+
+			function scheduleCenterColumns() {
+				if (recenterFrame) {
+					cancelAnimationFrame(recenterFrame);
+				}
+				recenterFrame = requestAnimationFrame(function () {
+					recenterFrame = requestAnimationFrame(function () {
+						recenterFrame = 0;
+						centerColumns();
+					});
+				});
+			}
+
 			function setPref(pref, value) {
 				if (!isAllowed(pref, value)) {
 					value = prefs[pref].fallback;
@@ -124,6 +185,9 @@
 				document.querySelectorAll('.segmented-control-btn[data-pref="' + pref + '"]').forEach(function (btn) {
 					btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === value ? 'true' : 'false');
 				});
+				if (pref === 'view') {
+					scheduleCenterColumns();
+				}
 			}
 
 			document.querySelectorAll('.segmented-control-btn').forEach(function (btn) {
@@ -145,6 +209,9 @@
 					dialog.close();
 				}
 			});
+
+			window.addEventListener('resize', scheduleCenterColumns);
+			scheduleCenterColumns();
 		})();
 	</script>
 </body>

@@ -1,4 +1,4 @@
-default: proto frontend service
+default: protocol frontend service
 
 local:
 	gomplate -d bookmarks=bookmarks.yaml -d links=links.yaml -f template.html > index.html
@@ -9,8 +9,19 @@ service: container-tools
 frontend:
 	$(MAKE) -wC frontend
 
-proto:
-	$(MAKE) -wC proto
+protocol:
+	$(MAKE) -wC protocol
+
+test:
+	$(MAKE) -wC service test
+	$(MAKE) -wC frontend test
+
+lint:
+	$(MAKE) -wC service lint
+	$(MAKE) -wC frontend lint
+
+integration-test:
+	$(MAKE) -wC integration-tests
 
 docs:
 	$(MAKE) -wC docs
@@ -26,4 +37,4 @@ gomplate:
 	mv gomplate /usr/local/bin
 
 
-.PHONY: default service frontend docs gomplate proto
+.PHONY: default service frontend docs gomplate protocol test lint integration-test

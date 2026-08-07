@@ -57,16 +57,62 @@ func (*InitRequest) Descriptor() ([]byte, []int) {
 	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{0}
 }
 
+type SearchHints struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Lightweight build config names for the header search index.
+	BuildConfigs  []string `protobuf:"bytes,1,rep,name=build_configs,json=buildConfigs,proto3" json:"build_configs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchHints) Reset() {
+	*x = SearchHints{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchHints) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchHints) ProtoMessage() {}
+
+func (x *SearchHints) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchHints.ProtoReflect.Descriptor instead.
+func (*SearchHints) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SearchHints) GetBuildConfigs() []string {
+	if x != nil {
+		return x.BuildConfigs
+	}
+	return nil
+}
+
 type InitResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	SearchHints   *SearchHints           `protobuf:"bytes,2,opt,name=search_hints,json=searchHints,proto3" json:"search_hints,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InitResponse) Reset() {
 	*x = InitResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[1]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -78,7 +124,7 @@ func (x *InitResponse) String() string {
 func (*InitResponse) ProtoMessage() {}
 
 func (x *InitResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[1]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -91,7 +137,7 @@ func (x *InitResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InitResponse.ProtoReflect.Descriptor instead.
 func (*InitResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{1}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *InitResponse) GetVersion() string {
@@ -99,6 +145,13 @@ func (x *InitResponse) GetVersion() string {
 		return x.Version
 	}
 	return ""
+}
+
+func (x *InitResponse) GetSearchHints() *SearchHints {
+	if x != nil {
+		return x.SearchHints
+	}
+	return nil
 }
 
 type Template struct {
@@ -115,7 +168,7 @@ type Template struct {
 
 func (x *Template) Reset() {
 	*x = Template{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[2]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -127,7 +180,7 @@ func (x *Template) String() string {
 func (*Template) ProtoMessage() {}
 
 func (x *Template) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[2]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -140,7 +193,7 @@ func (x *Template) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Template.ProtoReflect.Descriptor instead.
 func (*Template) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{2}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Template) GetName() string {
@@ -203,7 +256,7 @@ type BuildConfig struct {
 
 func (x *BuildConfig) Reset() {
 	*x = BuildConfig{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[3]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +268,7 @@ func (x *BuildConfig) String() string {
 func (*BuildConfig) ProtoMessage() {}
 
 func (x *BuildConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[3]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +281,7 @@ func (x *BuildConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildConfig.ProtoReflect.Descriptor instead.
 func (*BuildConfig) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{3}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *BuildConfig) GetName() string {
@@ -310,7 +363,7 @@ type BuildRequest struct {
 
 func (x *BuildRequest) Reset() {
 	*x = BuildRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[4]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +375,7 @@ func (x *BuildRequest) String() string {
 func (*BuildRequest) ProtoMessage() {}
 
 func (x *BuildRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[4]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +388,7 @@ func (x *BuildRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildRequest.ProtoReflect.Descriptor instead.
 func (*BuildRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{4}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *BuildRequest) GetConfigName() string {
@@ -363,7 +416,7 @@ type BuildUpdateResponse struct {
 
 func (x *BuildUpdateResponse) Reset() {
 	*x = BuildUpdateResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[5]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -375,7 +428,7 @@ func (x *BuildUpdateResponse) String() string {
 func (*BuildUpdateResponse) ProtoMessage() {}
 
 func (x *BuildUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[5]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -388,7 +441,7 @@ func (x *BuildUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildUpdateResponse.ProtoReflect.Descriptor instead.
 func (*BuildUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{5}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *BuildUpdateResponse) GetConfigName() string {
@@ -469,7 +522,7 @@ type GetTemplatesRequest struct {
 
 func (x *GetTemplatesRequest) Reset() {
 	*x = GetTemplatesRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[6]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -481,7 +534,7 @@ func (x *GetTemplatesRequest) String() string {
 func (*GetTemplatesRequest) ProtoMessage() {}
 
 func (x *GetTemplatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[6]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -494,7 +547,7 @@ func (x *GetTemplatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTemplatesRequest.ProtoReflect.Descriptor instead.
 func (*GetTemplatesRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{6}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{7}
 }
 
 type GetTemplatesResponse struct {
@@ -506,7 +559,7 @@ type GetTemplatesResponse struct {
 
 func (x *GetTemplatesResponse) Reset() {
 	*x = GetTemplatesResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[7]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -518,7 +571,7 @@ func (x *GetTemplatesResponse) String() string {
 func (*GetTemplatesResponse) ProtoMessage() {}
 
 func (x *GetTemplatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[7]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -531,7 +584,7 @@ func (x *GetTemplatesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTemplatesResponse.ProtoReflect.Descriptor instead.
 func (*GetTemplatesResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{7}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetTemplatesResponse) GetTemplates() []*Template {
@@ -549,7 +602,7 @@ type GetStatusRequest struct {
 
 func (x *GetStatusRequest) Reset() {
 	*x = GetStatusRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[8]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +614,7 @@ func (x *GetStatusRequest) String() string {
 func (*GetStatusRequest) ProtoMessage() {}
 
 func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[8]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +627,7 @@ func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetStatusRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{8}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{9}
 }
 
 type GetStatusResponse struct {
@@ -589,7 +642,7 @@ type GetStatusResponse struct {
 
 func (x *GetStatusResponse) Reset() {
 	*x = GetStatusResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[9]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -601,7 +654,7 @@ func (x *GetStatusResponse) String() string {
 func (*GetStatusResponse) ProtoMessage() {}
 
 func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[9]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -614,7 +667,7 @@ func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetStatusResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{9}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetStatusResponse) GetInContainer() bool {
@@ -653,7 +706,7 @@ type GetBuildConfigsRequest struct {
 
 func (x *GetBuildConfigsRequest) Reset() {
 	*x = GetBuildConfigsRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[10]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +718,7 @@ func (x *GetBuildConfigsRequest) String() string {
 func (*GetBuildConfigsRequest) ProtoMessage() {}
 
 func (x *GetBuildConfigsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[10]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -678,7 +731,7 @@ func (x *GetBuildConfigsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBuildConfigsRequest.ProtoReflect.Descriptor instead.
 func (*GetBuildConfigsRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{10}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{11}
 }
 
 type GetBuildConfigsResponse struct {
@@ -691,7 +744,7 @@ type GetBuildConfigsResponse struct {
 
 func (x *GetBuildConfigsResponse) Reset() {
 	*x = GetBuildConfigsResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[11]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -703,7 +756,7 @@ func (x *GetBuildConfigsResponse) String() string {
 func (*GetBuildConfigsResponse) ProtoMessage() {}
 
 func (x *GetBuildConfigsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[11]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -716,7 +769,7 @@ func (x *GetBuildConfigsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBuildConfigsResponse.ProtoReflect.Descriptor instead.
 func (*GetBuildConfigsResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{11}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetBuildConfigsResponse) GetBuildConfigs() []*BuildConfig {
@@ -742,7 +795,7 @@ type GetBuildConfigRequest struct {
 
 func (x *GetBuildConfigRequest) Reset() {
 	*x = GetBuildConfigRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[12]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -754,7 +807,7 @@ func (x *GetBuildConfigRequest) String() string {
 func (*GetBuildConfigRequest) ProtoMessage() {}
 
 func (x *GetBuildConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[12]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -767,7 +820,7 @@ func (x *GetBuildConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBuildConfigRequest.ProtoReflect.Descriptor instead.
 func (*GetBuildConfigRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{12}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetBuildConfigRequest) GetConfigName() string {
@@ -786,7 +839,7 @@ type GetBuildConfigResponse struct {
 
 func (x *GetBuildConfigResponse) Reset() {
 	*x = GetBuildConfigResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[13]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -798,7 +851,7 @@ func (x *GetBuildConfigResponse) String() string {
 func (*GetBuildConfigResponse) ProtoMessage() {}
 
 func (x *GetBuildConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[13]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +864,7 @@ func (x *GetBuildConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBuildConfigResponse.ProtoReflect.Descriptor instead.
 func (*GetBuildConfigResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{13}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetBuildConfigResponse) GetBuildConfig() *BuildConfig {
@@ -830,7 +883,7 @@ type GetTemplateRequest struct {
 
 func (x *GetTemplateRequest) Reset() {
 	*x = GetTemplateRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[14]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +895,7 @@ func (x *GetTemplateRequest) String() string {
 func (*GetTemplateRequest) ProtoMessage() {}
 
 func (x *GetTemplateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[14]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +908,7 @@ func (x *GetTemplateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTemplateRequest.ProtoReflect.Descriptor instead.
 func (*GetTemplateRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{14}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetTemplateRequest) GetTemplateName() string {
@@ -874,7 +927,7 @@ type GetTemplateResponse struct {
 
 func (x *GetTemplateResponse) Reset() {
 	*x = GetTemplateResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[15]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -886,7 +939,7 @@ func (x *GetTemplateResponse) String() string {
 func (*GetTemplateResponse) ProtoMessage() {}
 
 func (x *GetTemplateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[15]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -899,7 +952,7 @@ func (x *GetTemplateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTemplateResponse.ProtoReflect.Descriptor instead.
 func (*GetTemplateResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{15}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetTemplateResponse) GetTemplate() *Template {
@@ -925,7 +978,7 @@ type BuildHistoryEntry struct {
 
 func (x *BuildHistoryEntry) Reset() {
 	*x = BuildHistoryEntry{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[16]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -937,7 +990,7 @@ func (x *BuildHistoryEntry) String() string {
 func (*BuildHistoryEntry) ProtoMessage() {}
 
 func (x *BuildHistoryEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[16]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -950,7 +1003,7 @@ func (x *BuildHistoryEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildHistoryEntry.ProtoReflect.Descriptor instead.
 func (*BuildHistoryEntry) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{16}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *BuildHistoryEntry) GetTimestamp() int64 {
@@ -1011,7 +1064,7 @@ type GetBuildHistoryRequest struct {
 
 func (x *GetBuildHistoryRequest) Reset() {
 	*x = GetBuildHistoryRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[17]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1023,7 +1076,7 @@ func (x *GetBuildHistoryRequest) String() string {
 func (*GetBuildHistoryRequest) ProtoMessage() {}
 
 func (x *GetBuildHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[17]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1036,7 +1089,7 @@ func (x *GetBuildHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBuildHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetBuildHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{17}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetBuildHistoryRequest) GetConfigName() string {
@@ -1055,7 +1108,7 @@ type GetBuildHistoryResponse struct {
 
 func (x *GetBuildHistoryResponse) Reset() {
 	*x = GetBuildHistoryResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[18]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +1120,7 @@ func (x *GetBuildHistoryResponse) String() string {
 func (*GetBuildHistoryResponse) ProtoMessage() {}
 
 func (x *GetBuildHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[18]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1133,7 @@ func (x *GetBuildHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBuildHistoryResponse.ProtoReflect.Descriptor instead.
 func (*GetBuildHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{18}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetBuildHistoryResponse) GetEntries() []*BuildHistoryEntry {
@@ -1098,7 +1151,7 @@ type GetCurrentUserRequest struct {
 
 func (x *GetCurrentUserRequest) Reset() {
 	*x = GetCurrentUserRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[19]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1110,7 +1163,7 @@ func (x *GetCurrentUserRequest) String() string {
 func (*GetCurrentUserRequest) ProtoMessage() {}
 
 func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[19]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1123,7 +1176,7 @@ func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCurrentUserRequest.ProtoReflect.Descriptor instead.
 func (*GetCurrentUserRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{19}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{20}
 }
 
 type GetCurrentUserResponse struct {
@@ -1136,7 +1189,7 @@ type GetCurrentUserResponse struct {
 
 func (x *GetCurrentUserResponse) Reset() {
 	*x = GetCurrentUserResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[20]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1148,7 +1201,7 @@ func (x *GetCurrentUserResponse) String() string {
 func (*GetCurrentUserResponse) ProtoMessage() {}
 
 func (x *GetCurrentUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[20]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1161,7 +1214,7 @@ func (x *GetCurrentUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCurrentUserResponse.ProtoReflect.Descriptor instead.
 func (*GetCurrentUserResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{20}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetCurrentUserResponse) GetUsername() string {
@@ -1186,7 +1239,7 @@ type GitPullRequest struct {
 
 func (x *GitPullRequest) Reset() {
 	*x = GitPullRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[21]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1198,7 +1251,7 @@ func (x *GitPullRequest) String() string {
 func (*GitPullRequest) ProtoMessage() {}
 
 func (x *GitPullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[21]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1211,7 +1264,7 @@ func (x *GitPullRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitPullRequest.ProtoReflect.Descriptor instead.
 func (*GitPullRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{21}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{22}
 }
 
 type GitPullResponse struct {
@@ -1224,7 +1277,7 @@ type GitPullResponse struct {
 
 func (x *GitPullResponse) Reset() {
 	*x = GitPullResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[22]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1236,7 +1289,7 @@ func (x *GitPullResponse) String() string {
 func (*GitPullResponse) ProtoMessage() {}
 
 func (x *GitPullResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[22]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +1302,7 @@ func (x *GitPullResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitPullResponse.ProtoReflect.Descriptor instead.
 func (*GitPullResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{22}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GitPullResponse) GetSuccess() bool {
@@ -1278,7 +1331,7 @@ type DataFile struct {
 
 func (x *DataFile) Reset() {
 	*x = DataFile{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[23]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1290,7 +1343,7 @@ func (x *DataFile) String() string {
 func (*DataFile) ProtoMessage() {}
 
 func (x *DataFile) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[23]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1303,7 +1356,7 @@ func (x *DataFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataFile.ProtoReflect.Descriptor instead.
 func (*DataFile) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{23}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *DataFile) GetName() string {
@@ -1342,7 +1395,7 @@ type ListDataFilesRequest struct {
 
 func (x *ListDataFilesRequest) Reset() {
 	*x = ListDataFilesRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[24]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1354,7 +1407,7 @@ func (x *ListDataFilesRequest) String() string {
 func (*ListDataFilesRequest) ProtoMessage() {}
 
 func (x *ListDataFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[24]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1367,7 +1420,7 @@ func (x *ListDataFilesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDataFilesRequest.ProtoReflect.Descriptor instead.
 func (*ListDataFilesRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{24}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{25}
 }
 
 type ListDataFilesResponse struct {
@@ -1380,7 +1433,7 @@ type ListDataFilesResponse struct {
 
 func (x *ListDataFilesResponse) Reset() {
 	*x = ListDataFilesResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[25]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1392,7 +1445,7 @@ func (x *ListDataFilesResponse) String() string {
 func (*ListDataFilesResponse) ProtoMessage() {}
 
 func (x *ListDataFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[25]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1405,7 +1458,7 @@ func (x *ListDataFilesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDataFilesResponse.ProtoReflect.Descriptor instead.
 func (*ListDataFilesResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{25}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListDataFilesResponse) GetDataFiles() []*DataFile {
@@ -1432,7 +1485,7 @@ type GetDataFileRequest struct {
 
 func (x *GetDataFileRequest) Reset() {
 	*x = GetDataFileRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[26]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1444,7 +1497,7 @@ func (x *GetDataFileRequest) String() string {
 func (*GetDataFileRequest) ProtoMessage() {}
 
 func (x *GetDataFileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[26]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1457,7 +1510,7 @@ func (x *GetDataFileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDataFileRequest.ProtoReflect.Descriptor instead.
 func (*GetDataFileRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{26}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *GetDataFileRequest) GetBuildConfigName() string {
@@ -1486,7 +1539,7 @@ type GetDataFileResponse struct {
 
 func (x *GetDataFileResponse) Reset() {
 	*x = GetDataFileResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[27]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1498,7 +1551,7 @@ func (x *GetDataFileResponse) String() string {
 func (*GetDataFileResponse) ProtoMessage() {}
 
 func (x *GetDataFileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[27]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1511,7 +1564,7 @@ func (x *GetDataFileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDataFileResponse.ProtoReflect.Descriptor instead.
 func (*GetDataFileResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{27}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GetDataFileResponse) GetContent() string {
@@ -1547,9 +1600,12 @@ var File_StencilBox_clientapi_v1_clientapi_proto protoreflect.FileDescriptor
 const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\n" +
 	"'StencilBox/clientapi/v1/clientapi.proto\x12\x17StencilBox.clientapi.v1\"\r\n" +
-	"\vInitRequest\"(\n" +
+	"\vInitRequest\"2\n" +
+	"\vSearchHints\x12#\n" +
+	"\rbuild_configs\x18\x01 \x03(\tR\fbuildConfigs\"q\n" +
 	"\fInitResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\tR\aversion\"\xc2\x01\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12G\n" +
+	"\fsearch_hints\x18\x02 \x01(\v2$.StencilBox.clientapi.v1.SearchHintsR\vsearchHints\"\xc2\x01\n" +
 	"\bTemplate\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12\x16\n" +
@@ -1683,75 +1739,77 @@ func file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP() []byte {
 	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescData
 }
 
-var file_StencilBox_clientapi_v1_clientapi_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_StencilBox_clientapi_v1_clientapi_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_StencilBox_clientapi_v1_clientapi_proto_goTypes = []any{
 	(*InitRequest)(nil),             // 0: StencilBox.clientapi.v1.InitRequest
-	(*InitResponse)(nil),            // 1: StencilBox.clientapi.v1.InitResponse
-	(*Template)(nil),                // 2: StencilBox.clientapi.v1.Template
-	(*BuildConfig)(nil),             // 3: StencilBox.clientapi.v1.BuildConfig
-	(*BuildRequest)(nil),            // 4: StencilBox.clientapi.v1.BuildRequest
-	(*BuildUpdateResponse)(nil),     // 5: StencilBox.clientapi.v1.BuildUpdateResponse
-	(*GetTemplatesRequest)(nil),     // 6: StencilBox.clientapi.v1.GetTemplatesRequest
-	(*GetTemplatesResponse)(nil),    // 7: StencilBox.clientapi.v1.GetTemplatesResponse
-	(*GetStatusRequest)(nil),        // 8: StencilBox.clientapi.v1.GetStatusRequest
-	(*GetStatusResponse)(nil),       // 9: StencilBox.clientapi.v1.GetStatusResponse
-	(*GetBuildConfigsRequest)(nil),  // 10: StencilBox.clientapi.v1.GetBuildConfigsRequest
-	(*GetBuildConfigsResponse)(nil), // 11: StencilBox.clientapi.v1.GetBuildConfigsResponse
-	(*GetBuildConfigRequest)(nil),   // 12: StencilBox.clientapi.v1.GetBuildConfigRequest
-	(*GetBuildConfigResponse)(nil),  // 13: StencilBox.clientapi.v1.GetBuildConfigResponse
-	(*GetTemplateRequest)(nil),      // 14: StencilBox.clientapi.v1.GetTemplateRequest
-	(*GetTemplateResponse)(nil),     // 15: StencilBox.clientapi.v1.GetTemplateResponse
-	(*BuildHistoryEntry)(nil),       // 16: StencilBox.clientapi.v1.BuildHistoryEntry
-	(*GetBuildHistoryRequest)(nil),  // 17: StencilBox.clientapi.v1.GetBuildHistoryRequest
-	(*GetBuildHistoryResponse)(nil), // 18: StencilBox.clientapi.v1.GetBuildHistoryResponse
-	(*GetCurrentUserRequest)(nil),   // 19: StencilBox.clientapi.v1.GetCurrentUserRequest
-	(*GetCurrentUserResponse)(nil),  // 20: StencilBox.clientapi.v1.GetCurrentUserResponse
-	(*GitPullRequest)(nil),          // 21: StencilBox.clientapi.v1.GitPullRequest
-	(*GitPullResponse)(nil),         // 22: StencilBox.clientapi.v1.GitPullResponse
-	(*DataFile)(nil),                // 23: StencilBox.clientapi.v1.DataFile
-	(*ListDataFilesRequest)(nil),    // 24: StencilBox.clientapi.v1.ListDataFilesRequest
-	(*ListDataFilesResponse)(nil),   // 25: StencilBox.clientapi.v1.ListDataFilesResponse
-	(*GetDataFileRequest)(nil),      // 26: StencilBox.clientapi.v1.GetDataFileRequest
-	(*GetDataFileResponse)(nil),     // 27: StencilBox.clientapi.v1.GetDataFileResponse
-	nil,                             // 28: StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
+	(*SearchHints)(nil),             // 1: StencilBox.clientapi.v1.SearchHints
+	(*InitResponse)(nil),            // 2: StencilBox.clientapi.v1.InitResponse
+	(*Template)(nil),                // 3: StencilBox.clientapi.v1.Template
+	(*BuildConfig)(nil),             // 4: StencilBox.clientapi.v1.BuildConfig
+	(*BuildRequest)(nil),            // 5: StencilBox.clientapi.v1.BuildRequest
+	(*BuildUpdateResponse)(nil),     // 6: StencilBox.clientapi.v1.BuildUpdateResponse
+	(*GetTemplatesRequest)(nil),     // 7: StencilBox.clientapi.v1.GetTemplatesRequest
+	(*GetTemplatesResponse)(nil),    // 8: StencilBox.clientapi.v1.GetTemplatesResponse
+	(*GetStatusRequest)(nil),        // 9: StencilBox.clientapi.v1.GetStatusRequest
+	(*GetStatusResponse)(nil),       // 10: StencilBox.clientapi.v1.GetStatusResponse
+	(*GetBuildConfigsRequest)(nil),  // 11: StencilBox.clientapi.v1.GetBuildConfigsRequest
+	(*GetBuildConfigsResponse)(nil), // 12: StencilBox.clientapi.v1.GetBuildConfigsResponse
+	(*GetBuildConfigRequest)(nil),   // 13: StencilBox.clientapi.v1.GetBuildConfigRequest
+	(*GetBuildConfigResponse)(nil),  // 14: StencilBox.clientapi.v1.GetBuildConfigResponse
+	(*GetTemplateRequest)(nil),      // 15: StencilBox.clientapi.v1.GetTemplateRequest
+	(*GetTemplateResponse)(nil),     // 16: StencilBox.clientapi.v1.GetTemplateResponse
+	(*BuildHistoryEntry)(nil),       // 17: StencilBox.clientapi.v1.BuildHistoryEntry
+	(*GetBuildHistoryRequest)(nil),  // 18: StencilBox.clientapi.v1.GetBuildHistoryRequest
+	(*GetBuildHistoryResponse)(nil), // 19: StencilBox.clientapi.v1.GetBuildHistoryResponse
+	(*GetCurrentUserRequest)(nil),   // 20: StencilBox.clientapi.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),  // 21: StencilBox.clientapi.v1.GetCurrentUserResponse
+	(*GitPullRequest)(nil),          // 22: StencilBox.clientapi.v1.GitPullRequest
+	(*GitPullResponse)(nil),         // 23: StencilBox.clientapi.v1.GitPullResponse
+	(*DataFile)(nil),                // 24: StencilBox.clientapi.v1.DataFile
+	(*ListDataFilesRequest)(nil),    // 25: StencilBox.clientapi.v1.ListDataFilesRequest
+	(*ListDataFilesResponse)(nil),   // 26: StencilBox.clientapi.v1.ListDataFilesResponse
+	(*GetDataFileRequest)(nil),      // 27: StencilBox.clientapi.v1.GetDataFileRequest
+	(*GetDataFileResponse)(nil),     // 28: StencilBox.clientapi.v1.GetDataFileResponse
+	nil,                             // 29: StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
 }
 var file_StencilBox_clientapi_v1_clientapi_proto_depIdxs = []int32{
-	28, // 0: StencilBox.clientapi.v1.BuildConfig.datafiles:type_name -> StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
-	2,  // 1: StencilBox.clientapi.v1.GetTemplatesResponse.templates:type_name -> StencilBox.clientapi.v1.Template
-	3,  // 2: StencilBox.clientapi.v1.GetBuildConfigsResponse.build_configs:type_name -> StencilBox.clientapi.v1.BuildConfig
-	3,  // 3: StencilBox.clientapi.v1.GetBuildConfigResponse.build_config:type_name -> StencilBox.clientapi.v1.BuildConfig
-	2,  // 4: StencilBox.clientapi.v1.GetTemplateResponse.template:type_name -> StencilBox.clientapi.v1.Template
-	16, // 5: StencilBox.clientapi.v1.GetBuildHistoryResponse.entries:type_name -> StencilBox.clientapi.v1.BuildHistoryEntry
-	23, // 6: StencilBox.clientapi.v1.ListDataFilesResponse.data_files:type_name -> StencilBox.clientapi.v1.DataFile
-	0,  // 7: StencilBox.clientapi.v1.StencilBoxApiService.Init:input_type -> StencilBox.clientapi.v1.InitRequest
-	4,  // 8: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:input_type -> StencilBox.clientapi.v1.BuildRequest
-	6,  // 9: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:input_type -> StencilBox.clientapi.v1.GetTemplatesRequest
-	14, // 10: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:input_type -> StencilBox.clientapi.v1.GetTemplateRequest
-	8,  // 11: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:input_type -> StencilBox.clientapi.v1.GetStatusRequest
-	10, // 12: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:input_type -> StencilBox.clientapi.v1.GetBuildConfigsRequest
-	12, // 13: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:input_type -> StencilBox.clientapi.v1.GetBuildConfigRequest
-	17, // 14: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:input_type -> StencilBox.clientapi.v1.GetBuildHistoryRequest
-	19, // 15: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:input_type -> StencilBox.clientapi.v1.GetCurrentUserRequest
-	21, // 16: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:input_type -> StencilBox.clientapi.v1.GitPullRequest
-	24, // 17: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:input_type -> StencilBox.clientapi.v1.ListDataFilesRequest
-	26, // 18: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:input_type -> StencilBox.clientapi.v1.GetDataFileRequest
-	1,  // 19: StencilBox.clientapi.v1.StencilBoxApiService.Init:output_type -> StencilBox.clientapi.v1.InitResponse
-	5,  // 20: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:output_type -> StencilBox.clientapi.v1.BuildUpdateResponse
-	7,  // 21: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:output_type -> StencilBox.clientapi.v1.GetTemplatesResponse
-	15, // 22: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:output_type -> StencilBox.clientapi.v1.GetTemplateResponse
-	9,  // 23: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:output_type -> StencilBox.clientapi.v1.GetStatusResponse
-	11, // 24: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:output_type -> StencilBox.clientapi.v1.GetBuildConfigsResponse
-	13, // 25: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:output_type -> StencilBox.clientapi.v1.GetBuildConfigResponse
-	18, // 26: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:output_type -> StencilBox.clientapi.v1.GetBuildHistoryResponse
-	20, // 27: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:output_type -> StencilBox.clientapi.v1.GetCurrentUserResponse
-	22, // 28: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:output_type -> StencilBox.clientapi.v1.GitPullResponse
-	25, // 29: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:output_type -> StencilBox.clientapi.v1.ListDataFilesResponse
-	27, // 30: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:output_type -> StencilBox.clientapi.v1.GetDataFileResponse
-	19, // [19:31] is the sub-list for method output_type
-	7,  // [7:19] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	1,  // 0: StencilBox.clientapi.v1.InitResponse.search_hints:type_name -> StencilBox.clientapi.v1.SearchHints
+	29, // 1: StencilBox.clientapi.v1.BuildConfig.datafiles:type_name -> StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
+	3,  // 2: StencilBox.clientapi.v1.GetTemplatesResponse.templates:type_name -> StencilBox.clientapi.v1.Template
+	4,  // 3: StencilBox.clientapi.v1.GetBuildConfigsResponse.build_configs:type_name -> StencilBox.clientapi.v1.BuildConfig
+	4,  // 4: StencilBox.clientapi.v1.GetBuildConfigResponse.build_config:type_name -> StencilBox.clientapi.v1.BuildConfig
+	3,  // 5: StencilBox.clientapi.v1.GetTemplateResponse.template:type_name -> StencilBox.clientapi.v1.Template
+	17, // 6: StencilBox.clientapi.v1.GetBuildHistoryResponse.entries:type_name -> StencilBox.clientapi.v1.BuildHistoryEntry
+	24, // 7: StencilBox.clientapi.v1.ListDataFilesResponse.data_files:type_name -> StencilBox.clientapi.v1.DataFile
+	0,  // 8: StencilBox.clientapi.v1.StencilBoxApiService.Init:input_type -> StencilBox.clientapi.v1.InitRequest
+	5,  // 9: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:input_type -> StencilBox.clientapi.v1.BuildRequest
+	7,  // 10: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:input_type -> StencilBox.clientapi.v1.GetTemplatesRequest
+	15, // 11: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:input_type -> StencilBox.clientapi.v1.GetTemplateRequest
+	9,  // 12: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:input_type -> StencilBox.clientapi.v1.GetStatusRequest
+	11, // 13: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:input_type -> StencilBox.clientapi.v1.GetBuildConfigsRequest
+	13, // 14: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:input_type -> StencilBox.clientapi.v1.GetBuildConfigRequest
+	18, // 15: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:input_type -> StencilBox.clientapi.v1.GetBuildHistoryRequest
+	20, // 16: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:input_type -> StencilBox.clientapi.v1.GetCurrentUserRequest
+	22, // 17: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:input_type -> StencilBox.clientapi.v1.GitPullRequest
+	25, // 18: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:input_type -> StencilBox.clientapi.v1.ListDataFilesRequest
+	27, // 19: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:input_type -> StencilBox.clientapi.v1.GetDataFileRequest
+	2,  // 20: StencilBox.clientapi.v1.StencilBoxApiService.Init:output_type -> StencilBox.clientapi.v1.InitResponse
+	6,  // 21: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:output_type -> StencilBox.clientapi.v1.BuildUpdateResponse
+	8,  // 22: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:output_type -> StencilBox.clientapi.v1.GetTemplatesResponse
+	16, // 23: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:output_type -> StencilBox.clientapi.v1.GetTemplateResponse
+	10, // 24: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:output_type -> StencilBox.clientapi.v1.GetStatusResponse
+	12, // 25: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:output_type -> StencilBox.clientapi.v1.GetBuildConfigsResponse
+	14, // 26: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:output_type -> StencilBox.clientapi.v1.GetBuildConfigResponse
+	19, // 27: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:output_type -> StencilBox.clientapi.v1.GetBuildHistoryResponse
+	21, // 28: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:output_type -> StencilBox.clientapi.v1.GetCurrentUserResponse
+	23, // 29: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:output_type -> StencilBox.clientapi.v1.GitPullResponse
+	26, // 30: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:output_type -> StencilBox.clientapi.v1.ListDataFilesResponse
+	28, // 31: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:output_type -> StencilBox.clientapi.v1.GetDataFileResponse
+	20, // [20:32] is the sub-list for method output_type
+	8,  // [8:20] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_StencilBox_clientapi_v1_clientapi_proto_init() }
@@ -1765,7 +1823,7 @@ func file_StencilBox_clientapi_v1_clientapi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_StencilBox_clientapi_v1_clientapi_proto_rawDesc), len(file_StencilBox_clientapi_v1_clientapi_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   29,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

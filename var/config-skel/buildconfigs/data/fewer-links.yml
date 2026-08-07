@@ -1,0 +1,46 @@
+title: Example Fewer Links
+
+categories:
+  - title: Tech community
+    links:
+      - url: news.ycombinator.com
+        title: Hacker News
+
+      - url: lobste.rs
+        title: Lobsters
+
+      - url: slashdot.org
+        title: Slashdot
+
+  - title: Code forges
+    links:
+      - url: github.com
+        title: GitHub
+
+      - url: gitlab.com
+        title: GitLab
+
+      - url: stackoverflow.com
+        title: Stack Overflow
+
+  - title: Self-hosted apps
+    links:
+      - url: jellyfin.org
+        title: Jellyfin
+
+      - url: nextcloud.com
+        title: Nextcloud
+
+      - url: home-assistant.io
+        title: Home Assistant
+
+  - title: Funny sites
+    links:
+      - url: xkcd.com
+        title: XKCD
+
+      - url: theonion.com
+        title: The Onion
+
+      - url: thedailywtf.com
+        title: The Daily WTF

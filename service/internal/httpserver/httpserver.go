@@ -13,9 +13,10 @@ import (
 	"github.com/rs/cors"
 
 	"context"
-	"path/filepath"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -93,18 +94,31 @@ func getOutputHandler(dir string) http.Handler {
 	return http.FileServer(http.Dir(dir))
 }
 
+// getHttpServerAddress returns the bind address.
+// Priority: $PORT, then $STENCILBOX_ADDRESS, then 0.0.0.0:8080.
+// PORT may be a bare port ("8080") or a full address (":8080" / "0.0.0.0:8080").
 func getHttpServerAddress() string {
-	address := os.Getenv("STENCILBOX_ADDRESS")
-
-	if address == "" {
-		address = "0.0.0.0:8080"
+	if port := strings.TrimSpace(os.Getenv("PORT")); port != "" {
+		address := normalizeListenAddr(port)
+		log.WithFields(log.Fields{"PORT": port, "address": address}).Info("Starting HTTP server")
+		return address
 	}
 
-	log.WithFields(log.Fields{
-		"STENCILBOX_ADDRESS env var": address,
-	}).Info("Starting HTTP server")
+	if address := strings.TrimSpace(os.Getenv("STENCILBOX_ADDRESS")); address != "" {
+		log.WithFields(log.Fields{"STENCILBOX_ADDRESS": address}).Info("Starting HTTP server")
+		return address
+	}
 
+	address := "0.0.0.0:8080"
+	log.WithFields(log.Fields{"address": address}).Info("Starting HTTP server")
 	return address
+}
+
+func normalizeListenAddr(port string) string {
+	if strings.Contains(port, ":") {
+		return port
+	}
+	return "0.0.0.0:" + port
 }
 
 // Context key for storing http.Request

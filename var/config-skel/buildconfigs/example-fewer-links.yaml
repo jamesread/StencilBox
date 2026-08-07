@@ -1,0 +1,8 @@
+name: example fewer links
+
+outputdir: example-fewer-links
+
+template: links-homepage
+
+datafiles:
+  links: data/fewer-links.yml
