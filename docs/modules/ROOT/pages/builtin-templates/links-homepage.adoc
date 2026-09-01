@@ -16,6 +16,7 @@ categories:
     links:
     - url: github.com
       title: GitHub
+      description: Code hosting and collaboration
 
     - url: slashdot.com
       title: Slashdot
@@ -26,11 +27,13 @@ categories:
     - url: https://grafana.example.com
       url_internal: http://grafana.internal:3000
       title: Grafana
+      description: Metrics dashboards
 
   - title: Funny sites
     links:
       - url: xkcd.com
         title: XKCD
+        description: A webcomic of romance, sarcasm, math, and language
 
       - url: theonion.com
         title: The Onion
@@ -38,6 +41,7 @@ categories:
 
 Each link requires a `url` (used for the hyperlink) and `title`. Optional fields:
 
+* `description` -- short text shown below the link title in list view.
 * `url_internal` -- when set, used as the base URL to fetch the favicon during build instead of `url`. Use this when the public URL sits behind a reverse proxy that requires authentication but an internal URL is reachable from the build environment.
 * `icon` -- path or URL to a favicon; when set, automatic favicon fetching is skipped.
 

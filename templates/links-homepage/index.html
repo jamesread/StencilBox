@@ -40,7 +40,12 @@
 					{{ if .icon }}
 						{{ linkIconHTML .icon "favicon" "" }}
 					{{ end }}
-					<span class="link-title">{{ .title }}</span>
+					<span class="link-text">
+						<span class="link-title">{{ .title }}</span>
+						{{ if .description }}
+							<span class="link-description">{{ .description }}</span>
+						{{ end }}
+					</span>
 				</a>
 			{{ end }}
 		</div>

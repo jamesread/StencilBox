@@ -29,6 +29,7 @@ categories:
     links:
     - url: github.com
       title: GitHub
+      description: Code hosting and collaboration
 
     - url: slashdot.com
       title: Slashdot
@@ -40,6 +41,7 @@ categories:
     links:
       - url: xkcd.com
         title: XKCD
+        description: A webcomic of romance, sarcasm, math, and language
 
       - url: theonion.com
         title: The Onion

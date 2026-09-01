@@ -5,6 +5,7 @@ categories:
     links:
       - url: news.ycombinator.com
         title: Hacker News
+        description: Tech news and discussion
 
       - url: lobste.rs
         title: Lobsters
@@ -16,6 +17,7 @@ categories:
     links:
       - url: github.com
         title: GitHub
+        description: Code hosting and collaboration
 
       - url: gitlab.com
         title: GitLab
@@ -38,6 +40,7 @@ categories:
     links:
       - url: xkcd.com
         title: XKCD
+        description: A webcomic of romance, sarcasm, math, and language
 
       - url: theonion.com
         title: The Onion

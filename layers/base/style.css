@@ -48,6 +48,24 @@ body.links-homepage a {
   gap: 0.75em;
 }
 
+html.view-list body.links-homepage a:has(.link-description) {
+  align-items: flex-start;
+}
+
+body.links-homepage a .link-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.2em;
+}
+
+body.links-homepage a .link-description {
+  font-size: 0.85em;
+  font-weight: 400;
+  line-height: 1.35;
+  color: #687482;
+}
+
 body.links-homepage a .favicon,
 body.links-homepage a .favicon svg {
   width: 1.5em;
@@ -75,6 +93,10 @@ body.links-homepage a:hover {
 body.links-homepage a:focus {
   background-color: #efefef;
   font-weight: bold;
+}
+
+body.links-homepage a:focus .link-description {
+  font-weight: 400;
 }
 
 body.links-homepage footer {
@@ -320,6 +342,10 @@ html.view-icons body.links-homepage a .link-title {
   overflow-wrap: anywhere;
 }
 
+html.view-icons body.links-homepage a .link-description {
+  display: none;
+}
+
 html.theme-dark {
   color-scheme: dark;
 }
@@ -348,6 +374,10 @@ html.theme-dark body.links-homepage h1 {
 
 html.theme-dark body.links-homepage h2 {
   color: #b0b8c2;
+}
+
+html.theme-dark body.links-homepage a .link-description {
+  color: #9aa3ae;
 }
 
 html.theme-dark body.links-homepage footer p {
