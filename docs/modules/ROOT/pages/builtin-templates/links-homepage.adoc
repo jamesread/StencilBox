@@ -41,6 +41,10 @@ Each link requires a `url` (used for the hyperlink) and `title`. Optional fields
 * `url_internal` -- when set, used as the base URL to fetch the favicon during build instead of `url`. Use this when the public URL sits behind a reverse proxy that requires authentication but an internal URL is reachable from the build environment.
 * `icon` -- path or URL to a favicon; when set, automatic favicon fetching is skipped.
 
+== Footer
+
+The footer includes an **Options** control and a **StencilBox** link. The StencilBox link uses `{{ .webuiUrl }}` and opens the web UI on the build config that generated the page. See xref:templates/index.adoc[Templates] for other built-in variables.
+
 == Example Build Config
 
 Check out the xref:buildconfigs/index.adoc[Build Configs] page for an example of how to use this template.

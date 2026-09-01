@@ -48,7 +48,10 @@
 	</main>
 
 	<footer>
-		<button type="button" class="options-open" aria-haspopup="dialog" aria-controls="page-options">Options</button>
+		<div class="footer-actions">
+			<button type="button" class="footer-action options-open" aria-haspopup="dialog" aria-controls="page-options">Options</button>
+			<a class="footer-action" href="{{ .webuiUrl }}" target="_blank" rel="noopener noreferrer">StencilBox</a>
+		</div>
 		<p>Last built: {{ .buildDateFormatted }} · StencilBox {{ .version }}</p>
 	</footer>
 

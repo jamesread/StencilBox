@@ -27,6 +27,13 @@ describe('StencilBox smoke', function () {
     assert.strictEqual(title, 'StencilBox')
   })
 
+  it('serves SPA deep links to build configs', async function () {
+    await driver.get(base + '/webui/build-config/homepage')
+    await driver.wait(until.elementLocated(By.css('body')), 10000)
+    const title = await driver.getTitle()
+    assert.strictEqual(title, 'StencilBox')
+  })
+
   it('renders the SPA shell', async function () {
     await driver.get(base + '/webui/')
     await driver.wait(until.elementLocated(By.css('#app, [id="layout"], main')), 10000)

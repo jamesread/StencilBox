@@ -63,7 +63,46 @@ func findWebuiDir() string {
 }
 
 func getNewWebUIHandler(dir string) http.Handler {
-	return http.StripPrefix("/webui/", http.FileServer(http.Dir(dir)))
+	return http.StripPrefix("/webui/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, resolveWebuiFile(dir, r.URL.Path))
+	}))
+}
+
+func resolveWebuiFile(dir, requestPath string) string {
+	index := filepath.Join(dir, "index.html")
+	if full := existingWebuiAsset(dir, requestPath); full != "" {
+		return full
+	}
+	return index
+}
+
+func existingWebuiAsset(dir, requestPath string) string {
+	rel := strings.TrimPrefix(filepath.Clean("/"+requestPath), "/")
+	if rel == "" || rel == "." {
+		return ""
+	}
+
+	full := filepath.Join(dir, rel)
+	if !isExistingFileInside(dir, full) {
+		return ""
+	}
+	return full
+}
+
+func isExistingFileInside(dir, full string) bool {
+	if !isPathInsideDir(dir, full) {
+		return false
+	}
+	info, err := os.Stat(full)
+	return err == nil && !info.IsDir()
+}
+
+func isPathInsideDir(dir, full string) bool {
+	rel, err := filepath.Rel(dir, full)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 func getOutputHandler(dir string) http.Handler {

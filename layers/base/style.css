@@ -87,6 +87,14 @@ body.links-homepage footer {
   gap: 1.25em;
 }
 
+body.links-homepage .footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75em;
+}
+
 body.links-homepage footer p {
   color: #888;
   font-size: 0.85em;
@@ -117,7 +125,7 @@ body.links-homepage header {
   margin-bottom: 2em;
 }
 
-body.links-homepage .options-open {
+body.links-homepage .footer-action {
   margin: 0;
   padding: 0.55em 1.15em;
   border: none;
@@ -132,8 +140,18 @@ body.links-homepage .options-open {
   cursor: pointer;
 }
 
-body.links-homepage .options-open:hover {
+body.links-homepage a.footer-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+body.links-homepage .footer-action:hover,
+body.links-homepage a.footer-action:hover,
+body.links-homepage a.footer-action:focus {
   background: #efefef;
+  font-weight: 600;
 }
 
 body.links-homepage .options-dialog {
@@ -336,14 +354,17 @@ html.theme-dark body.links-homepage footer p {
   color: #8b93a0;
 }
 
-html.theme-dark body.links-homepage .options-open {
+html.theme-dark body.links-homepage .footer-action {
   background: rgba(42, 48, 56, 0.9);
   box-shadow: 0 0 0.75em rgba(0, 0, 0, 0.45);
   color: #c5ccd5;
 }
 
-html.theme-dark body.links-homepage .options-open:hover {
+html.theme-dark body.links-homepage .footer-action:hover,
+html.theme-dark body.links-homepage a.footer-action:hover,
+html.theme-dark body.links-homepage a.footer-action:focus {
   background: #363d47;
+  font-weight: 600;
 }
 
 html.theme-dark body.links-homepage .options-dialog {

@@ -156,6 +156,7 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	templateData["buildDate"] = buildTime.Format(time.RFC3339)
 	templateData["buildDateFormatted"] = buildTime.Format("January 2, 2006 at 3:04 PM MST")
 	templateData["version"] = buildinfo.Version
+	templateData["webuiUrl"] = webuiBuildConfigURL(getWebuiUrlBase(), cfg.Name)
 
 	log.Infof("Template data: %+v", templateData)
 
@@ -344,6 +345,18 @@ func getBuildUrlBase() string {
 	}
 
 	return ""
+}
+
+func getWebuiUrlBase() string {
+	return strings.TrimRight(os.Getenv("STENCILBOX_WEBUI_URL_BASE"), "/")
+}
+
+func webuiBuildConfigURL(base, configName string) string {
+	path := "/webui/build-config/" + url.PathEscape(configName)
+	if base == "" {
+		return path
+	}
+	return strings.TrimRight(base, "/") + path
 }
 
 // abortBuild reports context cancellation or deadline expiry and returns true if the build should stop.

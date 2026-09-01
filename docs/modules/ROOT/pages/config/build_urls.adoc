@@ -1,3 +1,11 @@
 = Build URLs
 
 You can set `STENCILBOX_BUILD_URL_BASE` to specify the base URL for build URLs. This is useful if you are running Stencilbox behind a reverse proxy or in a different environment.
+
+== Web UI URL
+
+Templates receive `{{ .webuiUrl }}`, a link to the StencilBox web UI for the build config that generated the page.
+
+By default this is a root-relative path (`/webui/build-config/<name>`), which works when the built site is served from the same host as StencilBox.
+
+Set `STENCILBOX_WEBUI_URL_BASE` to the public origin of StencilBox (no trailing `/webui`) when the built site is hosted elsewhere. For example, `https://stencilbox.example.com` produces `https://stencilbox.example.com/webui/build-config/<name>`.
