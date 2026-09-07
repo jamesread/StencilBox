@@ -18,6 +18,8 @@ github.com/jamesread/golure v0.0.0-20260510214136-6ef80e0ce8da h1:hYsJqujd3A4Xtp
 github.com/jamesread/golure v0.0.0-20260510214136-6ef80e0ce8da/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
 github.com/jamesread/httpauthshim v0.1.0 h1:1jWyKmRu0rurlDrubxZxM3EXCwiaJnn7ax8wJnjVbrU=
 github.com/jamesread/httpauthshim v0.1.0/go.mod h1:SvCzQpS3Llj+oykwcV3cnDEDdb/5ra7i/sh3faGFcKs=
+github.com/jamesread/httpauthshim v0.2.0 h1:0vWutwipdNBCROQyjhsONdlb6qxcbnyajNc4fl8r/Fc=
+github.com/jamesread/httpauthshim v0.2.0/go.mod h1:SvCzQpS3Llj+oykwcV3cnDEDdb/5ra7i/sh3faGFcKs=
 github.com/rs/cors v1.11.1 h1:eU3gRzXLRK57F5rKMGMZURNdIG4EoAmX8k94r9wXWHA=
 github.com/rs/cors v1.11.1/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
 github.com/sirupsen/logrus v1.10.2 h1:G2SED73/qrAu6YwbdxOD6peLkCBI3z7L+ykJFTXJBBo=
