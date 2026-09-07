@@ -7,7 +7,7 @@ require (
 	connectrpc.com/cors v0.1.0
 	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/jamesread/golure v0.0.0-20260510214136-6ef80e0ce8da
+	github.com/jamesread/golure v0.0.0-20260902093223-27b18778c9a5
 	github.com/jamesread/httpauthshim v0.1.0
 	github.com/rs/cors v1.11.1
 	github.com/sirupsen/logrus v1.10.2
