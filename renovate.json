@@ -1,3 +1,10 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "Antora 3 uses Asciidoctor.js 2; kroki 1.x needs Asciidoctor.js 4",
+      "matchPackageNames": ["asciidoctor-kroki"],
+      "allowedVersions": "<1.0.0"
+    }
+  ]
 }
