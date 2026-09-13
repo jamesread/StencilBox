@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -16,6 +17,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/html"
 )
+
+// ErrRejectedMime is returned when a downloaded favicon is not an image or SVG.
+var ErrRejectedMime = errors.New("favicon is not an image or svg")
 
 // faviconFetchTimeout bounds each HTTP request used when resolving and downloading link favicons during builds.
 const faviconFetchTimeout = 8 * time.Second
@@ -64,60 +68,116 @@ func fetchPageContent(pageURL string) (string, error) {
 }
 
 func resolveFaviconURL(faviconURL, pageURL string) string {
-	if faviconURL == "" {
-		return ""
-	}
-
-	// If favicon URL is absolute, return as-is
-	if strings.HasPrefix(faviconURL, "http://") || strings.HasPrefix(faviconURL, "https://") {
+	if faviconURL == "" || strings.HasPrefix(faviconURL, "data:") {
 		return faviconURL
 	}
 
-	// Parse the page URL to resolve relative favicon URLs
-	parsedPageURL, err := url.Parse(pageURL)
+	base, err := url.Parse(pageURL)
 	if err != nil {
 		log.Warnf("Failed to parse page URL %s: %v", pageURL, err)
 		return faviconURL
 	}
 
-	// Resolve relative URL
-	resolvedURL := parsedPageURL.ResolveReference(&url.URL{Path: faviconURL})
-	return resolvedURL.String()
-}
-
-// GetFaviconURL fetches the favicon URL from a webpage
-func GetFaviconURL(pageURL string) (string, error) {
-	normalizedURL := NormalizeURL(pageURL)
-	if normalizedURL == "" {
-		return "", fmt.Errorf("invalid URL: %s", pageURL)
+	ref, err := url.Parse(faviconURL)
+	if err != nil {
+		return faviconURL
 	}
 
-	content, err := fetchPageContent(normalizedURL)
+	return base.ResolveReference(ref).String()
+}
+
+func isFaviconMimeType(mimeType string) bool {
+	mediaType, _, _ := strings.Cut(mimeType, ";")
+	mediaType = strings.TrimSpace(strings.ToLower(mediaType))
+	if mediaType == "" {
+		return false
+	}
+	if strings.HasPrefix(mediaType, "image/") {
+		return true
+	}
+	return strings.Contains(mediaType, "svg")
+}
+
+func defaultFaviconURL(pageURL string) string {
+	parsedURL, err := url.Parse(pageURL)
+	if err != nil || parsedURL.Host == "" {
+		return ""
+	}
+	return parsedURL.Scheme + "://" + parsedURL.Host + "/favicon.ico"
+}
+
+func addFaviconCandidate(out []string, seen map[string]bool, raw, pageURL string) []string {
+	abs := resolveFaviconURL(raw, pageURL)
+	if abs == "" || seen[abs] {
+		return out
+	}
+	seen[abs] = true
+	return append(out, abs)
+}
+
+func faviconCandidates(pageURL string) ([]string, error) {
+	normalizedURL := NormalizeURL(pageURL)
+	if normalizedURL == "" {
+		return nil, fmt.Errorf("invalid URL: %s", pageURL)
+	}
+
+	seen := make(map[string]bool)
+	candidates := appendLinkFavicons(nil, seen, normalizedURL)
+	candidates = addFaviconCandidate(candidates, seen, defaultFaviconURL(normalizedURL), normalizedURL)
+	if len(candidates) == 0 {
+		return nil, fmt.Errorf("no favicon found")
+	}
+	return candidates, nil
+}
+
+func appendLinkFavicons(candidates []string, seen map[string]bool, pageURL string) []string {
+	content, err := fetchPageContent(pageURL)
+	if err != nil {
+		return candidates
+	}
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
+	if err != nil {
+		return candidates
+	}
+	for _, node := range doc.Find("link").Nodes {
+		candidates = addFaviconCandidate(candidates, seen, getFavicon(node), pageURL)
+	}
+	return candidates
+}
+
+// GetFaviconURL fetches the first favicon URL from a webpage.
+func GetFaviconURL(pageURL string) (string, error) {
+	candidates, err := faviconCandidates(pageURL)
+	if err != nil {
+		return "", err
+	}
+	return candidates[0], nil
+}
+
+// FindAndDownloadFavicon tries each discovered favicon URL until one is an image or SVG.
+func FindAndDownloadFavicon(pageURL, saveDir, filename string) (string, error) {
+	candidates, err := faviconCandidates(pageURL)
 	if err != nil {
 		return "", err
 	}
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
-	if err != nil {
-		return "", fmt.Errorf("failed to parse HTML: %w", err)
-	}
+	return downloadFirstImageFavicon(candidates, saveDir, filename)
+}
 
-	faviconPath := searchLinksForFavicon(doc.Find("link"))
-	if faviconPath == "" {
-		// Try default favicon location
-		parsedURL, err := url.Parse(normalizedURL)
+func downloadFirstImageFavicon(candidates []string, saveDir, filename string) (string, error) {
+	var lastErr error
+	for _, candidate := range candidates {
+		log.WithField("path", candidate).Info("Found favicon")
+		saved, err := DownloadFavicon(candidate, saveDir, filename)
 		if err == nil {
-			faviconPath = parsedURL.Scheme + "://" + parsedURL.Host + "/favicon.ico"
+			return saved, nil
 		}
+		lastErr = err
 	}
-
-	if faviconPath == "" {
-		return "", fmt.Errorf("no favicon found")
+	if lastErr != nil {
+		return "", lastErr
 	}
-
-	// Resolve relative favicon URLs
-	faviconURL := resolveFaviconURL(faviconPath, normalizedURL)
-	return faviconURL, nil
+	return "", fmt.Errorf("no favicon found")
 }
 
 // decodeDataURL decodes a base64 data URL and returns the MIME type and decoded data
@@ -214,8 +274,16 @@ func DownloadFavicon(faviconURL, saveDir, filename string) (string, error) {
 			return "", fmt.Errorf("failed to read favicon data: %w", err)
 		}
 
-		// Get MIME type from response header
 		mimeType = resp.Header.Get("Content-Type")
+	}
+
+	log.WithFields(log.Fields{
+		"path":     faviconURL,
+		"mimeType": mimeType,
+	}).Info("Downloaded favicon")
+
+	if !isFaviconMimeType(mimeType) {
+		return "", fmt.Errorf("%w: %s", ErrRejectedMime, mimeType)
 	}
 
 	// Determine file extension from filename, favicon URL, MIME type, or default.
@@ -331,16 +399,4 @@ func IsSVGContent(path string) bool {
 		return strings.Contains(strings.ToLower(trimmed), "<svg")
 	}
 	return false
-}
-
-func searchLinksForFavicon(sel *goquery.Selection) string {
-	for _, node := range sel.Nodes {
-		favicon := getFavicon(node)
-
-		if favicon != "" {
-			return favicon
-		}
-	}
-
-	return ""
 }

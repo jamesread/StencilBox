@@ -32,11 +32,11 @@ type BuildStatus struct {
 }
 
 type BuildContext struct {
-	Ctx            context.Context
-	BuildConfig    *buildconfigs.BuildConfig
-	BuildStatus    *BuildStatus
-	UpdateChannel  chan string
-	TemplateData   map[string]any
+	Ctx           context.Context
+	BuildConfig   *buildconfigs.BuildConfig
+	BuildStatus   *BuildStatus
+	UpdateChannel chan string
+	TemplateData  map[string]any
 }
 
 func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs.BuildConfig, buildStatus *BuildStatus, updateChannel chan string) {
@@ -47,11 +47,11 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	defer cancel()
 
 	bctx := &BuildContext{
-		Ctx:            deadlineCtx,
-		BuildConfig:    cfg,
-		BuildStatus:    buildStatus,
-		UpdateChannel:  updateChannel,
-		TemplateData:   make(map[string]any),
+		Ctx:           deadlineCtx,
+		BuildConfig:   cfg,
+		BuildStatus:   buildStatus,
+		UpdateChannel: updateChannel,
+		TemplateData:  make(map[string]any),
 	}
 
 	updateChannel <- fmt.Sprintf("Starting build for project %s", cfg.Name)
@@ -604,25 +604,11 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 
 					faviconBaseURL := linkFaviconBaseURL(linkMap)
 
-					// Fetch favicon
 					faviconJob++
 					updateChannel <- fmt.Sprintf("Fetching favicon (%d of %d): %s", faviconJob, totalFaviconJobs, faviconBaseURL)
-					faviconURL, err := scraper.GetFaviconURL(faviconBaseURL)
+					iconFilename, err := scraper.FindAndDownloadFavicon(faviconBaseURL, iconsDir, safeFilename)
 					if err != nil {
 						log.Debugf("Failed to get favicon for %s: %v", faviconBaseURL, err)
-						// Use placeholder icon if fetch fails
-						if placeholderIconPath != "" {
-							linkMap["icon"] = placeholderIconPath
-							links[linkIdx] = linkMap
-						}
-						continue
-					}
-
-					// Download and save favicon
-					iconFilename, err := scraper.DownloadFavicon(faviconURL, iconsDir, safeFilename)
-					if err != nil {
-						log.Debugf("Failed to download favicon for %s: %v", linkURL, err)
-						// Use placeholder icon if download fails
 						if placeholderIconPath != "" {
 							linkMap["icon"] = placeholderIconPath
 							links[linkIdx] = linkMap
