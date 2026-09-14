@@ -2,22 +2,24 @@
 	<Section
 		:padding="false"
 		title="Data Files"
+		:icon="File01Icon"
 		subtitle="YAML files that provide data to templates during the build process."
 	>
 
 		<template #toolbar>
-			<a href="https://jamesread.github.io/StencilBox/buildconfigs/index.html" class="button">
-				Docs
-				<HugeiconsIcon :icon="LinkSquare01Icon" size="24" />
+			<a href="https://jamesread.github.io/StencilBox/buildconfigs/index.html" class="button inline-icon">
+				<HugeiconsIcon :icon="LinkSquare01Icon" width="1em" height="1em" :strokeWidth="2.5" aria-hidden="true" />
+				<span>Docs</span>
 			</a>
 
 			<button
-				class="neutral"
+				type="button"
+				class="inline-icon neutral"
 				:disabled="!canGitPull || isPulling"
 				@click="handleGitPull"
 			>
-				{{ isPulling ? 'Pulling...' : 'Git Pull' }}
-				<HugeiconsIcon :icon="GitCommitIcon" size="24" />
+				<HugeiconsIcon :icon="GitCommitIcon" width="1em" height="1em" :strokeWidth="2.5" aria-hidden="true" />
+				<span>{{ isPulling ? 'Pulling...' : 'Git Pull' }}</span>
 			</button>
 		</template>
 
@@ -56,7 +58,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
-import { LinkSquare01Icon, GitCommitIcon } from '@hugeicons/core-free-icons';
+import { File01Icon, GitCommitIcon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 import Section from 'picocrank/vue/components/Section.vue';
 import Table from 'picocrank/vue/components/Table.vue';
 

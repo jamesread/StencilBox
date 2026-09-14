@@ -1,13 +1,14 @@
 <template>
 	<Section
 		:title="'Data File: ' + (dataFile?.name || 'Loading...')"
+		:icon="File01Icon"
 		subtitle="View the contents of a data file."
 	>
 
 		<template #toolbar>
-			<a href="https://jamesread.github.io/StencilBox/buildconfigs/index.html" class="button">
-				Docs
-				<HugeiconsIcon :icon="LinkSquare01Icon" size="24" />
+			<a href="https://jamesread.github.io/StencilBox/buildconfigs/index.html" class="button inline-icon">
+				<HugeiconsIcon :icon="LinkSquare01Icon" width="1em" height="1em" :strokeWidth="2.5" aria-hidden="true" />
+				<span>Docs</span>
 			</a>
 		</template>
 
@@ -32,7 +33,7 @@
 		<p v-if="error" class="bad">{{ error }}</p>
 	</Section>
 
-	<Section title="Content" v-if="content">
+	<Section title="Content" :icon="SourceCodeIcon" v-if="content">
 		<pre class="datafile-content"><code>{{ content }}</code></pre>
 	</Section>
 </template>
@@ -40,7 +41,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { HugeiconsIcon } from '@hugeicons/vue';
-import { LinkSquare01Icon } from '@hugeicons/core-free-icons';
+import { File01Icon, LinkSquare01Icon, SourceCodeIcon } from '@hugeicons/core-free-icons';
 import Section from 'picocrank/vue/components/Section.vue';
 
 const props = defineProps({

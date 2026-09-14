@@ -1,5 +1,5 @@
 <template>
-	<Section title = "System Details">
+	<Section title = "System Details" :icon = "Settings01Icon">
 		<dl>
 			<dt>Build configs directory</dt>
 			<dd>{{status?.buildConfigsDir}}
@@ -22,6 +22,7 @@
 <script setup>
 	import { ref, onMounted } from 'vue';
 	import Section from 'picocrank/vue/components/Section.vue';
+	import { Settings01Icon } from '@hugeicons/core-free-icons';
 
 	const status = ref(null)
 

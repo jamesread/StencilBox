@@ -1,4 +1,5 @@
 @import 'femtocrank/style.css';
+@import 'picocrank/styles/picocrank-extensions.css';
 @import 'femtocrank/dark.css' screen and (prefers-color-scheme: dark);
 
 section.small {

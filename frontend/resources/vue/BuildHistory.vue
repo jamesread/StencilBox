@@ -1,5 +1,5 @@
 <template>
-	<Section title="Build History" subtitle="Recent rebuilds of this build configuration" :padding="false">
+	<Section title="Build History" :icon="HistoryIcon" subtitle="Recent rebuilds of this build configuration" :padding="false">
 		<p v-if="history.length === 0" class="subtle padding">No build history available yet.</p>
 
 		<Table v-else :headers="headers" :data="history">
@@ -8,14 +8,14 @@
 			</template>
 
 			<template #cell-status="{ row, value }">
-				<span :class="row.isError ? 'bad' : 'good'">
-					{{ row.status }}
+				<span class="tag" :class="row.isError ? 'bad' : 'good'" :title="row.status">
+					{{ row.isError ? 'Error' : 'OK' }}
 				</span>
 			</template>
 
 			<template #cell-type="{ row, value }">
-				<span v-if="row.isAutoRebuild" class="annotation">Auto-rebuild</span>
-				<span v-else class="annotation">Manual</span>
+				<span v-if="row.isAutoRebuild" class="tag">Auto-rebuild</span>
+				<span v-else class="tag">Manual</span>
 			</template>
 
 			<template #cell-durationMs="{ row }">
@@ -43,6 +43,7 @@
 import { ref, onMounted, watch } from 'vue';
 import Section from 'picocrank/vue/components/Section.vue';
 import Table from 'picocrank/vue/components/Table.vue';
+import { HistoryIcon } from '@hugeicons/core-free-icons';
 
 const props = defineProps({
 	configName: {

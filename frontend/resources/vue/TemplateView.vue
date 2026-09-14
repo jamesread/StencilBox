@@ -1,5 +1,5 @@
 <template>
-    <Section :title = "'View Template: ' + template?.name">
+    <Section :title = "'View Template: ' + template?.name" :icon = "CodeSquareIcon">
         <dl>
             <dt>Name</dt>
             <dd>{{ template?.name }}</dd>
@@ -17,7 +17,7 @@
         </dl>
 
 	</Section>
-	<Section title="Associated Build Configs">
+	<Section title="Associated Build Configs" :icon="Configuration01Icon">
         <p>The following build configs are associated with this template:</p>
 
         <p v-if="template?.buildConfigs && template.buildConfigs.length === 0">
@@ -39,6 +39,7 @@
 <script setup>
 	import { ref, onMounted } from 'vue';
 	import Section from 'picocrank/vue/components/Section.vue';
+	import { CodeSquareIcon, Configuration01Icon } from '@hugeicons/core-free-icons';
 
     const props = defineProps({
         name: {

@@ -1,9 +1,9 @@
 <template>
-	<Section title = "Templates" :padding = false>
+	<Section title = "Templates" :padding = false :icon = "CodeSquareIcon">
 			<template #toolbar>
-				<a href = "https://jamesread.github.io/StencilBox/templates/index.html" class = "button">
-					Docs
-					<HugeiconsIcon :icon = "LinkSquare01Icon" size = "24" />
+				<a href = "https://jamesread.github.io/StencilBox/templates/index.html" class = "button inline-icon">
+					<HugeiconsIcon :icon = "LinkSquare01Icon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />
+					<span>Docs</span>
 				</a>
 
 				<button class="good" @click="addTemplate" disabled>
@@ -21,6 +21,9 @@
 			<template #cell-buildConfigs="{ row, value }">
 				{{ value.length }}
 			</template>
+			<template #cell-status="{ row, value }">
+				<span class="tag" :class="row.statusClass">{{ row.status }}</span>
+			</template>
 		</Table>
 	</Section>
 </template>
@@ -29,7 +32,7 @@
 	import { ref, onMounted } from 'vue';
 	import { useRouter } from 'vue-router';
 	import { HugeiconsIcon } from '@hugeicons/vue';
-	import { LinkSquare01Icon } from '@hugeicons/core-free-icons';
+	import { CodeSquareIcon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 	import Section from 'picocrank/vue/components/Section.vue';
 	import Table from 'picocrank/vue/components/Table.vue';
 

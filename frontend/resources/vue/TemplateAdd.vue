@@ -1,13 +1,11 @@
 <template>
-	<section>
-		<SectionHeader title="Add Template" subtitle="Add a new template from a Git repository." />
-
+	<Section title="Add Template" :icon="FileAddIcon" subtitle="Add a new template from a Git repository.">
 		<form @submit.prevent="submitForm">
 				<label for="repository-url">Git Repository URL</label>
-				<input 
-					type="text" 
-					id="repository-url" 
-					v-model="repositoryUrl" 
+				<input
+					type="text"
+					id="repository-url"
+					v-model="repositoryUrl"
 					placeholder="https://github.com/username/repository.git"
 					required
 				/>
@@ -22,12 +20,14 @@
 				</button>
 			</fieldset>
 		</form>
-	</section>
+	</Section>
 </template>
 
 <script setup>
 	import { ref } from 'vue';
 	import { useRouter } from 'vue-router';
+	import Section from 'picocrank/vue/components/Section.vue';
+	import { FileAddIcon } from '@hugeicons/core-free-icons';
 
 	const router = useRouter();
 	const repositoryUrl = ref('');
@@ -39,14 +39,14 @@
 		}
 
 		isSubmitting.value = true;
-		
+
 		try {
 			// TODO: Implement API call to add template
 			console.log('Adding template from:', repositoryUrl.value);
-			
+
 			// Simulate API call
 			await new Promise(resolve => setTimeout(resolve, 1000));
-			
+
 			// Navigate back to templates list
 			router.push({ name: 'templateList' });
 		} catch (error) {

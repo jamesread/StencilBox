@@ -2,22 +2,24 @@
 	<Section
 		:padding = "false"
 		title="Build Configurations"
+		:icon="Configuration01Icon"
 		subtitle="This is a list of build configurations, both builtin, and from your config directory."
 		>
 
 			<template #toolbar>
-				<a href = "https://jamesread.github.io/StencilBox/buildconfigs/index.html" class = "button">
-					Docs
-					<HugeiconsIcon :icon = "LinkSquare01Icon" size = "24" />
+				<a href = "https://jamesread.github.io/StencilBox/buildconfigs/index.html" class = "button inline-icon">
+					<HugeiconsIcon :icon = "LinkSquare01Icon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />
+					<span>Docs</span>
 				</a>
 
 				<button
-					class = "neutral"
+					type = "button"
+					class = "inline-icon neutral"
 					:disabled="!canGitPull || isPulling"
 					@click="handleGitPull"
 				>
-					{{ isPulling ? 'Pulling...' : 'Git Pull' }}
-					<HugeiconsIcon :icon = "GitCommitIcon" size = "24" />
+					<HugeiconsIcon :icon = "GitCommitIcon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />
+					<span>{{ isPulling ? 'Pulling...' : 'Git Pull' }}</span>
 				</button>
 			</template>
 
@@ -44,21 +46,17 @@
 			</template>
 
 			<template #cell-status="{ row, value }">
-					<span v-if="row.errorMessage" class = "bad">
-						<button class = "bad"@click="showErrorMessage(row)">Show Error</button>
-					</span>
-					<span v-else class = "annotation good">
-						OK
-					</span>
+					<button v-if="row.errorMessage" type = "button" class = "tag bad" @click="showErrorMessage(row)">Error</button>
+					<span v-else class = "tag good">OK</span>
 			</template>
 		</Table>
 	</Section>
 
-	<Section title = "Create build config">
+	<Section title = "Create build config" :icon = "FileAddIcon">
 		<template #toolbar>
-			<a href = "https://jamesread.github.io/StencilBox/buildconfigs/index.html" class = "button">
-				Docs
-				<HugeiconsIcon :icon = "LinkSquare01Icon" size = "24" />
+			<a href = "https://jamesread.github.io/StencilBox/buildconfigs/index.html" class = "button inline-icon">
+				<HugeiconsIcon :icon = "LinkSquare01Icon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />
+				<span>Docs</span>
 			</a>
 		</template>
 
@@ -91,7 +89,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { HugeiconsIcon } from '@hugeicons/vue';
-import { LinkSquare01Icon, GitCommitIcon } from '@hugeicons/core-free-icons';
+import { Configuration01Icon, FileAddIcon, GitCommitIcon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 import Section from 'picocrank/vue/components/Section.vue';
 import Table from 'picocrank/vue/components/Table.vue';
 

@@ -130,11 +130,15 @@ func TestFindAndDownloadFaviconFallsThroughToNextCandidate(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	dir := t.TempDir()
-	filename, err := FindAndDownloadFavicon(srv.URL, dir, "site")
+	got, err := FindAndDownloadFavicon(srv.URL, dir, "site")
 	if err != nil {
 		t.Fatalf("FindAndDownloadFavicon() err = %v", err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, filename))
+	wantURL := srv.URL + "/favicon.ico"
+	if got.SourceURL != wantURL {
+		t.Fatalf("SourceURL = %q, want %q", got.SourceURL, wantURL)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, got.Filename))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,16 +147,42 @@ func TestFindAndDownloadFaviconFallsThroughToNextCandidate(t *testing.T) {
 	}
 }
 
+func TestFindAndDownloadFaviconReturnsLinkRelIconURL(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<!doctype html><link rel="icon" href="/img/app-icon.png">`))
+	})
+	mux.HandleFunc("/img/app-icon.png", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("\x89PNG\r\n\x1a\n"))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	got, err := FindAndDownloadFavicon(srv.URL, t.TempDir(), "site")
+	if err != nil {
+		t.Fatalf("FindAndDownloadFavicon() err = %v", err)
+	}
+	wantURL := srv.URL + "/img/app-icon.png"
+	if got.SourceURL != wantURL {
+		t.Fatalf("SourceURL = %q, want %q", got.SourceURL, wantURL)
+	}
+	if got.MimeType != "image/png" {
+		t.Fatalf("MimeType = %q, want image/png", got.MimeType)
+	}
+}
+
 func TestDownloadFaviconSVGExtension(t *testing.T) {
 	dir := t.TempDir()
-	filename, err := DownloadFavicon("https://ih.apps.moo.teratan.net/favicon.svg", dir, "ih.apps.moo.teratan.net")
+	got, err := DownloadFavicon("https://ih.apps.moo.teratan.net/favicon.svg", dir, "ih.apps.moo.teratan.net")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasSuffix(filename, ".svg") {
-		t.Fatalf("expected .svg extension, got %q", filename)
+	if !strings.HasSuffix(got.Filename, ".svg") {
+		t.Fatalf("expected .svg extension, got %q", got.Filename)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, filename))
+	data, err := os.ReadFile(filepath.Join(dir, got.Filename))
 	if err != nil {
 		t.Fatal(err)
 	}

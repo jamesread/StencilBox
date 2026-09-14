@@ -1,13 +1,14 @@
 <template id = "build-config-template">
 	<Section
 		:title = "'Build Config: ' + config?.name"
+		:icon = "Configuration01Icon"
 		subtitle = "This shows a build configuration."
 		>
 
 			<template #toolbar>
-				<a href = "https://jamesread.github.io/StencilBox/buildconfigs/index.html" class = "button">
-					Open docs
-					<HugeiconsIcon :icon = "LinkSquare01Icon" size = "24" />
+				<a href = "https://jamesread.github.io/StencilBox/buildconfigs/index.html" class = "button inline-icon">
+					<HugeiconsIcon :icon = "LinkSquare01Icon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />
+					<span>Open docs</span>
 				</a>
 			</template>
 
@@ -72,64 +73,41 @@
 		</p>
 	</Section>
 
-	<Section title = "Build" id = "build">
-		<p v-if="config">Click the button below to build the project.</p>
+	<Section title = "Build" id = "build" :padding = "false" :icon = "Rocket01Icon">
+		<div class = "padding">
+			<p v-if="config">Click the button below to build the project.</p>
 
-		<div v-if="config" class="build-actions">
-			<button class="start-build-button" type="button" @click="startBuild">
-				Start Build
-				<HugeiconsIcon :icon="Rocket01Icon" size="24" />
-			</button>
-			<button class="neutral" type="button" :disabled="isClearingCache" @click="clearCache">
-				{{ isClearingCache ? 'Clearing…' : 'Clear cache' }}
-				<HugeiconsIcon :icon="Delete02Icon" size="24" />
-			</button>
+			<div v-if="config" class="build-actions">
+				<button class="inline-icon good" type="button" @click="startBuild">
+					<HugeiconsIcon :icon="Rocket01Icon" width="1em" height="1em" :strokeWidth="2.5" aria-hidden="true" />
+					<span>Start Build</span>
+				</button>
+				<button class="inline-icon neutral" type="button" :disabled="isClearingCache" @click="clearCache">
+					<HugeiconsIcon :icon="Delete02Icon" width="1em" height="1em" :strokeWidth="2.5" aria-hidden="true" />
+					<span>{{ isClearingCache ? 'Clearing…' : 'Clear cache' }}</span>
+				</button>
+			</div>
 		</div>
 
-		<div v-if="config" class="build-log-panel">
-			<div class="build-log-toolbar">
-				<span class="subtle">Build output — newest at bottom; scroll for full history (saved for this browser session).</span>
-				<div class="build-log-toolbar-actions">
-					<span v-if="copyLogFeedback" class="subtle build-log-copy-feedback">{{ copyLogFeedback }}</span>
-					<button
-						type="button"
-						class="button build-log-copy"
-						:disabled="buildLogLines.length === 0"
-						@click="copyBuildLog"
-					>
-						Copy log
-						<HugeiconsIcon :icon="Copy01Icon" size="24" />
-					</button>
-					<button type="button" class="button build-log-clear" @click="clearBuildLog">
+		<div v-if="config" class="section-subheader">
+			<h3>Build output</h3>
+		</div>
+
+		<div v-if="config" class="padding">
+			<ReadOnlyTextArea
+				ref="buildLogArea"
+				v-model="buildLogText"
+				placeholder="No build output yet. Start a build to stream status here."
+				:rows="16"
+			>
+				<template #actions>
+					<button type="button" :disabled="!buildLogText" @click="clearBuildLog">
 						Clear log
 					</button>
-				</div>
-			</div>
-			<div
-				ref="buildLogEl"
-				class="build-log"
-				role="log"
-				aria-relevant="additions"
-				aria-live="polite"
-			>
-				<p v-if="buildLogLines.length === 0" class="subtle build-log-empty">No build output yet. Start a build to stream status here.</p>
-				<div
-					v-for="line in buildLogLines"
-					:key="line.id"
-					class="build-log-line"
-					:class="{
-						'build-log-line--banner': line.kind === 'banner',
-						'build-log-line--error': line.kind === 'error',
-						'build-log-line--ok': line.kind === 'ok'
-					}"
-				>
-					<span class="build-log-meta">[{{ line.clock }}] {{ line.elapsed }}</span>
-					<span class="build-log-text">{{ line.text }}</span>
-				</div>
-			</div>
-		</div>
+				</template>
+			</ReadOnlyTextArea>
 
-		<dl v-if = "lastBuildUpdate && lastBuildUpdate.isComplete">
+			<dl v-if = "lastBuildUpdate && lastBuildUpdate.isComplete">
 				<dt>Output directory</dt>
 				<dd>
 					<span v-if = "lastBuildUpdate.baseOutputDir">
@@ -155,7 +133,8 @@
 						Not available
 					</span>
 				</dd>
-		</dl>
+			</dl>
+		</div>
 	</Section>
 
 	<BuildHistory
@@ -167,10 +146,11 @@
 </template>
 
 <script setup>
-	import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+	import { ref, onMounted, nextTick, watch } from 'vue';
 	import { HugeiconsIcon } from '@hugeicons/vue';
-	import { Copy01Icon, Delete02Icon, LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
+	import { Configuration01Icon, Delete02Icon, LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
 	import Section from 'picocrank/vue/components/Section.vue';
+	import ReadOnlyTextArea from 'picocrank/vue/components/ReadOnlyTextArea.vue';
 	import BuildHistory from './BuildHistory.vue';
 
 	const props = defineProps({
@@ -185,58 +165,12 @@
 
 	const config = ref(null);
 	const historyComponent = ref(null);
-	const buildLogEl = ref(null);
-	const buildLogLines = ref([]);
+	const buildLogArea = ref(null);
+	const buildLogText = ref('');
 	let buildSessionStartMs = 0;
-	let logIdSeq = 0;
 
 	const lastBuildUpdate = ref(null);
-	const copyLogFeedback = ref('');
 	const isClearingCache = ref(false);
-	let copyFeedbackTimer = 0;
-
-	function buildLogAsPlainText() {
-		return buildLogLines.value
-			.map((line) => `[${line.clock}] ${line.elapsed} ${line.text}`)
-			.join('\n');
-	}
-
-	function showCopyLogFeedback(message) {
-		if (copyFeedbackTimer) {
-			clearTimeout(copyFeedbackTimer);
-		}
-		copyLogFeedback.value = message;
-		copyFeedbackTimer = window.setTimeout(() => {
-			copyLogFeedback.value = '';
-			copyFeedbackTimer = 0;
-		}, 2000);
-	}
-
-	async function copyBuildLog() {
-		const text = buildLogAsPlainText();
-		if (!text) {
-			return;
-		}
-		try {
-			if (navigator.clipboard && window.isSecureContext) {
-				await navigator.clipboard.writeText(text);
-			} else {
-				const ta = document.createElement('textarea');
-				ta.value = text;
-				ta.setAttribute('readonly', '');
-				ta.style.position = 'fixed';
-				ta.style.left = '-9999px';
-				document.body.appendChild(ta);
-				ta.select();
-				document.execCommand('copy');
-				document.body.removeChild(ta);
-			}
-			showCopyLogFeedback('Copied to clipboard.');
-		} catch (e) {
-			console.warn('Could not copy build log:', e);
-			showCopyLogFeedback('Could not copy.');
-		}
-	}
 
 	function buildLogStorageKey(configName) {
 		return BUILD_LOG_STORAGE_PREFIX + configName;
@@ -265,7 +199,7 @@
 
 	function scrollBuildLogToBottom() {
 		nextTick(() => {
-			const el = buildLogEl.value;
+			const el = buildLogArea.value?.$el?.querySelector?.('textarea');
 			if (el) {
 				el.scrollTop = el.scrollHeight;
 			}
@@ -278,14 +212,26 @@
 			return;
 		}
 		try {
-			sessionStorage.setItem(buildLogStorageKey(name), JSON.stringify(buildLogLines.value));
+			sessionStorage.setItem(buildLogStorageKey(name), JSON.stringify(buildLogText.value));
 		} catch (e) {
 			console.warn('Could not persist build log:', e);
 		}
 	}
 
+	function storedLogToText(parsed) {
+		if (typeof parsed === 'string') {
+			return parsed;
+		}
+		if (!Array.isArray(parsed)) {
+			return '';
+		}
+		return parsed
+			.map((row) => `[${row.clock ?? ''}] ${row.elapsed ?? '+0.000s'} ${row.text ?? ''}`)
+			.join('\n');
+	}
+
 	function loadBuildLogFromStorage(configName) {
-		buildLogLines.value = [];
+		buildLogText.value = '';
 		if (!configName || typeof sessionStorage === 'undefined') {
 			return;
 		}
@@ -294,48 +240,35 @@
 			if (!raw) {
 				return;
 			}
-			const parsed = JSON.parse(raw);
-			if (!Array.isArray(parsed)) {
-				return;
-			}
-			logIdSeq = 0;
-			buildLogLines.value = parsed.map((row) => ({
-				id: row.id ?? ++logIdSeq,
-				clock: row.clock ?? '',
-				elapsed: row.elapsed ?? '+0.000s',
-				text: row.text ?? '',
-				kind: row.kind === 'banner' || row.kind === 'error' || row.kind === 'ok' ? row.kind : 'ok'
-			}));
-			logIdSeq = buildLogLines.value.reduce((m, l) => (typeof l.id === 'number' ? Math.max(m, l.id) : m), 0);
+			buildLogText.value = storedLogToText(JSON.parse(raw));
 			scrollBuildLogToBottom();
 		} catch (e) {
 			console.warn('Could not load build log:', e);
-			buildLogLines.value = [];
-			logIdSeq = 0;
+			buildLogText.value = '';
 		}
 	}
 
-	function appendBuildLogLine(text, kind) {
+	function trimBuildLog() {
+		const lines = buildLogText.value.split('\n');
+		if (lines.length <= MAX_BUILD_LOG_LINES) {
+			return;
+		}
+		buildLogText.value = lines.slice(lines.length - MAX_BUILD_LOG_LINES).join('\n');
+	}
+
+	function appendBuildLogLine(text) {
 		const now = new Date();
 		const elapsedMs = buildSessionStartMs ? performance.now() - buildSessionStartMs : 0;
-		const line = {
-			id: ++logIdSeq,
-			clock: formatClock(now),
-			elapsed: formatElapsed(elapsedMs),
-			text,
-			kind
-		};
-		buildLogLines.value.push(line);
-		if (buildLogLines.value.length > MAX_BUILD_LOG_LINES) {
-			const overflow = buildLogLines.value.length - MAX_BUILD_LOG_LINES;
-			buildLogLines.value.splice(0, overflow);
-		}
+		const line = `[${formatClock(now)}] ${formatElapsed(elapsedMs)} ${text}`;
+		buildLogText.value = buildLogText.value ? `${buildLogText.value}\n${line}` : line;
+		trimBuildLog();
 		persistBuildLog();
 		scrollBuildLogToBottom();
 	}
 
 	function clearBuildLog() {
-		buildLogLines.value = [];
+		buildLogText.value = '';
+		buildLogArea.value?.clear?.();
 		const name = config.value?.name;
 		if (name && typeof sessionStorage !== 'undefined') {
 			try {
@@ -362,12 +295,6 @@
 		loadConfig();
 	});
 
-	onUnmounted(() => {
-		if (copyFeedbackTimer) {
-			clearTimeout(copyFeedbackTimer);
-		}
-	});
-
 	watch(
 		() => props.name,
 		() => {
@@ -384,10 +311,9 @@
 			const response = await window.client.clearBuildCache({
 				configName: config.value.name
 			});
-			const kind = response.success ? 'ok' : 'error';
-			appendBuildLogLine(response.message + (response.cachePath ? ` (${response.cachePath})` : ''), kind);
+			appendBuildLogLine(response.message + (response.cachePath ? ` (${response.cachePath})` : ''));
 		} catch (error) {
-			appendBuildLogLine('Error clearing cache: ' + (error && error.message ? error.message : String(error)), 'error');
+			appendBuildLogLine('Error clearing cache: ' + (error && error.message ? error.message : String(error)));
 		} finally {
 			isClearingCache.value = false;
 		}
@@ -399,15 +325,15 @@
 		}
 		clearBuildLog();
 		buildSessionStartMs = performance.now();
-		appendBuildLogLine(`── Build started: ${config.value.name} ──`, 'banner');
+		appendBuildLogLine(`── Build started: ${config.value.name} ──`);
 		try {
 			for await (const update of window.client.startBuild({ configName: config.value.name })) {
 				onBuildUpdate(update);
 			}
-			appendBuildLogLine('── Build stream finished ──', 'banner');
+			appendBuildLogLine('── Build stream finished ──');
 		} catch (error) {
 			const msg = 'Error starting build: ' + (error && error.message ? error.message : String(error));
-			appendBuildLogLine(msg, 'error');
+			appendBuildLogLine(msg);
 			lastBuildUpdate.value = {
 				status: msg,
 				isError: true,
@@ -422,7 +348,7 @@
 
 		lastBuildUpdate.value = update;
 
-		appendBuildLogLine(update.status, update.isError ? 'error' : 'ok');
+		appendBuildLogLine(update.status);
 
 		console.log('Build update:', update);
 		updateBuildUrl();
@@ -451,81 +377,5 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.75rem;
-}
-
-.build-log-panel {
-	margin-top: 1rem;
-}
-
-.build-log-toolbar {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem 1rem;
-	margin-bottom: 0.35rem;
-}
-
-.build-log-toolbar-actions {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: flex-end;
-	gap: 0.5rem 0.75rem;
-}
-
-.build-log-copy-feedback {
-	white-space: nowrap;
-}
-
-.build-log-copy,
-.build-log-clear {
-	font-size: 0.9em;
-}
-
-.build-log {
-	max-height: 22rem;
-	overflow-y: auto;
-	padding: 0.65rem 0.75rem;
-	border-radius: 6px;
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-	font-size: 0.85rem;
-	line-height: 1.45;
-	white-space: pre-wrap;
-	word-break: break-word;
-	background: color-mix(in srgb, Canvas 92%, CanvasText 8%);
-	border: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
-}
-
-.build-log-empty {
-	margin: 0;
-	font-family: inherit;
-	font-size: inherit;
-}
-
-.build-log-line {
-	margin: 0;
-	padding: 0.1rem 0;
-}
-
-.build-log-meta {
-	display: inline-block;
-	min-width: 13.5rem;
-	margin-right: 0.5rem;
-	opacity: 0.85;
-	user-select: none;
-}
-
-.build-log-line--banner .build-log-text {
-	opacity: 0.75;
-	font-style: italic;
-}
-
-.build-log-line--error .build-log-text {
-	color: var(--color-critical, #c62828);
-}
-
-.build-log-line--ok .build-log-text {
-	color: inherit;
 }
 </style>

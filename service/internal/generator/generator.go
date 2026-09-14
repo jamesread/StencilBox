@@ -580,48 +580,7 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 						continue
 					}
 
-					// Get URL from link
-					linkURL, ok := linkMap["url"].(string)
-					if !ok || linkURL == "" {
-						continue
-					}
-
-					// Check if icon is already explicitly set in the data file
-					if existingIcon, hasIcon := linkMap["icon"]; hasIcon {
-						if iconStr, ok := existingIcon.(string); ok && iconStr != "" {
-							// Icon is explicitly set, use it as-is
-							log.Debugf("Using explicitly set icon for %s: %s", linkURL, iconStr)
-							links[linkIdx] = linkMap
-							continue
-						}
-					}
-
-					// Generate a safe filename for the favicon
-					safeFilename := sanitizeFilename(linkURL)
-
-					// Check if favicon already exists
-					if existingIcon := findExistingIconFile(iconsDir, safeFilename); existingIcon != "" {
-						linkMap["icon"] = "icons/" + existingIcon
-						links[linkIdx] = linkMap
-						continue
-					}
-
-					faviconBaseURL := linkFaviconBaseURL(linkMap)
-
-					faviconJob++
-					updateChannel <- fmt.Sprintf("Fetching favicon (%d of %d): %s", faviconJob, totalFaviconJobs, faviconBaseURL)
-					iconFilename, err := scraper.FindAndDownloadFavicon(faviconBaseURL, iconsDir, safeFilename)
-					if err != nil {
-						log.Debugf("Failed to get favicon for %s: %v", faviconBaseURL, err)
-						if placeholderIconPath != "" {
-							linkMap["icon"] = placeholderIconPath
-							links[linkIdx] = linkMap
-						}
-						continue
-					}
-
-					// Add icon property to link
-					linkMap["icon"] = "icons/" + iconFilename
+					applyFaviconToLink(linkMap, iconsDir, placeholderIconPath, updateChannel, &faviconJob, totalFaviconJobs)
 					links[linkIdx] = linkMap
 				}
 				catMap["links"] = links
@@ -632,6 +591,64 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 	}
 
 	return dataMap, nil
+}
+
+func hasExplicitIcon(linkMap map[string]any) bool {
+	existingIcon, hasIcon := linkMap["icon"]
+	if !hasIcon {
+		return false
+	}
+	iconStr, ok := existingIcon.(string)
+	return ok && iconStr != ""
+}
+
+func applyFaviconToLink(linkMap map[string]any, iconsDir, placeholder string, updateChannel chan string, job *int, total int) {
+	linkURL, ok := linkMap["url"].(string)
+	if !ok || linkURL == "" || hasExplicitIcon(linkMap) {
+		return
+	}
+
+	safeFilename := sanitizeFilename(linkURL)
+	if assignCachedFavicon(linkMap, iconsDir, safeFilename, linkURL, updateChannel) {
+		return
+	}
+
+	fetchAndAssignFavicon(linkMap, iconsDir, placeholder, safeFilename, updateChannel, job, total)
+}
+
+func assignCachedFavicon(linkMap map[string]any, iconsDir, safeFilename, linkURL string, updateChannel chan string) bool {
+	existing := findExistingIconFile(iconsDir, safeFilename)
+	if existing == "" {
+		return false
+	}
+	iconPath := "icons/" + existing
+	linkMap["icon"] = iconPath
+	updateChannel <- fmt.Sprintf("Using cached favicon for %s: %s", linkURL, iconPath)
+	return true
+}
+
+func fetchAndAssignFavicon(linkMap map[string]any, iconsDir, placeholder, safeFilename string, updateChannel chan string, job *int, total int) {
+	*job++
+	base := linkFaviconBaseURL(linkMap)
+	updateChannel <- fmt.Sprintf("Fetching favicon (%d of %d): %s", *job, total, base)
+	got, err := scraper.FindAndDownloadFavicon(base, iconsDir, safeFilename)
+	if err != nil {
+		log.Debugf("Failed to get favicon for %s: %v", base, err)
+		updateChannel <- fmt.Sprintf("No favicon found for %s: %v", base, err)
+		if placeholder != "" {
+			linkMap["icon"] = placeholder
+		}
+		return
+	}
+	updateChannel <- faviconFoundMessage(got)
+	linkMap["icon"] = "icons/" + got.Filename
+}
+
+func faviconFoundMessage(got scraper.DownloadedFavicon) string {
+	if got.MimeType == "" {
+		return "Found favicon: " + got.SourceURL
+	}
+	return fmt.Sprintf("Found favicon: %s (%s)", got.SourceURL, got.MimeType)
 }
 
 // normalizeLinksDataURLs ensures scheme-less link URLs become absolute https:// hrefs.

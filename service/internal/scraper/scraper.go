@@ -154,17 +154,24 @@ func GetFaviconURL(pageURL string) (string, error) {
 	return candidates[0], nil
 }
 
+// DownloadedFavicon is a favicon saved from a remote icon URL.
+type DownloadedFavicon struct {
+	Filename  string
+	SourceURL string
+	MimeType  string
+}
+
 // FindAndDownloadFavicon tries each discovered favicon URL until one is an image or SVG.
-func FindAndDownloadFavicon(pageURL, saveDir, filename string) (string, error) {
+func FindAndDownloadFavicon(pageURL, saveDir, filename string) (DownloadedFavicon, error) {
 	candidates, err := faviconCandidates(pageURL)
 	if err != nil {
-		return "", err
+		return DownloadedFavicon{}, err
 	}
 
 	return downloadFirstImageFavicon(candidates, saveDir, filename)
 }
 
-func downloadFirstImageFavicon(candidates []string, saveDir, filename string) (string, error) {
+func downloadFirstImageFavicon(candidates []string, saveDir, filename string) (DownloadedFavicon, error) {
 	var lastErr error
 	for _, candidate := range candidates {
 		log.WithField("path", candidate).Info("Found favicon")
@@ -172,12 +179,12 @@ func downloadFirstImageFavicon(candidates []string, saveDir, filename string) (s
 		if err == nil {
 			return saved, nil
 		}
-		lastErr = err
+		lastErr = fmt.Errorf("%s: %w", candidate, err)
 	}
 	if lastErr != nil {
-		return "", lastErr
+		return DownloadedFavicon{}, lastErr
 	}
-	return "", fmt.Errorf("no favicon found")
+	return DownloadedFavicon{}, fmt.Errorf("no favicon found")
 }
 
 // decodeDataURL decodes a base64 data URL and returns the MIME type and decoded data
@@ -230,48 +237,45 @@ func decodeDataURL(dataURL string) (mimeType string, data []byte, err error) {
 
 // DownloadFavicon downloads a favicon and saves it to the specified directory
 // It supports both regular HTTP URLs and base64 data URLs
-func DownloadFavicon(faviconURL, saveDir, filename string) (string, error) {
-	// Create icons directory if it doesn't exist
+func DownloadFavicon(faviconURL, saveDir, filename string) (DownloadedFavicon, error) {
+	empty := DownloadedFavicon{}
 	err := os.MkdirAll(saveDir, 0755)
 	if err != nil {
-		return "", fmt.Errorf("failed to create icons directory: %w", err)
+		return empty, fmt.Errorf("failed to create icons directory: %w", err)
 	}
 
 	var faviconData []byte
 	var mimeType string
 
-	// Check if this is a base64 data URL
 	if strings.HasPrefix(faviconURL, "data:") {
 		mimeType, faviconData, err = decodeDataURL(faviconURL)
 		if err != nil {
-			return "", fmt.Errorf("failed to decode data URL: %w", err)
+			return empty, fmt.Errorf("failed to decode data URL: %w", err)
 		}
 	} else {
-		// Regular HTTP URL - download it
 		client := &http.Client{
 			Timeout: faviconFetchTimeout,
 		}
 		req, err := http.NewRequest("GET", faviconURL, nil)
 		if err != nil {
-			return "", fmt.Errorf("failed to create request: %w", err)
+			return empty, fmt.Errorf("failed to create request: %w", err)
 		}
 
 		req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; StencilBox/1.0)")
 
 		resp, err := client.Do(req)
 		if err != nil {
-			return "", fmt.Errorf("failed to download favicon: %w", err)
+			return empty, fmt.Errorf("failed to download favicon: %w", err)
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+			return empty, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
 
-		// Read favicon data
 		faviconData, err = io.ReadAll(resp.Body)
 		if err != nil {
-			return "", fmt.Errorf("failed to read favicon data: %w", err)
+			return empty, fmt.Errorf("failed to read favicon data: %w", err)
 		}
 
 		mimeType = resp.Header.Get("Content-Type")
@@ -283,51 +287,50 @@ func DownloadFavicon(faviconURL, saveDir, filename string) (string, error) {
 	}).Info("Downloaded favicon")
 
 	if !isFaviconMimeType(mimeType) {
-		return "", fmt.Errorf("%w: %s", ErrRejectedMime, mimeType)
+		return empty, fmt.Errorf("%w: %s", ErrRejectedMime, mimeType)
 	}
 
-	// Determine file extension from filename, favicon URL, MIME type, or default.
-	ext := imageFileExt(filename)
-	if ext == "" && faviconURL != "" {
-		ext = imageFileExt(faviconURL)
-	}
-	if ext == "" {
-		if mimeType != "" {
-			mediaType, _, _ := strings.Cut(mimeType, ";")
-			mediaType = strings.TrimSpace(mediaType)
-			exts, err := mime.ExtensionsByType(mediaType)
-			if err == nil && len(exts) > 0 {
-				ext = exts[0]
-			}
-		}
-
-		if ext == "" {
-			if strings.Contains(mimeType, "png") {
-				ext = ".png"
-			} else if strings.Contains(mimeType, "svg") {
-				ext = ".svg"
-			} else if strings.Contains(mimeType, "jpeg") || strings.Contains(mimeType, "jpg") {
-				ext = ".jpg"
-			} else if strings.Contains(mimeType, "ico") {
-				ext = ".ico"
-			} else {
-				ext = ".ico" // default
-			}
-		}
-	}
-	if imageFileExt(filename) == "" {
-		filename = filename + ext
-	}
-
+	filename = filenameWithImageExt(filename, faviconURL, mimeType)
 	savePath := filepath.Join(saveDir, filename)
 
-	// Save to file
 	err = os.WriteFile(savePath, faviconData, 0644)
 	if err != nil {
-		return "", fmt.Errorf("failed to save favicon: %w", err)
+		return empty, fmt.Errorf("failed to save favicon: %w", err)
 	}
 
-	return filename, nil
+	return DownloadedFavicon{Filename: filename, SourceURL: faviconURL, MimeType: mimeType}, nil
+}
+
+func filenameWithImageExt(filename, faviconURL, mimeType string) string {
+	if imageFileExt(filename) != "" {
+		return filename
+	}
+	ext := imageFileExt(faviconURL)
+	if ext == "" {
+		ext = mimeTypeFileExt(mimeType)
+	}
+	return filename + ext
+}
+
+func mimeTypeFileExt(mimeType string) string {
+	if mimeType != "" {
+		mediaType, _, _ := strings.Cut(mimeType, ";")
+		mediaType = strings.TrimSpace(mediaType)
+		exts, err := mime.ExtensionsByType(mediaType)
+		if err == nil && len(exts) > 0 {
+			return exts[0]
+		}
+	}
+	switch {
+	case strings.Contains(mimeType, "png"):
+		return ".png"
+	case strings.Contains(mimeType, "svg"):
+		return ".svg"
+	case strings.Contains(mimeType, "jpeg"), strings.Contains(mimeType, "jpg"):
+		return ".jpg"
+	default:
+		return ".ico"
+	}
 }
 
 // ProcessUrl is kept for backward compatibility but now uses GetFaviconURL
