@@ -235,6 +235,30 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	return nil
 }
 
+func (c *ClientApi) ClearBuildCache(ctx context.Context, req *connect.Request[pb.ClearBuildCacheRequest]) (*connect.Response[pb.ClearBuildCacheResponse], error) {
+	buildConfig, found := c.buildConfigs[req.Msg.ConfigName]
+	if !found {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.ConfigName))
+	}
+
+	cachePath, err := generator.ClearTemporaryOutputDir(c.BaseOutputDir, buildConfig.OutputDir)
+	if err != nil {
+		log.Errorf("Failed to clear build cache for %s: %v", req.Msg.ConfigName, err)
+		return connect.NewResponse(&pb.ClearBuildCacheResponse{
+			Success:   false,
+			Message:   err.Error(),
+			CachePath: cachePath,
+		}), nil
+	}
+
+	log.Infof("Cleared build cache for %s at %s", req.Msg.ConfigName, cachePath)
+	return connect.NewResponse(&pb.ClearBuildCacheResponse{
+		Success:   true,
+		Message:   "Build cache cleared",
+		CachePath: cachePath,
+	}), nil
+}
+
 func (c *ClientApi) GetBuildConfigs(ctx context.Context, req *connect.Request[pb.GetBuildConfigsRequest]) (*connect.Response[pb.GetBuildConfigsResponse], error) {
 	response := &pb.GetBuildConfigsResponse{}
 	response.CanGitPull = buildconfigs.CanGitPull()

@@ -69,6 +69,9 @@ const (
 	// StencilBoxApiServiceGetDataFileProcedure is the fully-qualified name of the
 	// StencilBoxApiService's GetDataFile RPC.
 	StencilBoxApiServiceGetDataFileProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetDataFile"
+	// StencilBoxApiServiceClearBuildCacheProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ClearBuildCache RPC.
+	StencilBoxApiServiceClearBuildCacheProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ClearBuildCache"
 )
 
 // StencilBoxApiServiceClient is a client for the StencilBox.clientapi.v1.StencilBoxApiService
@@ -86,6 +89,7 @@ type StencilBoxApiServiceClient interface {
 	GitPull(context.Context, *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error)
 	ListDataFiles(context.Context, *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error)
 	GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error)
+	ClearBuildCache(context.Context, *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error)
 }
 
 // NewStencilBoxApiServiceClient constructs a client for the
@@ -172,6 +176,12 @@ func NewStencilBoxApiServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetDataFile")),
 			connect.WithClientOptions(opts...),
 		),
+		clearBuildCache: connect.NewClient[v1.ClearBuildCacheRequest, v1.ClearBuildCacheResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceClearBuildCacheProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ClearBuildCache")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -189,6 +199,7 @@ type stencilBoxApiServiceClient struct {
 	gitPull         *connect.Client[v1.GitPullRequest, v1.GitPullResponse]
 	listDataFiles   *connect.Client[v1.ListDataFilesRequest, v1.ListDataFilesResponse]
 	getDataFile     *connect.Client[v1.GetDataFileRequest, v1.GetDataFileResponse]
+	clearBuildCache *connect.Client[v1.ClearBuildCacheRequest, v1.ClearBuildCacheResponse]
 }
 
 // Init calls StencilBox.clientapi.v1.StencilBoxApiService.Init.
@@ -251,6 +262,11 @@ func (c *stencilBoxApiServiceClient) GetDataFile(ctx context.Context, req *conne
 	return c.getDataFile.CallUnary(ctx, req)
 }
 
+// ClearBuildCache calls StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache.
+func (c *stencilBoxApiServiceClient) ClearBuildCache(ctx context.Context, req *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error) {
+	return c.clearBuildCache.CallUnary(ctx, req)
+}
+
 // StencilBoxApiServiceHandler is an implementation of the
 // StencilBox.clientapi.v1.StencilBoxApiService service.
 type StencilBoxApiServiceHandler interface {
@@ -266,6 +282,7 @@ type StencilBoxApiServiceHandler interface {
 	GitPull(context.Context, *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error)
 	ListDataFiles(context.Context, *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error)
 	GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error)
+	ClearBuildCache(context.Context, *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error)
 }
 
 // NewStencilBoxApiServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -347,6 +364,12 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetDataFile")),
 		connect.WithHandlerOptions(opts...),
 	)
+	stencilBoxApiServiceClearBuildCacheHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceClearBuildCacheProcedure,
+		svc.ClearBuildCache,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ClearBuildCache")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/StencilBox.clientapi.v1.StencilBoxApiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case StencilBoxApiServiceInitProcedure:
@@ -373,6 +396,8 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 			stencilBoxApiServiceListDataFilesHandler.ServeHTTP(w, r)
 		case StencilBoxApiServiceGetDataFileProcedure:
 			stencilBoxApiServiceGetDataFileHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceClearBuildCacheProcedure:
+			stencilBoxApiServiceClearBuildCacheHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -428,4 +453,8 @@ func (UnimplementedStencilBoxApiServiceHandler) ListDataFiles(context.Context, *
 
 func (UnimplementedStencilBoxApiServiceHandler) GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ClearBuildCache(context.Context, *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache is not implemented"))
 }

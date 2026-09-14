@@ -59,7 +59,13 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	defer close(updateChannel)
 
 	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
-	temporaryOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir+"_tmp")
+	temporaryOutputDir, err := TemporaryOutputDir(baseOutputDir, cfg.OutputDir)
+	if err != nil {
+		updateChannel <- "Invalid output directory: " + err.Error()
+		buildStatus.IsError = true
+		buildStatus.Message = "Invalid output directory: " + err.Error()
+		return
+	}
 
 	log.WithFields(log.Fields{
 		"name":           cfg.Name,
@@ -69,8 +75,6 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 
 	os.MkdirAll(finalOutputDir, 0755)
 	os.MkdirAll(temporaryOutputDir, 0755)
-
-	var err error
 
 	indexPath := filepath.Join(FindTemplateDir(), cfg.Template, "index.html")
 

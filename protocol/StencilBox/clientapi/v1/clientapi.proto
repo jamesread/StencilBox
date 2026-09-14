@@ -162,6 +162,16 @@ message GetDataFileResponse {
   string datafile_name = 4;
 }
 
+message ClearBuildCacheRequest {
+  string config_name = 1;
+}
+
+message ClearBuildCacheResponse {
+  bool success = 1;
+  string message = 2;
+  string cache_path = 3;
+}
+
 service StencilBoxApiService {
   rpc Init(InitRequest) returns (InitResponse);
 
@@ -186,4 +196,6 @@ service StencilBoxApiService {
   rpc ListDataFiles(ListDataFilesRequest) returns (ListDataFilesResponse);
 
   rpc GetDataFile(GetDataFileRequest) returns (GetDataFileResponse);
+
+  rpc ClearBuildCache(ClearBuildCacheRequest) returns (ClearBuildCacheResponse);
 }

@@ -75,10 +75,16 @@
 	<Section title = "Build" id = "build">
 		<p v-if="config">Click the button below to build the project.</p>
 
-		<button v-if="config" class = "start-build-button" type = "submit" @click = "startBuild(config)">
-			Start Build
-			<HugeiconsIcon :icon = "Rocket01Icon" size = "24" />
-		</button>
+		<div v-if="config" class="build-actions">
+			<button class="start-build-button" type="button" @click="startBuild">
+				Start Build
+				<HugeiconsIcon :icon="Rocket01Icon" size="24" />
+			</button>
+			<button class="neutral" type="button" :disabled="isClearingCache" @click="clearCache">
+				{{ isClearingCache ? 'Clearing…' : 'Clear cache' }}
+				<HugeiconsIcon :icon="Delete02Icon" size="24" />
+			</button>
+		</div>
 
 		<div v-if="config" class="build-log-panel">
 			<div class="build-log-toolbar">
@@ -163,7 +169,7 @@
 <script setup>
 	import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 	import { HugeiconsIcon } from '@hugeicons/vue';
-	import { Copy01Icon, LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
+	import { Copy01Icon, Delete02Icon, LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
 	import Section from 'picocrank/vue/components/Section.vue';
 	import BuildHistory from './BuildHistory.vue';
 
@@ -186,6 +192,7 @@
 
 	const lastBuildUpdate = ref(null);
 	const copyLogFeedback = ref('');
+	const isClearingCache = ref(false);
 	let copyFeedbackTimer = 0;
 
 	function buildLogAsPlainText() {
@@ -368,6 +375,24 @@
 		}
 	);
 
+	async function clearCache() {
+		if (!config.value || isClearingCache.value) {
+			return;
+		}
+		isClearingCache.value = true;
+		try {
+			const response = await window.client.clearBuildCache({
+				configName: config.value.name
+			});
+			const kind = response.success ? 'ok' : 'error';
+			appendBuildLogLine(response.message + (response.cachePath ? ` (${response.cachePath})` : ''), kind);
+		} catch (error) {
+			appendBuildLogLine('Error clearing cache: ' + (error && error.message ? error.message : String(error)), 'error');
+		} finally {
+			isClearingCache.value = false;
+		}
+	}
+
 	async function startBuild() {
 		if (!config.value) {
 			return;
@@ -421,6 +446,13 @@
 </script>
 
 <style scoped>
+.build-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+}
+
 .build-log-panel {
 	margin-top: 1rem;
 }
