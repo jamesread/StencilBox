@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -94,17 +95,30 @@ func (c *ClientApi) queueStartupBuilds() {
 }
 
 func findOutputDir() string {
+	if dir := strings.TrimSpace(os.Getenv("STENCILBOX_OUTPUT_DIR")); dir != "" {
+		return dir
+	}
+
 	outputdir, err := dirs.GetFirstExistingDirectory("output", []string{
+		"/config/output/",
 		"/var/www/StencilBox/",
 		"../sb-output/",
 	})
 
 	if err != nil {
-		log.Warnf("Did not find the output directory, using default ./sb-output")
-		return "./sb-output"
+		def := defaultOutputDir()
+		log.Warnf("Did not find the output directory, using default %s", def)
+		return def
 	}
 
 	return outputdir
+}
+
+func defaultOutputDir() string {
+	if _, err := os.Stat("/config"); err == nil {
+		return "/config/output"
+	}
+	return "./sb-output"
 }
 
 func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitRequest]) (*connect.Response[pb.InitResponse], error) {

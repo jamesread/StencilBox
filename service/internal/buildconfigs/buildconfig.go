@@ -139,6 +139,10 @@ func ReadConfigFiles() map[string]*BuildConfig {
 	ret := make(map[string]*BuildConfig, 0)
 
 	dir, err := GetConfigDir()
+	if err != nil {
+		log.Warnf("No build configs directory found: %v", err)
+		return ret
+	}
 
 	files, _ := filepath.Glob(filepath.Join(dir, "*.yaml"))
 

@@ -118,7 +118,7 @@ func getOutputHandler(dir string) http.Handler {
 		if err != nil {
 			log.WithFields(log.Fields{
 				"index": index,
-			}).Fatalf("Could not create output directory")
+			}).Fatalf("Could not create output directory: %v", err)
 		}
 
 		err = os.WriteFile(index, []byte("<html><body><h1>StencilBox Default Index file</h1><p>This page will be replaced when something is built.</p><a href = 'webui'>webui</a></body></html>"), 0644)
