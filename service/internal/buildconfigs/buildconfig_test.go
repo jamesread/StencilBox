@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/jamesread/StencilBox/internal/config"
 )
 
 func TestBuildOnStartupDefault(t *testing.T) {
@@ -83,5 +85,42 @@ onstartup: false
 				t.Fatalf("BuildOnStartup() = %v, want %v", cfg.BuildOnStartup(), tt.expected)
 			}
 		})
+	}
+}
+
+func TestReadConfigFilesNameFallbackAndDuplicates(t *testing.T) {
+	dir := t.TempDir()
+	config.SetConfigDir(dir)
+	defer config.SetConfigDir("")
+
+	bcDir := filepath.Join(dir, "buildconfigs")
+	if err := os.MkdirAll(bcDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	files := map[string]string{
+		"noname.yaml": "template: debug\noutputdir: a\n",
+		"one.yaml":    "name: Same\ntemplate: debug\noutputdir: b\n",
+		"two.yaml":    "name: Same\ntemplate: debug\noutputdir: c\n",
+	}
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(bcDir, name), []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got := ReadConfigFiles()
+
+	if len(got) != 3 {
+		t.Fatalf("expected 3 configs, got %d: %v", len(got), got)
+	}
+	if bc, ok := got["noname"]; !ok || bc.OutputDir != "a" {
+		t.Errorf("expected unnamed config to fall back to filename, got %v", got)
+	}
+	if bc, ok := got["Same"]; !ok || bc.OutputDir != "b" {
+		t.Errorf("expected first config to keep its name, got %v", got)
+	}
+	if bc, ok := got["two.yaml"]; !ok || bc.OutputDir != "c" {
+		t.Errorf("expected duplicate to be renamed to its filename, got %v", got)
 	}
 }

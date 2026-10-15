@@ -18,3 +18,16 @@ logLevel: info
 | `logLevel`      | The log level to use. | info            | Yes                      | One of `debug`, `info`, `warn`, `error`.
 | `showFooter`    | Whether to show the footer in the web UI. | true           | No                      | ---
 |===
+
+== Environment variables
+
+|===
+| Variable | Description | Default
+| `STENCILBOX_TEMPLATES_DIR` | Directory searched for custom templates, before the built-in templates. See xref:templates/index.adoc[Templates]. | `/config/templates`
+| `STENCILBOX_STATE_DIR` | Directory where build history is saved (`stencilbox-build-history.json`), so it survives restarts. This is never inside the output directory, because that is served publicly. | The parent of the output directory, eg `/config`
+| `STENCILBOX_OUTPUT_DIR` | Directory where built sites are written and served from. | `/config/output`
+|===
+
+== Stopping StencilBox
+
+On `SIGTERM` or `SIGINT`, StencilBox stops accepting new builds and waits up to 25 seconds for builds in progress to finish before exiting. Docker only waits 10 seconds before killing a container by default; to give builds the full time, set `stop_grace_period: 30s` in Docker Compose, or pass `--stop-timeout 30` to `docker run`.

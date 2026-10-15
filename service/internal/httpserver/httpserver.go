@@ -1,10 +1,11 @@
 package httpserver
 
 import (
-	"github.com/jamesread/golure/pkg/dirs"
+	clientapiconnect "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
 	"github.com/jamesread/StencilBox/internal/clientapi"
 	"github.com/jamesread/StencilBox/internal/config"
-	clientapiconnect "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
+	"github.com/jamesread/StencilBox/internal/reqctx"
+	"github.com/jamesread/golure/pkg/dirs"
 	auth "github.com/jamesread/httpauthshim"
 	"github.com/jamesread/httpauthshim/sessions"
 
@@ -13,20 +14,24 @@ import (
 	"github.com/rs/cors"
 
 	"context"
+	"errors"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func withCors(h http.Handler) http.Handler {
 	mw := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   connectcors.AllowedMethods(),
-		AllowedHeaders:   connectcors.AllowedHeaders(),
-		ExposedHeaders:   connectcors.ExposedHeaders(),
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: connectcors.AllowedMethods(),
+		AllowedHeaders: connectcors.AllowedHeaders(),
+		ExposedHeaders: connectcors.ExposedHeaders(),
 	})
 
 	return mw.Handler(h)
@@ -48,9 +53,9 @@ func findWebuiDir() string {
 		"../frontend/dist/",
 		"../frontend/",
 		"/frontend/",
-		"/usr/share/SpaghettiCannon/frontend/",
-		"/var/www/SpaghettiCannon/",
-		"/etc/SpaghettiCannon/frontend/",
+		"/usr/share/StencilBox/frontend/",
+		"/var/www/StencilBox/webui/",
+		"/etc/StencilBox/frontend/",
 	})
 
 	if err != nil {
@@ -160,11 +165,6 @@ func normalizeListenAddr(port string) string {
 	return "0.0.0.0:" + port
 }
 
-// Context key for storing http.Request
-type contextKey string
-
-const httpRequestKey contextKey = "httpRequest"
-
 // withAuth wraps an http.Handler with authentication middleware
 func withAuth(authCtx *auth.AuthShimContext, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -178,9 +178,7 @@ func withAuth(authCtx *auth.AuthShimContext, h http.Handler) http.Handler {
 		}
 
 		// Store http.Request in context for use in API handlers
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, httpRequestKey, r)
-		r = r.WithContext(ctx)
+		r = r.WithContext(reqctx.WithHttpRequest(r.Context(), r))
 
 		// User is authenticated, proceed with request
 		h.ServeHTTP(w, r)
@@ -259,5 +257,47 @@ func Start() {
 		Handler: mux,
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	serveErr := make(chan error, 1)
+	go func() {
+		serveErr <- srv.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serveErr:
+		log.Fatalf("HTTP server failed: %v", err)
+	case <-ctx.Done():
+	}
+
+	stop()
+	shutdown(srv, apiServer)
+}
+
+// shutdownGracePeriod is how long in-progress builds get to finish after SIGTERM. It is below
+// the 30s Kubernetes default; Docker only waits 10s unless --stop-timeout is raised.
+const shutdownGracePeriod = 25 * time.Second
+
+func shutdown(srv *http.Server, apiServer *clientapi.ClientApi) {
+	log.Infof("Shutting down, waiting up to %v for builds in progress", shutdownGracePeriod)
+
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownGracePeriod)
+	defer cancel()
+
+	// Stop accepting builds first, so a request arriving during shutdown is refused rather than started.
+	apiDone := make(chan struct{})
+	go func() {
+		apiServer.Shutdown(ctx)
+		close(apiDone)
+	}()
+
+	if err := srv.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Warnf("HTTP server did not shut down cleanly, closing connections: %v", err)
+		srv.Close()
+	}
+
+	<-apiDone
+
+	log.Info("StencilBox stopped")
 }

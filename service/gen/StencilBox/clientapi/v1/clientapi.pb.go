@@ -636,8 +636,10 @@ type GetStatusResponse struct {
 	TemplatesPath   string                 `protobuf:"bytes,4,opt,name=templates_path,json=templatesPath,proto3" json:"templates_path,omitempty"`
 	OutputPath      string                 `protobuf:"bytes,5,opt,name=output_path,json=outputPath,proto3" json:"output_path,omitempty"`
 	BuildConfigsDir string                 `protobuf:"bytes,6,opt,name=build_configs_dir,json=buildConfigsDir,proto3" json:"build_configs_dir,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Directory where users can add their own templates (empty if none is writable).
+	CustomTemplatesPath string `protobuf:"bytes,7,opt,name=custom_templates_path,json=customTemplatesPath,proto3" json:"custom_templates_path,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *GetStatusResponse) Reset() {
@@ -694,6 +696,13 @@ func (x *GetStatusResponse) GetOutputPath() string {
 func (x *GetStatusResponse) GetBuildConfigsDir() string {
 	if x != nil {
 		return x.BuildConfigsDir
+	}
+	return ""
+}
+
+func (x *GetStatusResponse) GetCustomTemplatesPath() string {
+	if x != nil {
+		return x.CustomTemplatesPath
 	}
 	return ""
 }
@@ -1753,13 +1762,14 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\x13GetTemplatesRequest\"W\n" +
 	"\x14GetTemplatesResponse\x12?\n" +
 	"\ttemplates\x18\x01 \x03(\v2!.StencilBox.clientapi.v1.TemplateR\ttemplates\"\x12\n" +
-	"\x10GetStatusRequest\"\xaa\x01\n" +
+	"\x10GetStatusRequest\"\xde\x01\n" +
 	"\x11GetStatusResponse\x12!\n" +
 	"\fin_container\x18\x02 \x01(\bR\vinContainer\x12%\n" +
 	"\x0etemplates_path\x18\x04 \x01(\tR\rtemplatesPath\x12\x1f\n" +
 	"\voutput_path\x18\x05 \x01(\tR\n" +
 	"outputPath\x12*\n" +
-	"\x11build_configs_dir\x18\x06 \x01(\tR\x0fbuildConfigsDir\"\x18\n" +
+	"\x11build_configs_dir\x18\x06 \x01(\tR\x0fbuildConfigsDir\x122\n" +
+	"\x15custom_templates_path\x18\a \x01(\tR\x13customTemplatesPath\"\x18\n" +
 	"\x16GetBuildConfigsRequest\"\x86\x01\n" +
 	"\x17GetBuildConfigsResponse\x12I\n" +
 	"\rbuild_configs\x18\x01 \x03(\v2$.StencilBox.clientapi.v1.BuildConfigR\fbuildConfigs\x12 \n" +

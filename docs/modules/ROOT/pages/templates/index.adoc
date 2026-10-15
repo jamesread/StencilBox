@@ -8,7 +8,22 @@ There are a few built-in templates that come with the application. You can find 
 
 == Creating a Template
 
-If you want to create your own template, the best way is to create your own Git repository and add your template files there. You can then reference that repository in your build config. See xref:repos/index.adoc[Custom Repos] for more information.
+To add your own template, create a directory for it in the custom templates directory (`/config/templates/` when running in Docker), containing an `index.html`:
+
+----
+/config/templates/
+└── my-template/
+    ├── index.html       # required: a Go template
+    └── metadata.yaml    # optional: description and documentation_url
+----
+
+Then set `template: my-template` in a build config. New templates are picked up when the web UI is loaded; the *Add Template* page in the web UI shows the exact directory being used.
+
+A custom template with the same name as a built-in template takes priority over it, so you can also copy a built-in template into the custom templates directory and adapt it.
+
+The custom templates directory can be changed with the `STENCILBOX_TEMPLATES_DIR` environment variable. When StencilBox is started with `-configdir`, `<configdir>/templates` is also searched.
+
+To share additional files such as stylesheets or scripts between sites, keep them in a Git repository and reference it from your build config. See xref:repos/index.adoc[Custom Repos] for more information.
 
 == Built-in template variables
 

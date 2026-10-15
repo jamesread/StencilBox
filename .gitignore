@@ -7,3 +7,5 @@ build/
 dist/
 tmp/
 .vite
+sbom.spdx.json
+stencilbox-build-history.json*

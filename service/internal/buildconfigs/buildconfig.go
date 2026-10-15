@@ -42,7 +42,7 @@ func (cfg *BuildConfig) BuildOnStartup() bool {
 }
 
 type GitRepo struct {
-	URL string
+	URL     string
 	Timeout float64
 }
 
@@ -153,14 +153,26 @@ func ReadConfigFiles() map[string]*BuildConfig {
 
 	for _, file := range files {
 		bc := readBuildConfig(file)
+
+		if bc == nil {
+			log.Warnf("Failed to read build config from file: %s", file)
+			continue
+		}
+
 		bc.Filename = filepath.Base(file)
 		bc.Path = file
 
-		if bc != nil {
-			ret[bc.Name] = bc
-		} else {
-			log.Warnf("Failed to read build config from file: %s %v", file, err)
+		if strings.TrimSpace(bc.Name) == "" {
+			bc.Name = strings.TrimSuffix(bc.Filename, filepath.Ext(bc.Filename))
+			log.Warnf("Build config %s has no name, using %q", file, bc.Name)
 		}
+
+		if existing, dup := ret[bc.Name]; dup {
+			log.Warnf("Build config name %q in %s duplicates %s, renaming to %q", bc.Name, bc.Filename, existing.Filename, bc.Filename)
+			bc.Name = bc.Filename
+		}
+
+		ret[bc.Name] = bc
 	}
 
 	return ret

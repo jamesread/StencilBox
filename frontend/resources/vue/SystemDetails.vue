@@ -7,8 +7,11 @@
 				<span v-else> (on host)</span>
 			</dd>
 
-			<dt>Templates path</dt>
+			<dt>Template directories</dt>
 			<dd>{{status?.templatesPath}}</dd>
+
+			<dt>Custom templates directory</dt>
+			<dd>{{status?.customTemplatesPath}}</dd>
 
 			<dt>Output path</dt>
 			<dd>{{status?.outputPath}}</dd>

@@ -36,5 +36,7 @@ gomplate:
 	chmod +x gomplate
 	mv gomplate /usr/local/bin
 
+sbom:
+	syft . -o spdx-json=sbom.spdx.json
 
-.PHONY: default service frontend docs gomplate protocol test lint integration-test
+.PHONY: default service frontend docs gomplate protocol test lint integration-test sbom

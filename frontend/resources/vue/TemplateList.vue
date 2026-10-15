@@ -6,7 +6,7 @@
 					<span>Docs</span>
 				</a>
 
-				<button class="good" @click="addTemplate" disabled>
+				<button class="good" @click="addTemplate">
 					Add Template
 				</button>
 			</template>

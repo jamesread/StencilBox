@@ -74,6 +74,9 @@ message GetStatusResponse {
   string output_path = 5;
 
   string build_configs_dir = 6;
+
+  // Directory where users can add their own templates (empty if none is writable).
+  string custom_templates_path = 7;
 }
 
 message GetBuildConfigsRequest {

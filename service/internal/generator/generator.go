@@ -61,9 +61,7 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
 	temporaryOutputDir, err := TemporaryOutputDir(baseOutputDir, cfg.OutputDir)
 	if err != nil {
-		updateChannel <- "Invalid output directory: " + err.Error()
-		buildStatus.IsError = true
-		buildStatus.Message = "Invalid output directory: " + err.Error()
+		failBuild(buildStatus, updateChannel, "Invalid output directory: "+err.Error())
 		return
 	}
 
@@ -76,15 +74,20 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	os.MkdirAll(finalOutputDir, 0755)
 	os.MkdirAll(temporaryOutputDir, 0755)
 
-	indexPath := filepath.Join(FindTemplateDir(), cfg.Template, "index.html")
+	templateDir, err := FindTemplate(cfg.Template)
+	if err != nil {
+		failBuild(buildStatus, updateChannel, "Failed to find template: "+err.Error())
+		return
+	}
+
+	updateChannel <- fmt.Sprintf("Using %s template from %s", templateDir.Source, templateDir.Path)
+
+	indexPath := filepath.Join(templateDir.Path, "index.html")
 
 	tmpl, err := getNewTemplater(temporaryOutputDir).ParseFiles(indexPath)
 
 	if err != nil {
-		updateChannel <- "Failed to parse template: " + err.Error()
-
-		buildStatus.IsError = true
-		buildStatus.Message = "Failed to parse template: " + err.Error()
+		failBuild(buildStatus, updateChannel, "Failed to parse template: "+err.Error())
 		return
 	}
 
@@ -100,8 +103,7 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 		dat, err := readDatafile(path, filepath.Dir(cfg.Path))
 
 		if err != nil {
-			buildStatus.IsError = true
-			buildStatus.Message = "Error reading datafile " + name + ": " + err.Error()
+			failBuild(buildStatus, updateChannel, "Error reading datafile "+name+": "+err.Error())
 			return
 		}
 
@@ -142,8 +144,10 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 
 	if err != nil {
 		log.Errorf("Error creating output file: %v", err)
+		failBuild(buildStatus, updateChannel, "Error creating output file: "+err.Error())
 		return
 	}
+	defer outfile.Close()
 
 	repoStorageDir := getRepoStorageDir(cfg)
 	cloneRepos(bctx, repoStorageDir)
@@ -167,8 +171,12 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	err = tmpl.Execute(outfile, templateData)
 
 	if err != nil {
-		buildStatus.IsError = true
-		buildStatus.Message = "Error executing template: " + err.Error()
+		failBuild(buildStatus, updateChannel, "Error executing template: "+err.Error())
+		return
+	}
+
+	if err := outfile.Close(); err != nil {
+		failBuild(buildStatus, updateChannel, "Error writing output file: "+err.Error())
 		return
 	}
 
@@ -188,7 +196,7 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 
 	runVite(bctx, temporaryOutputDir, finalOutputDir)
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
+	if abortBuild(deadlineCtx, buildStatus, updateChannel) || buildStatus.IsError {
 		return
 	}
 
@@ -206,9 +214,6 @@ func buildRepoHooks(cfg *buildconfigs.BuildConfig, updateChannel chan string) *m
 	hooks := make(map[string]string)
 
 	for _, repo := range cfg.Repos {
-		repoName := filepath.Base(repo.URL)
-		repoName = repoName[:len(repoName)-len(filepath.Ext(repoName))]
-
 		appendHookData("head", &hooks, &repo, cfg)
 		appendHookData("body", &hooks, &repo, cfg)
 	}
@@ -217,10 +222,6 @@ func buildRepoHooks(cfg *buildconfigs.BuildConfig, updateChannel chan string) *m
 }
 
 func appendHookData(hookName string, hooks *map[string]string, repo *buildconfigs.GitRepo, cfg *buildconfigs.BuildConfig) {
-	if _, ok := (*hooks)[hookName]; ok {
-		(*hooks)[hookName] = ""
-	}
-
 	(*hooks)[hookName] += getHookData(hookName, repo, cfg) + "\n"
 }
 
@@ -305,9 +306,8 @@ func runVite(bctx *BuildContext, temporaryOutputDir string, finalOutputDir strin
 	res := easyexec.ExecWithRequest(req)
 
 	if res.ExitCode != 0 {
-		bctx.BuildStatus.IsError = true
-		bctx.UpdateChannel <- fmt.Sprintf("Vite build failed with exit code %d", res.ExitCode)
 		bctx.UpdateChannel <- fmt.Sprintf("Vite output:\n%s", res.Output)
+		failBuild(bctx.BuildStatus, bctx.UpdateChannel, fmt.Sprintf("Vite build failed with exit code %d", res.ExitCode))
 	} else {
 		bctx.UpdateChannel <- "Vite build completed successfully"
 	}
@@ -361,6 +361,13 @@ func webuiBuildConfigURL(base, configName string) string {
 		return path
 	}
 	return strings.TrimRight(base, "/") + path
+}
+
+// failBuild marks the build as failed and streams the reason to the client.
+func failBuild(buildStatus *BuildStatus, updateChannel chan string, message string) {
+	buildStatus.IsError = true
+	buildStatus.Message = message
+	updateChannel <- message
 }
 
 // abortBuild reports context cancellation or deadline expiry and returns true if the build should stop.
@@ -456,16 +463,6 @@ func copyLayers(outputDir string) {
 
 	copyFile(layerBaseDir, outputDir, "style.css")
 	copyFile(layerBaseDir, outputDir, "favicon.png")
-}
-
-func FindTemplateDir() string {
-	dir, _ := dirs.GetFirstExistingDirectory("template", []string{
-		"../templates/",
-		"/app/templates/",
-		"/config/templates/",
-	})
-
-	return dir
 }
 
 func copyFile(fromDir string, toDir string, filename string) {

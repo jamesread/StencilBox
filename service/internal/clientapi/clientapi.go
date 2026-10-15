@@ -3,7 +3,6 @@ package clientapi
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,6 +18,7 @@ import (
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
 	"github.com/jamesread/StencilBox/internal/buildinfo"
 	"github.com/jamesread/StencilBox/internal/generator"
+	"github.com/jamesread/StencilBox/internal/reqctx"
 	"github.com/jamesread/StencilBox/internal/watcher"
 	"github.com/jamesread/golure/pkg/dirs"
 	auth "github.com/jamesread/httpauthshim"
@@ -34,7 +34,14 @@ type ClientApi struct {
 	watcherCancel context.CancelFunc
 	buildHistory  map[string][]*pb.BuildHistoryEntry // config name -> history entries
 	historyMu     sync.RWMutex                       // protects buildHistory
+	historyPath   string                             // where buildHistory is persisted
 	authCtx       *auth.AuthShimContext              // authentication context (may be nil)
+
+	builds       sync.WaitGroup     // builds in progress, waited for on shutdown
+	buildCtx     context.Context    // parent context for automatic builds
+	buildCancel  context.CancelFunc // aborts automatic builds when shutdown times out
+	shutdownMu   sync.Mutex         // protects shuttingDown and builds.Add
+	shuttingDown bool
 
 	client.StencilBoxApiServiceClient
 }
@@ -52,7 +59,9 @@ func NewServer(authCtx *auth.AuthShimContext) *ClientApi {
 	api.authCtx = authCtx
 	api.buildConfigs = buildconfigs.ReadConfigFiles()
 	api.BaseOutputDir, _ = filepath.Abs(findOutputDir())
-	api.buildHistory = make(map[string][]*pb.BuildHistoryEntry)
+	api.historyPath = buildHistoryPath(api.BaseOutputDir)
+	api.buildHistory = loadBuildHistory(api.historyPath)
+	api.buildCtx, api.buildCancel = context.WithCancel(context.Background())
 
 	// Initialize the data file watcher
 	api.watcherCtx, api.watcherCancel = context.WithCancel(context.Background())
@@ -159,47 +168,70 @@ type TemplateMetadata struct {
 	Description      string `yaml:"description"`
 }
 
+// readTemplates lists templates from every template directory. Custom directories are
+// searched first, so a custom template shadows a built-in template of the same name.
 func readTemplates() map[string]*Template {
 	templates := make(map[string]*Template)
 
-	res, err := filepath.Glob(filepath.Join(generator.FindTemplateDir(), "**", "index.html"))
+	for _, dir := range generator.FindTemplateDirs() {
+		log.Infof("Reading %s templates from: %s", dir.Source, dir.Path)
 
-	log.Infof("Reading templates from: %s", filepath.Join("templates", "**", "index.html"))
-
-	if err != nil {
-		log.Errorf("Error reading templates: %v", err)
-		return templates
-	}
-
-	for _, fp := range res {
-		templateName := filepath.Base(filepath.Dir(fp))
-
-		metadataFile := filepath.Join(filepath.Dir(fp), "metadata.yaml")
-		metadata, err := os.ReadFile(metadataFile)
+		res, err := filepath.Glob(filepath.Join(dir.Path, "*", "index.html"))
 
 		if err != nil {
-			log.Errorf("Error reading metadata: %v", err)
+			log.Errorf("Error reading templates: %v", err)
 			continue
 		}
 
-		metadataMap := TemplateMetadata{}
-		err = yaml.Unmarshal(metadata, &metadataMap)
+		for _, fp := range res {
+			templateName := filepath.Base(filepath.Dir(fp))
 
-		if err != nil {
-			log.Errorf("Error unmarshalling metadata: %v", err)
-			continue
-		}
+			if _, exists := templates[templateName]; exists {
+				log.Infof("Template %s in %s is shadowed by a custom template", templateName, dir.Path)
+				continue
+			}
 
-		templates[templateName] = &Template{
-			Name:             templateName,
-			Source:           "built-in",
-			Status:           "OK",
-			DocumentationURL: metadataMap.DocumentationUrl,
-			Description:      metadataMap.Description,
+			templates[templateName] = readTemplate(templateName, filepath.Dir(fp), dir.Source)
 		}
 	}
 
 	return templates
+}
+
+// readTemplate builds a Template from its directory. metadata.yaml is optional.
+func readTemplate(name, dir, source string) *Template {
+	tpl := &Template{
+		Name:   name,
+		Source: source,
+		Status: "OK",
+	}
+
+	metadata, err := os.ReadFile(filepath.Join(dir, "metadata.yaml"))
+
+	if os.IsNotExist(err) {
+		return tpl
+	}
+
+	if err != nil {
+		log.Errorf("Error reading metadata for template %s: %v", name, err)
+		tpl.Status = "error"
+		tpl.Description = "Error reading metadata.yaml: " + err.Error()
+		return tpl
+	}
+
+	metadataMap := TemplateMetadata{}
+
+	if err := yaml.Unmarshal(metadata, &metadataMap); err != nil {
+		log.Errorf("Error unmarshalling metadata for template %s: %v", name, err)
+		tpl.Status = "error"
+		tpl.Description = "Invalid metadata.yaml: " + err.Error()
+		return tpl
+	}
+
+	tpl.DocumentationURL = metadataMap.DocumentationUrl
+	tpl.Description = metadataMap.Description
+
+	return tpl
 }
 
 func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.BuildRequest], srv *connect.ServerStream[pb.BuildUpdateResponse]) error {
@@ -220,6 +252,14 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 		return connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.ConfigName))
 	}
 
+	if !c.beginBuild() {
+		response.IsError = true
+		response.Status = "StencilBox is shutting down"
+		srv.Send(response)
+		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("server is shutting down"))
+	}
+	defer c.builds.Done()
+
 	buildStatus := &generator.BuildStatus{}
 	buildStarted := time.Now()
 	go generator.Generate(ctx, c.BaseOutputDir, buildConfig, buildStatus, updateChan)
@@ -233,6 +273,9 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 
 	log.Infof("Build completed for config %s", req.Msg.ConfigName)
 	response.IsError = buildStatus.IsError
+	if buildStatus.Message != "" {
+		response.Status = buildStatus.Message
+	}
 	response.BuildUrlBase = buildStatus.BuildUrlBase
 	response.OutputSizeHumanReadable = buildStatus.OutputSizeHumanReadable
 	response.BaseOutputDir = c.BaseOutputDir
@@ -333,13 +376,24 @@ func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetSt
 	dir, _ := buildconfigs.GetConfigDir()
 
 	response := &pb.GetStatusResponse{
-		InContainer:     inContainer(),
-		OutputPath:      c.BaseOutputDir,
-		TemplatesPath:   filepath.Join(generator.FindTemplateDir(), "templates"),
-		BuildConfigsDir: dir,
+		InContainer:         inContainer(),
+		OutputPath:          c.BaseOutputDir,
+		TemplatesPath:       templateDirsString(),
+		BuildConfigsDir:     dir,
+		CustomTemplatesPath: generator.CustomTemplatesDir(),
 	}
 
 	return connect.NewResponse(response), nil
+}
+
+func templateDirsString() string {
+	paths := []string{}
+
+	for _, dir := range generator.FindTemplateDirs() {
+		paths = append(paths, dir.Path)
+	}
+
+	return strings.Join(paths, ", ")
 }
 
 func (c *ClientApi) GetTemplate(ctx context.Context, req *connect.Request[pb.GetTemplateRequest]) (*connect.Response[pb.GetTemplateResponse], error) {
@@ -386,7 +440,7 @@ func (c *ClientApi) GetBuildConfig(ctx context.Context, req *connect.Request[pb.
 
 		return connect.NewResponse(response), nil
 	} else {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("template not found"))
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.ConfigName))
 	}
 }
 
@@ -409,6 +463,11 @@ func (c *ClientApi) autoRebuild(configName string) {
 		return
 	}
 
+	if !c.beginBuild() {
+		log.Infof("Skipping automatic rebuild for %s: shutting down", configName)
+		return
+	}
+
 	log.Infof("Starting automatic rebuild for config: %s", configName)
 
 	updateChan := make(chan string)
@@ -416,8 +475,10 @@ func (c *ClientApi) autoRebuild(configName string) {
 
 	// Run the build in a goroutine; read updates concurrently so Generate does not block on the channel.
 	go func() {
+		defer c.builds.Done()
+
 		buildStarted := time.Now()
-		go generator.Generate(context.Background(), c.BaseOutputDir, buildConfig, buildStatus, updateChan)
+		go generator.Generate(c.buildCtx, c.BaseOutputDir, buildConfig, buildStatus, updateChan)
 
 		for update := range updateChan {
 			log.Infof("[Auto-rebuild %s] %s", configName, update)
@@ -472,6 +533,10 @@ func (c *ClientApi) recordBuildHistory(configName string, buildStatus *generator
 	if len(c.buildHistory[configName]) > maxHistoryEntries {
 		c.buildHistory[configName] = c.buildHistory[configName][:maxHistoryEntries]
 	}
+
+	if err := saveBuildHistory(c.historyPath, c.buildHistory); err != nil {
+		log.Warnf("Failed to save build history to %s: %v", c.historyPath, err)
+	}
 }
 
 // GetBuildHistory returns the build history for a specific config
@@ -504,8 +569,8 @@ func (c *ClientApi) GetCurrentUser(ctx context.Context, req *connect.Request[pb.
 	}
 
 	// Extract http.Request from context (stored by withAuth middleware)
-	httpReq, ok := ctx.Value("httpRequest").(*http.Request)
-	if !ok || httpReq == nil {
+	httpReq := reqctx.HttpRequest(ctx)
+	if httpReq == nil {
 		// If we can't get the request, return guest user
 		return connect.NewResponse(response), nil
 	}
@@ -623,8 +688,27 @@ func (c *ClientApi) GetDataFile(ctx context.Context, req *connect.Request[pb.Get
 	return connect.NewResponse(response), nil
 }
 
-// Shutdown cleans up resources
-func (c *ClientApi) Shutdown() {
+// beginBuild registers a build so shutdown waits for it. It returns false once shutdown has
+// started; callers that get true must call c.builds.Done() when the build finishes.
+func (c *ClientApi) beginBuild() bool {
+	c.shutdownMu.Lock()
+	defer c.shutdownMu.Unlock()
+
+	if c.shuttingDown {
+		return false
+	}
+
+	c.builds.Add(1)
+	return true
+}
+
+// Shutdown stops the data file watcher, refuses new builds, and waits for builds in progress
+// to finish. If ctx expires first, remaining builds are cancelled.
+func (c *ClientApi) Shutdown(ctx context.Context) {
+	c.shutdownMu.Lock()
+	c.shuttingDown = true
+	c.shutdownMu.Unlock()
+
 	if c.watcherCancel != nil {
 		log.Info("Stopping data file watcher...")
 		c.watcherCancel()
@@ -632,5 +716,21 @@ func (c *ClientApi) Shutdown() {
 
 	if c.dataWatcher != nil {
 		c.dataWatcher.Stop()
+	}
+
+	done := make(chan struct{})
+	go func() {
+		c.builds.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		log.Info("All builds finished")
+	case <-ctx.Done():
+		log.Warn("Timed out waiting for builds to finish, cancelling them")
+		if c.buildCancel != nil {
+			c.buildCancel()
+		}
 	}
 }
