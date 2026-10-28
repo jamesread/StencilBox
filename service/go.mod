@@ -11,7 +11,7 @@ require (
 	github.com/jamesread/httpauthshim v0.2.0
 	github.com/rs/cors v1.11.1
 	github.com/sirupsen/logrus v1.10.2
-	golang.org/x/net v0.61.0
+	golang.org/x/net v0.62.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 )
