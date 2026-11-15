@@ -69,9 +69,102 @@ const (
 	// StencilBoxApiServiceGetDataFileProcedure is the fully-qualified name of the
 	// StencilBoxApiService's GetDataFile RPC.
 	StencilBoxApiServiceGetDataFileProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetDataFile"
+	// StencilBoxApiServiceUpdateDataFileProcedure is the fully-qualified name of the
+	// StencilBoxApiService's UpdateDataFile RPC.
+	StencilBoxApiServiceUpdateDataFileProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/UpdateDataFile"
+	// StencilBoxApiServiceCreateBuildConfigProcedure is the fully-qualified name of the
+	// StencilBoxApiService's CreateBuildConfig RPC.
+	StencilBoxApiServiceCreateBuildConfigProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/CreateBuildConfig"
+	// StencilBoxApiServiceCreateDataFileProcedure is the fully-qualified name of the
+	// StencilBoxApiService's CreateDataFile RPC.
+	StencilBoxApiServiceCreateDataFileProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/CreateDataFile"
 	// StencilBoxApiServiceClearBuildCacheProcedure is the fully-qualified name of the
 	// StencilBoxApiService's ClearBuildCache RPC.
 	StencilBoxApiServiceClearBuildCacheProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ClearBuildCache"
+	// StencilBoxApiServiceLoginWithUsernameAndPasswordProcedure is the fully-qualified name of the
+	// StencilBoxApiService's LoginWithUsernameAndPassword RPC.
+	StencilBoxApiServiceLoginWithUsernameAndPasswordProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/LoginWithUsernameAndPassword"
+	// StencilBoxApiServiceLogoutProcedure is the fully-qualified name of the StencilBoxApiService's
+	// Logout RPC.
+	StencilBoxApiServiceLogoutProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/Logout"
+	// StencilBoxApiServiceChangePasswordProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ChangePassword RPC.
+	StencilBoxApiServiceChangePasswordProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ChangePassword"
+	// StencilBoxApiServiceGetUsersProcedure is the fully-qualified name of the StencilBoxApiService's
+	// GetUsers RPC.
+	StencilBoxApiServiceGetUsersProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetUsers"
+	// StencilBoxApiServiceGetUserProcedure is the fully-qualified name of the StencilBoxApiService's
+	// GetUser RPC.
+	StencilBoxApiServiceGetUserProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetUser"
+	// StencilBoxApiServiceCreateUserProcedure is the fully-qualified name of the StencilBoxApiService's
+	// CreateUser RPC.
+	StencilBoxApiServiceCreateUserProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/CreateUser"
+	// StencilBoxApiServiceDeleteUserProcedure is the fully-qualified name of the StencilBoxApiService's
+	// DeleteUser RPC.
+	StencilBoxApiServiceDeleteUserProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/DeleteUser"
+	// StencilBoxApiServiceResetUserPasswordProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ResetUserPassword RPC.
+	StencilBoxApiServiceResetUserPasswordProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ResetUserPassword"
+	// StencilBoxApiServiceGetUserAccessProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetUserAccess RPC.
+	StencilBoxApiServiceGetUserAccessProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetUserAccess"
+	// StencilBoxApiServiceSetUserGroupsProcedure is the fully-qualified name of the
+	// StencilBoxApiService's SetUserGroups RPC.
+	StencilBoxApiServiceSetUserGroupsProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/SetUserGroups"
+	// StencilBoxApiServiceGetMyPermissionsAuditProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetMyPermissionsAudit RPC.
+	StencilBoxApiServiceGetMyPermissionsAuditProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetMyPermissionsAudit"
+	// StencilBoxApiServiceListUserGroupsProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ListUserGroups RPC.
+	StencilBoxApiServiceListUserGroupsProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ListUserGroups"
+	// StencilBoxApiServiceCreateUserGroupProcedure is the fully-qualified name of the
+	// StencilBoxApiService's CreateUserGroup RPC.
+	StencilBoxApiServiceCreateUserGroupProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/CreateUserGroup"
+	// StencilBoxApiServiceDeleteUserGroupProcedure is the fully-qualified name of the
+	// StencilBoxApiService's DeleteUserGroup RPC.
+	StencilBoxApiServiceDeleteUserGroupProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/DeleteUserGroup"
+	// StencilBoxApiServiceGetUserGroupMembersProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetUserGroupMembers RPC.
+	StencilBoxApiServiceGetUserGroupMembersProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetUserGroupMembers"
+	// StencilBoxApiServiceSetUserGroupMembersProcedure is the fully-qualified name of the
+	// StencilBoxApiService's SetUserGroupMembers RPC.
+	StencilBoxApiServiceSetUserGroupMembersProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/SetUserGroupMembers"
+	// StencilBoxApiServiceListRbacPermissionsProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ListRbacPermissions RPC.
+	StencilBoxApiServiceListRbacPermissionsProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ListRbacPermissions"
+	// StencilBoxApiServiceListRbacRolesProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ListRbacRoles RPC.
+	StencilBoxApiServiceListRbacRolesProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ListRbacRoles"
+	// StencilBoxApiServiceCreateRbacRoleProcedure is the fully-qualified name of the
+	// StencilBoxApiService's CreateRbacRole RPC.
+	StencilBoxApiServiceCreateRbacRoleProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/CreateRbacRole"
+	// StencilBoxApiServiceUpdateRbacRoleProcedure is the fully-qualified name of the
+	// StencilBoxApiService's UpdateRbacRole RPC.
+	StencilBoxApiServiceUpdateRbacRoleProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/UpdateRbacRole"
+	// StencilBoxApiServiceDeleteRbacRoleProcedure is the fully-qualified name of the
+	// StencilBoxApiService's DeleteRbacRole RPC.
+	StencilBoxApiServiceDeleteRbacRoleProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/DeleteRbacRole"
+	// StencilBoxApiServiceGetUserGroupRbacRolesProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetUserGroupRbacRoles RPC.
+	StencilBoxApiServiceGetUserGroupRbacRolesProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetUserGroupRbacRoles"
+	// StencilBoxApiServiceSetUserGroupRbacRolesProcedure is the fully-qualified name of the
+	// StencilBoxApiService's SetUserGroupRbacRoles RPC.
+	StencilBoxApiServiceSetUserGroupRbacRolesProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/SetUserGroupRbacRoles"
+	// StencilBoxApiServiceGetRbacRoleGroupsProcedure is the fully-qualified name of the
+	// StencilBoxApiService's GetRbacRoleGroups RPC.
+	StencilBoxApiServiceGetRbacRoleGroupsProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/GetRbacRoleGroups"
+	// StencilBoxApiServiceListApiKeysProcedure is the fully-qualified name of the
+	// StencilBoxApiService's ListApiKeys RPC.
+	StencilBoxApiServiceListApiKeysProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/ListApiKeys"
+	// StencilBoxApiServiceCreateApiKeyProcedure is the fully-qualified name of the
+	// StencilBoxApiService's CreateApiKey RPC.
+	StencilBoxApiServiceCreateApiKeyProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/CreateApiKey"
+	// StencilBoxApiServiceUpdateApiKeyProcedure is the fully-qualified name of the
+	// StencilBoxApiService's UpdateApiKey RPC.
+	StencilBoxApiServiceUpdateApiKeyProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/UpdateApiKey"
+	// StencilBoxApiServiceDeleteApiKeyProcedure is the fully-qualified name of the
+	// StencilBoxApiService's DeleteApiKey RPC.
+	StencilBoxApiServiceDeleteApiKeyProcedure = "/StencilBox.clientapi.v1.StencilBoxApiService/DeleteApiKey"
 )
 
 // StencilBoxApiServiceClient is a client for the StencilBox.clientapi.v1.StencilBoxApiService
@@ -89,7 +182,38 @@ type StencilBoxApiServiceClient interface {
 	GitPull(context.Context, *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error)
 	ListDataFiles(context.Context, *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error)
 	GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error)
+	UpdateDataFile(context.Context, *connect.Request[v1.UpdateDataFileRequest]) (*connect.Response[v1.UpdateDataFileResponse], error)
+	CreateBuildConfig(context.Context, *connect.Request[v1.CreateBuildConfigRequest]) (*connect.Response[v1.CreateBuildConfigResponse], error)
+	CreateDataFile(context.Context, *connect.Request[v1.CreateDataFileRequest]) (*connect.Response[v1.CreateDataFileResponse], error)
 	ClearBuildCache(context.Context, *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error)
+	LoginWithUsernameAndPassword(context.Context, *connect.Request[v1.LoginWithUsernameAndPasswordRequest]) (*connect.Response[v1.LoginWithUsernameAndPasswordResponse], error)
+	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
+	ChangePassword(context.Context, *connect.Request[v1.ChangePasswordRequest]) (*connect.Response[v1.ChangePasswordResponse], error)
+	GetUsers(context.Context, *connect.Request[v1.GetUsersRequest]) (*connect.Response[v1.GetUsersResponse], error)
+	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
+	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
+	DeleteUser(context.Context, *connect.Request[v1.DeleteUserRequest]) (*connect.Response[v1.DeleteUserResponse], error)
+	ResetUserPassword(context.Context, *connect.Request[v1.ResetUserPasswordRequest]) (*connect.Response[v1.ResetUserPasswordResponse], error)
+	GetUserAccess(context.Context, *connect.Request[v1.GetUserAccessRequest]) (*connect.Response[v1.GetUserAccessResponse], error)
+	SetUserGroups(context.Context, *connect.Request[v1.SetUserGroupsRequest]) (*connect.Response[v1.SetUserGroupsResponse], error)
+	GetMyPermissionsAudit(context.Context, *connect.Request[v1.GetMyPermissionsAuditRequest]) (*connect.Response[v1.GetMyPermissionsAuditResponse], error)
+	ListUserGroups(context.Context, *connect.Request[v1.ListUserGroupsRequest]) (*connect.Response[v1.ListUserGroupsResponse], error)
+	CreateUserGroup(context.Context, *connect.Request[v1.CreateUserGroupRequest]) (*connect.Response[v1.CreateUserGroupResponse], error)
+	DeleteUserGroup(context.Context, *connect.Request[v1.DeleteUserGroupRequest]) (*connect.Response[v1.DeleteUserGroupResponse], error)
+	GetUserGroupMembers(context.Context, *connect.Request[v1.GetUserGroupMembersRequest]) (*connect.Response[v1.GetUserGroupMembersResponse], error)
+	SetUserGroupMembers(context.Context, *connect.Request[v1.SetUserGroupMembersRequest]) (*connect.Response[v1.SetUserGroupMembersResponse], error)
+	ListRbacPermissions(context.Context, *connect.Request[v1.ListRbacPermissionsRequest]) (*connect.Response[v1.ListRbacPermissionsResponse], error)
+	ListRbacRoles(context.Context, *connect.Request[v1.ListRbacRolesRequest]) (*connect.Response[v1.ListRbacRolesResponse], error)
+	CreateRbacRole(context.Context, *connect.Request[v1.CreateRbacRoleRequest]) (*connect.Response[v1.CreateRbacRoleResponse], error)
+	UpdateRbacRole(context.Context, *connect.Request[v1.UpdateRbacRoleRequest]) (*connect.Response[v1.UpdateRbacRoleResponse], error)
+	DeleteRbacRole(context.Context, *connect.Request[v1.DeleteRbacRoleRequest]) (*connect.Response[v1.DeleteRbacRoleResponse], error)
+	GetUserGroupRbacRoles(context.Context, *connect.Request[v1.GetUserGroupRbacRolesRequest]) (*connect.Response[v1.GetUserGroupRbacRolesResponse], error)
+	SetUserGroupRbacRoles(context.Context, *connect.Request[v1.SetUserGroupRbacRolesRequest]) (*connect.Response[v1.SetUserGroupRbacRolesResponse], error)
+	GetRbacRoleGroups(context.Context, *connect.Request[v1.GetRbacRoleGroupsRequest]) (*connect.Response[v1.GetRbacRoleGroupsResponse], error)
+	ListApiKeys(context.Context, *connect.Request[v1.ListApiKeysRequest]) (*connect.Response[v1.ListApiKeysResponse], error)
+	CreateApiKey(context.Context, *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error)
+	UpdateApiKey(context.Context, *connect.Request[v1.UpdateApiKeyRequest]) (*connect.Response[v1.UpdateApiKeyResponse], error)
+	DeleteApiKey(context.Context, *connect.Request[v1.DeleteApiKeyRequest]) (*connect.Response[v1.DeleteApiKeyResponse], error)
 }
 
 // NewStencilBoxApiServiceClient constructs a client for the
@@ -176,10 +300,196 @@ func NewStencilBoxApiServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetDataFile")),
 			connect.WithClientOptions(opts...),
 		),
+		updateDataFile: connect.NewClient[v1.UpdateDataFileRequest, v1.UpdateDataFileResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceUpdateDataFileProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("UpdateDataFile")),
+			connect.WithClientOptions(opts...),
+		),
+		createBuildConfig: connect.NewClient[v1.CreateBuildConfigRequest, v1.CreateBuildConfigResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceCreateBuildConfigProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateBuildConfig")),
+			connect.WithClientOptions(opts...),
+		),
+		createDataFile: connect.NewClient[v1.CreateDataFileRequest, v1.CreateDataFileResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceCreateDataFileProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateDataFile")),
+			connect.WithClientOptions(opts...),
+		),
 		clearBuildCache: connect.NewClient[v1.ClearBuildCacheRequest, v1.ClearBuildCacheResponse](
 			httpClient,
 			baseURL+StencilBoxApiServiceClearBuildCacheProcedure,
 			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ClearBuildCache")),
+			connect.WithClientOptions(opts...),
+		),
+		loginWithUsernameAndPassword: connect.NewClient[v1.LoginWithUsernameAndPasswordRequest, v1.LoginWithUsernameAndPasswordResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceLoginWithUsernameAndPasswordProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("LoginWithUsernameAndPassword")),
+			connect.WithClientOptions(opts...),
+		),
+		logout: connect.NewClient[v1.LogoutRequest, v1.LogoutResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceLogoutProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("Logout")),
+			connect.WithClientOptions(opts...),
+		),
+		changePassword: connect.NewClient[v1.ChangePasswordRequest, v1.ChangePasswordResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceChangePasswordProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ChangePassword")),
+			connect.WithClientOptions(opts...),
+		),
+		getUsers: connect.NewClient[v1.GetUsersRequest, v1.GetUsersResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetUsersProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUsers")),
+			connect.WithClientOptions(opts...),
+		),
+		getUser: connect.NewClient[v1.GetUserRequest, v1.GetUserResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetUserProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUser")),
+			connect.WithClientOptions(opts...),
+		),
+		createUser: connect.NewClient[v1.CreateUserRequest, v1.CreateUserResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceCreateUserProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateUser")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteUser: connect.NewClient[v1.DeleteUserRequest, v1.DeleteUserResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceDeleteUserProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteUser")),
+			connect.WithClientOptions(opts...),
+		),
+		resetUserPassword: connect.NewClient[v1.ResetUserPasswordRequest, v1.ResetUserPasswordResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceResetUserPasswordProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ResetUserPassword")),
+			connect.WithClientOptions(opts...),
+		),
+		getUserAccess: connect.NewClient[v1.GetUserAccessRequest, v1.GetUserAccessResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetUserAccessProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUserAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		setUserGroups: connect.NewClient[v1.SetUserGroupsRequest, v1.SetUserGroupsResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceSetUserGroupsProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("SetUserGroups")),
+			connect.WithClientOptions(opts...),
+		),
+		getMyPermissionsAudit: connect.NewClient[v1.GetMyPermissionsAuditRequest, v1.GetMyPermissionsAuditResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetMyPermissionsAuditProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetMyPermissionsAudit")),
+			connect.WithClientOptions(opts...),
+		),
+		listUserGroups: connect.NewClient[v1.ListUserGroupsRequest, v1.ListUserGroupsResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceListUserGroupsProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListUserGroups")),
+			connect.WithClientOptions(opts...),
+		),
+		createUserGroup: connect.NewClient[v1.CreateUserGroupRequest, v1.CreateUserGroupResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceCreateUserGroupProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateUserGroup")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteUserGroup: connect.NewClient[v1.DeleteUserGroupRequest, v1.DeleteUserGroupResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceDeleteUserGroupProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteUserGroup")),
+			connect.WithClientOptions(opts...),
+		),
+		getUserGroupMembers: connect.NewClient[v1.GetUserGroupMembersRequest, v1.GetUserGroupMembersResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetUserGroupMembersProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUserGroupMembers")),
+			connect.WithClientOptions(opts...),
+		),
+		setUserGroupMembers: connect.NewClient[v1.SetUserGroupMembersRequest, v1.SetUserGroupMembersResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceSetUserGroupMembersProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("SetUserGroupMembers")),
+			connect.WithClientOptions(opts...),
+		),
+		listRbacPermissions: connect.NewClient[v1.ListRbacPermissionsRequest, v1.ListRbacPermissionsResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceListRbacPermissionsProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListRbacPermissions")),
+			connect.WithClientOptions(opts...),
+		),
+		listRbacRoles: connect.NewClient[v1.ListRbacRolesRequest, v1.ListRbacRolesResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceListRbacRolesProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListRbacRoles")),
+			connect.WithClientOptions(opts...),
+		),
+		createRbacRole: connect.NewClient[v1.CreateRbacRoleRequest, v1.CreateRbacRoleResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceCreateRbacRoleProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateRbacRole")),
+			connect.WithClientOptions(opts...),
+		),
+		updateRbacRole: connect.NewClient[v1.UpdateRbacRoleRequest, v1.UpdateRbacRoleResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceUpdateRbacRoleProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("UpdateRbacRole")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteRbacRole: connect.NewClient[v1.DeleteRbacRoleRequest, v1.DeleteRbacRoleResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceDeleteRbacRoleProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteRbacRole")),
+			connect.WithClientOptions(opts...),
+		),
+		getUserGroupRbacRoles: connect.NewClient[v1.GetUserGroupRbacRolesRequest, v1.GetUserGroupRbacRolesResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetUserGroupRbacRolesProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUserGroupRbacRoles")),
+			connect.WithClientOptions(opts...),
+		),
+		setUserGroupRbacRoles: connect.NewClient[v1.SetUserGroupRbacRolesRequest, v1.SetUserGroupRbacRolesResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceSetUserGroupRbacRolesProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("SetUserGroupRbacRoles")),
+			connect.WithClientOptions(opts...),
+		),
+		getRbacRoleGroups: connect.NewClient[v1.GetRbacRoleGroupsRequest, v1.GetRbacRoleGroupsResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceGetRbacRoleGroupsProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetRbacRoleGroups")),
+			connect.WithClientOptions(opts...),
+		),
+		listApiKeys: connect.NewClient[v1.ListApiKeysRequest, v1.ListApiKeysResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceListApiKeysProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListApiKeys")),
+			connect.WithClientOptions(opts...),
+		),
+		createApiKey: connect.NewClient[v1.CreateApiKeyRequest, v1.CreateApiKeyResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceCreateApiKeyProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateApiKey")),
+			connect.WithClientOptions(opts...),
+		),
+		updateApiKey: connect.NewClient[v1.UpdateApiKeyRequest, v1.UpdateApiKeyResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceUpdateApiKeyProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("UpdateApiKey")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteApiKey: connect.NewClient[v1.DeleteApiKeyRequest, v1.DeleteApiKeyResponse](
+			httpClient,
+			baseURL+StencilBoxApiServiceDeleteApiKeyProcedure,
+			connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteApiKey")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -187,19 +497,50 @@ func NewStencilBoxApiServiceClient(httpClient connect.HTTPClient, baseURL string
 
 // stencilBoxApiServiceClient implements StencilBoxApiServiceClient.
 type stencilBoxApiServiceClient struct {
-	init            *connect.Client[v1.InitRequest, v1.InitResponse]
-	startBuild      *connect.Client[v1.BuildRequest, v1.BuildUpdateResponse]
-	getTemplates    *connect.Client[v1.GetTemplatesRequest, v1.GetTemplatesResponse]
-	getTemplate     *connect.Client[v1.GetTemplateRequest, v1.GetTemplateResponse]
-	getStatus       *connect.Client[v1.GetStatusRequest, v1.GetStatusResponse]
-	getBuildConfigs *connect.Client[v1.GetBuildConfigsRequest, v1.GetBuildConfigsResponse]
-	getBuildConfig  *connect.Client[v1.GetBuildConfigRequest, v1.GetBuildConfigResponse]
-	getBuildHistory *connect.Client[v1.GetBuildHistoryRequest, v1.GetBuildHistoryResponse]
-	getCurrentUser  *connect.Client[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse]
-	gitPull         *connect.Client[v1.GitPullRequest, v1.GitPullResponse]
-	listDataFiles   *connect.Client[v1.ListDataFilesRequest, v1.ListDataFilesResponse]
-	getDataFile     *connect.Client[v1.GetDataFileRequest, v1.GetDataFileResponse]
-	clearBuildCache *connect.Client[v1.ClearBuildCacheRequest, v1.ClearBuildCacheResponse]
+	init                         *connect.Client[v1.InitRequest, v1.InitResponse]
+	startBuild                   *connect.Client[v1.BuildRequest, v1.BuildUpdateResponse]
+	getTemplates                 *connect.Client[v1.GetTemplatesRequest, v1.GetTemplatesResponse]
+	getTemplate                  *connect.Client[v1.GetTemplateRequest, v1.GetTemplateResponse]
+	getStatus                    *connect.Client[v1.GetStatusRequest, v1.GetStatusResponse]
+	getBuildConfigs              *connect.Client[v1.GetBuildConfigsRequest, v1.GetBuildConfigsResponse]
+	getBuildConfig               *connect.Client[v1.GetBuildConfigRequest, v1.GetBuildConfigResponse]
+	getBuildHistory              *connect.Client[v1.GetBuildHistoryRequest, v1.GetBuildHistoryResponse]
+	getCurrentUser               *connect.Client[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse]
+	gitPull                      *connect.Client[v1.GitPullRequest, v1.GitPullResponse]
+	listDataFiles                *connect.Client[v1.ListDataFilesRequest, v1.ListDataFilesResponse]
+	getDataFile                  *connect.Client[v1.GetDataFileRequest, v1.GetDataFileResponse]
+	updateDataFile               *connect.Client[v1.UpdateDataFileRequest, v1.UpdateDataFileResponse]
+	createBuildConfig            *connect.Client[v1.CreateBuildConfigRequest, v1.CreateBuildConfigResponse]
+	createDataFile               *connect.Client[v1.CreateDataFileRequest, v1.CreateDataFileResponse]
+	clearBuildCache              *connect.Client[v1.ClearBuildCacheRequest, v1.ClearBuildCacheResponse]
+	loginWithUsernameAndPassword *connect.Client[v1.LoginWithUsernameAndPasswordRequest, v1.LoginWithUsernameAndPasswordResponse]
+	logout                       *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
+	changePassword               *connect.Client[v1.ChangePasswordRequest, v1.ChangePasswordResponse]
+	getUsers                     *connect.Client[v1.GetUsersRequest, v1.GetUsersResponse]
+	getUser                      *connect.Client[v1.GetUserRequest, v1.GetUserResponse]
+	createUser                   *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
+	deleteUser                   *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
+	resetUserPassword            *connect.Client[v1.ResetUserPasswordRequest, v1.ResetUserPasswordResponse]
+	getUserAccess                *connect.Client[v1.GetUserAccessRequest, v1.GetUserAccessResponse]
+	setUserGroups                *connect.Client[v1.SetUserGroupsRequest, v1.SetUserGroupsResponse]
+	getMyPermissionsAudit        *connect.Client[v1.GetMyPermissionsAuditRequest, v1.GetMyPermissionsAuditResponse]
+	listUserGroups               *connect.Client[v1.ListUserGroupsRequest, v1.ListUserGroupsResponse]
+	createUserGroup              *connect.Client[v1.CreateUserGroupRequest, v1.CreateUserGroupResponse]
+	deleteUserGroup              *connect.Client[v1.DeleteUserGroupRequest, v1.DeleteUserGroupResponse]
+	getUserGroupMembers          *connect.Client[v1.GetUserGroupMembersRequest, v1.GetUserGroupMembersResponse]
+	setUserGroupMembers          *connect.Client[v1.SetUserGroupMembersRequest, v1.SetUserGroupMembersResponse]
+	listRbacPermissions          *connect.Client[v1.ListRbacPermissionsRequest, v1.ListRbacPermissionsResponse]
+	listRbacRoles                *connect.Client[v1.ListRbacRolesRequest, v1.ListRbacRolesResponse]
+	createRbacRole               *connect.Client[v1.CreateRbacRoleRequest, v1.CreateRbacRoleResponse]
+	updateRbacRole               *connect.Client[v1.UpdateRbacRoleRequest, v1.UpdateRbacRoleResponse]
+	deleteRbacRole               *connect.Client[v1.DeleteRbacRoleRequest, v1.DeleteRbacRoleResponse]
+	getUserGroupRbacRoles        *connect.Client[v1.GetUserGroupRbacRolesRequest, v1.GetUserGroupRbacRolesResponse]
+	setUserGroupRbacRoles        *connect.Client[v1.SetUserGroupRbacRolesRequest, v1.SetUserGroupRbacRolesResponse]
+	getRbacRoleGroups            *connect.Client[v1.GetRbacRoleGroupsRequest, v1.GetRbacRoleGroupsResponse]
+	listApiKeys                  *connect.Client[v1.ListApiKeysRequest, v1.ListApiKeysResponse]
+	createApiKey                 *connect.Client[v1.CreateApiKeyRequest, v1.CreateApiKeyResponse]
+	updateApiKey                 *connect.Client[v1.UpdateApiKeyRequest, v1.UpdateApiKeyResponse]
+	deleteApiKey                 *connect.Client[v1.DeleteApiKeyRequest, v1.DeleteApiKeyResponse]
 }
 
 // Init calls StencilBox.clientapi.v1.StencilBoxApiService.Init.
@@ -262,9 +603,165 @@ func (c *stencilBoxApiServiceClient) GetDataFile(ctx context.Context, req *conne
 	return c.getDataFile.CallUnary(ctx, req)
 }
 
+// UpdateDataFile calls StencilBox.clientapi.v1.StencilBoxApiService.UpdateDataFile.
+func (c *stencilBoxApiServiceClient) UpdateDataFile(ctx context.Context, req *connect.Request[v1.UpdateDataFileRequest]) (*connect.Response[v1.UpdateDataFileResponse], error) {
+	return c.updateDataFile.CallUnary(ctx, req)
+}
+
+// CreateBuildConfig calls StencilBox.clientapi.v1.StencilBoxApiService.CreateBuildConfig.
+func (c *stencilBoxApiServiceClient) CreateBuildConfig(ctx context.Context, req *connect.Request[v1.CreateBuildConfigRequest]) (*connect.Response[v1.CreateBuildConfigResponse], error) {
+	return c.createBuildConfig.CallUnary(ctx, req)
+}
+
+// CreateDataFile calls StencilBox.clientapi.v1.StencilBoxApiService.CreateDataFile.
+func (c *stencilBoxApiServiceClient) CreateDataFile(ctx context.Context, req *connect.Request[v1.CreateDataFileRequest]) (*connect.Response[v1.CreateDataFileResponse], error) {
+	return c.createDataFile.CallUnary(ctx, req)
+}
+
 // ClearBuildCache calls StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache.
 func (c *stencilBoxApiServiceClient) ClearBuildCache(ctx context.Context, req *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error) {
 	return c.clearBuildCache.CallUnary(ctx, req)
+}
+
+// LoginWithUsernameAndPassword calls
+// StencilBox.clientapi.v1.StencilBoxApiService.LoginWithUsernameAndPassword.
+func (c *stencilBoxApiServiceClient) LoginWithUsernameAndPassword(ctx context.Context, req *connect.Request[v1.LoginWithUsernameAndPasswordRequest]) (*connect.Response[v1.LoginWithUsernameAndPasswordResponse], error) {
+	return c.loginWithUsernameAndPassword.CallUnary(ctx, req)
+}
+
+// Logout calls StencilBox.clientapi.v1.StencilBoxApiService.Logout.
+func (c *stencilBoxApiServiceClient) Logout(ctx context.Context, req *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
+	return c.logout.CallUnary(ctx, req)
+}
+
+// ChangePassword calls StencilBox.clientapi.v1.StencilBoxApiService.ChangePassword.
+func (c *stencilBoxApiServiceClient) ChangePassword(ctx context.Context, req *connect.Request[v1.ChangePasswordRequest]) (*connect.Response[v1.ChangePasswordResponse], error) {
+	return c.changePassword.CallUnary(ctx, req)
+}
+
+// GetUsers calls StencilBox.clientapi.v1.StencilBoxApiService.GetUsers.
+func (c *stencilBoxApiServiceClient) GetUsers(ctx context.Context, req *connect.Request[v1.GetUsersRequest]) (*connect.Response[v1.GetUsersResponse], error) {
+	return c.getUsers.CallUnary(ctx, req)
+}
+
+// GetUser calls StencilBox.clientapi.v1.StencilBoxApiService.GetUser.
+func (c *stencilBoxApiServiceClient) GetUser(ctx context.Context, req *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
+	return c.getUser.CallUnary(ctx, req)
+}
+
+// CreateUser calls StencilBox.clientapi.v1.StencilBoxApiService.CreateUser.
+func (c *stencilBoxApiServiceClient) CreateUser(ctx context.Context, req *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error) {
+	return c.createUser.CallUnary(ctx, req)
+}
+
+// DeleteUser calls StencilBox.clientapi.v1.StencilBoxApiService.DeleteUser.
+func (c *stencilBoxApiServiceClient) DeleteUser(ctx context.Context, req *connect.Request[v1.DeleteUserRequest]) (*connect.Response[v1.DeleteUserResponse], error) {
+	return c.deleteUser.CallUnary(ctx, req)
+}
+
+// ResetUserPassword calls StencilBox.clientapi.v1.StencilBoxApiService.ResetUserPassword.
+func (c *stencilBoxApiServiceClient) ResetUserPassword(ctx context.Context, req *connect.Request[v1.ResetUserPasswordRequest]) (*connect.Response[v1.ResetUserPasswordResponse], error) {
+	return c.resetUserPassword.CallUnary(ctx, req)
+}
+
+// GetUserAccess calls StencilBox.clientapi.v1.StencilBoxApiService.GetUserAccess.
+func (c *stencilBoxApiServiceClient) GetUserAccess(ctx context.Context, req *connect.Request[v1.GetUserAccessRequest]) (*connect.Response[v1.GetUserAccessResponse], error) {
+	return c.getUserAccess.CallUnary(ctx, req)
+}
+
+// SetUserGroups calls StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroups.
+func (c *stencilBoxApiServiceClient) SetUserGroups(ctx context.Context, req *connect.Request[v1.SetUserGroupsRequest]) (*connect.Response[v1.SetUserGroupsResponse], error) {
+	return c.setUserGroups.CallUnary(ctx, req)
+}
+
+// GetMyPermissionsAudit calls StencilBox.clientapi.v1.StencilBoxApiService.GetMyPermissionsAudit.
+func (c *stencilBoxApiServiceClient) GetMyPermissionsAudit(ctx context.Context, req *connect.Request[v1.GetMyPermissionsAuditRequest]) (*connect.Response[v1.GetMyPermissionsAuditResponse], error) {
+	return c.getMyPermissionsAudit.CallUnary(ctx, req)
+}
+
+// ListUserGroups calls StencilBox.clientapi.v1.StencilBoxApiService.ListUserGroups.
+func (c *stencilBoxApiServiceClient) ListUserGroups(ctx context.Context, req *connect.Request[v1.ListUserGroupsRequest]) (*connect.Response[v1.ListUserGroupsResponse], error) {
+	return c.listUserGroups.CallUnary(ctx, req)
+}
+
+// CreateUserGroup calls StencilBox.clientapi.v1.StencilBoxApiService.CreateUserGroup.
+func (c *stencilBoxApiServiceClient) CreateUserGroup(ctx context.Context, req *connect.Request[v1.CreateUserGroupRequest]) (*connect.Response[v1.CreateUserGroupResponse], error) {
+	return c.createUserGroup.CallUnary(ctx, req)
+}
+
+// DeleteUserGroup calls StencilBox.clientapi.v1.StencilBoxApiService.DeleteUserGroup.
+func (c *stencilBoxApiServiceClient) DeleteUserGroup(ctx context.Context, req *connect.Request[v1.DeleteUserGroupRequest]) (*connect.Response[v1.DeleteUserGroupResponse], error) {
+	return c.deleteUserGroup.CallUnary(ctx, req)
+}
+
+// GetUserGroupMembers calls StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupMembers.
+func (c *stencilBoxApiServiceClient) GetUserGroupMembers(ctx context.Context, req *connect.Request[v1.GetUserGroupMembersRequest]) (*connect.Response[v1.GetUserGroupMembersResponse], error) {
+	return c.getUserGroupMembers.CallUnary(ctx, req)
+}
+
+// SetUserGroupMembers calls StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupMembers.
+func (c *stencilBoxApiServiceClient) SetUserGroupMembers(ctx context.Context, req *connect.Request[v1.SetUserGroupMembersRequest]) (*connect.Response[v1.SetUserGroupMembersResponse], error) {
+	return c.setUserGroupMembers.CallUnary(ctx, req)
+}
+
+// ListRbacPermissions calls StencilBox.clientapi.v1.StencilBoxApiService.ListRbacPermissions.
+func (c *stencilBoxApiServiceClient) ListRbacPermissions(ctx context.Context, req *connect.Request[v1.ListRbacPermissionsRequest]) (*connect.Response[v1.ListRbacPermissionsResponse], error) {
+	return c.listRbacPermissions.CallUnary(ctx, req)
+}
+
+// ListRbacRoles calls StencilBox.clientapi.v1.StencilBoxApiService.ListRbacRoles.
+func (c *stencilBoxApiServiceClient) ListRbacRoles(ctx context.Context, req *connect.Request[v1.ListRbacRolesRequest]) (*connect.Response[v1.ListRbacRolesResponse], error) {
+	return c.listRbacRoles.CallUnary(ctx, req)
+}
+
+// CreateRbacRole calls StencilBox.clientapi.v1.StencilBoxApiService.CreateRbacRole.
+func (c *stencilBoxApiServiceClient) CreateRbacRole(ctx context.Context, req *connect.Request[v1.CreateRbacRoleRequest]) (*connect.Response[v1.CreateRbacRoleResponse], error) {
+	return c.createRbacRole.CallUnary(ctx, req)
+}
+
+// UpdateRbacRole calls StencilBox.clientapi.v1.StencilBoxApiService.UpdateRbacRole.
+func (c *stencilBoxApiServiceClient) UpdateRbacRole(ctx context.Context, req *connect.Request[v1.UpdateRbacRoleRequest]) (*connect.Response[v1.UpdateRbacRoleResponse], error) {
+	return c.updateRbacRole.CallUnary(ctx, req)
+}
+
+// DeleteRbacRole calls StencilBox.clientapi.v1.StencilBoxApiService.DeleteRbacRole.
+func (c *stencilBoxApiServiceClient) DeleteRbacRole(ctx context.Context, req *connect.Request[v1.DeleteRbacRoleRequest]) (*connect.Response[v1.DeleteRbacRoleResponse], error) {
+	return c.deleteRbacRole.CallUnary(ctx, req)
+}
+
+// GetUserGroupRbacRoles calls StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupRbacRoles.
+func (c *stencilBoxApiServiceClient) GetUserGroupRbacRoles(ctx context.Context, req *connect.Request[v1.GetUserGroupRbacRolesRequest]) (*connect.Response[v1.GetUserGroupRbacRolesResponse], error) {
+	return c.getUserGroupRbacRoles.CallUnary(ctx, req)
+}
+
+// SetUserGroupRbacRoles calls StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupRbacRoles.
+func (c *stencilBoxApiServiceClient) SetUserGroupRbacRoles(ctx context.Context, req *connect.Request[v1.SetUserGroupRbacRolesRequest]) (*connect.Response[v1.SetUserGroupRbacRolesResponse], error) {
+	return c.setUserGroupRbacRoles.CallUnary(ctx, req)
+}
+
+// GetRbacRoleGroups calls StencilBox.clientapi.v1.StencilBoxApiService.GetRbacRoleGroups.
+func (c *stencilBoxApiServiceClient) GetRbacRoleGroups(ctx context.Context, req *connect.Request[v1.GetRbacRoleGroupsRequest]) (*connect.Response[v1.GetRbacRoleGroupsResponse], error) {
+	return c.getRbacRoleGroups.CallUnary(ctx, req)
+}
+
+// ListApiKeys calls StencilBox.clientapi.v1.StencilBoxApiService.ListApiKeys.
+func (c *stencilBoxApiServiceClient) ListApiKeys(ctx context.Context, req *connect.Request[v1.ListApiKeysRequest]) (*connect.Response[v1.ListApiKeysResponse], error) {
+	return c.listApiKeys.CallUnary(ctx, req)
+}
+
+// CreateApiKey calls StencilBox.clientapi.v1.StencilBoxApiService.CreateApiKey.
+func (c *stencilBoxApiServiceClient) CreateApiKey(ctx context.Context, req *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error) {
+	return c.createApiKey.CallUnary(ctx, req)
+}
+
+// UpdateApiKey calls StencilBox.clientapi.v1.StencilBoxApiService.UpdateApiKey.
+func (c *stencilBoxApiServiceClient) UpdateApiKey(ctx context.Context, req *connect.Request[v1.UpdateApiKeyRequest]) (*connect.Response[v1.UpdateApiKeyResponse], error) {
+	return c.updateApiKey.CallUnary(ctx, req)
+}
+
+// DeleteApiKey calls StencilBox.clientapi.v1.StencilBoxApiService.DeleteApiKey.
+func (c *stencilBoxApiServiceClient) DeleteApiKey(ctx context.Context, req *connect.Request[v1.DeleteApiKeyRequest]) (*connect.Response[v1.DeleteApiKeyResponse], error) {
+	return c.deleteApiKey.CallUnary(ctx, req)
 }
 
 // StencilBoxApiServiceHandler is an implementation of the
@@ -282,7 +779,38 @@ type StencilBoxApiServiceHandler interface {
 	GitPull(context.Context, *connect.Request[v1.GitPullRequest]) (*connect.Response[v1.GitPullResponse], error)
 	ListDataFiles(context.Context, *connect.Request[v1.ListDataFilesRequest]) (*connect.Response[v1.ListDataFilesResponse], error)
 	GetDataFile(context.Context, *connect.Request[v1.GetDataFileRequest]) (*connect.Response[v1.GetDataFileResponse], error)
+	UpdateDataFile(context.Context, *connect.Request[v1.UpdateDataFileRequest]) (*connect.Response[v1.UpdateDataFileResponse], error)
+	CreateBuildConfig(context.Context, *connect.Request[v1.CreateBuildConfigRequest]) (*connect.Response[v1.CreateBuildConfigResponse], error)
+	CreateDataFile(context.Context, *connect.Request[v1.CreateDataFileRequest]) (*connect.Response[v1.CreateDataFileResponse], error)
 	ClearBuildCache(context.Context, *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error)
+	LoginWithUsernameAndPassword(context.Context, *connect.Request[v1.LoginWithUsernameAndPasswordRequest]) (*connect.Response[v1.LoginWithUsernameAndPasswordResponse], error)
+	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
+	ChangePassword(context.Context, *connect.Request[v1.ChangePasswordRequest]) (*connect.Response[v1.ChangePasswordResponse], error)
+	GetUsers(context.Context, *connect.Request[v1.GetUsersRequest]) (*connect.Response[v1.GetUsersResponse], error)
+	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
+	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
+	DeleteUser(context.Context, *connect.Request[v1.DeleteUserRequest]) (*connect.Response[v1.DeleteUserResponse], error)
+	ResetUserPassword(context.Context, *connect.Request[v1.ResetUserPasswordRequest]) (*connect.Response[v1.ResetUserPasswordResponse], error)
+	GetUserAccess(context.Context, *connect.Request[v1.GetUserAccessRequest]) (*connect.Response[v1.GetUserAccessResponse], error)
+	SetUserGroups(context.Context, *connect.Request[v1.SetUserGroupsRequest]) (*connect.Response[v1.SetUserGroupsResponse], error)
+	GetMyPermissionsAudit(context.Context, *connect.Request[v1.GetMyPermissionsAuditRequest]) (*connect.Response[v1.GetMyPermissionsAuditResponse], error)
+	ListUserGroups(context.Context, *connect.Request[v1.ListUserGroupsRequest]) (*connect.Response[v1.ListUserGroupsResponse], error)
+	CreateUserGroup(context.Context, *connect.Request[v1.CreateUserGroupRequest]) (*connect.Response[v1.CreateUserGroupResponse], error)
+	DeleteUserGroup(context.Context, *connect.Request[v1.DeleteUserGroupRequest]) (*connect.Response[v1.DeleteUserGroupResponse], error)
+	GetUserGroupMembers(context.Context, *connect.Request[v1.GetUserGroupMembersRequest]) (*connect.Response[v1.GetUserGroupMembersResponse], error)
+	SetUserGroupMembers(context.Context, *connect.Request[v1.SetUserGroupMembersRequest]) (*connect.Response[v1.SetUserGroupMembersResponse], error)
+	ListRbacPermissions(context.Context, *connect.Request[v1.ListRbacPermissionsRequest]) (*connect.Response[v1.ListRbacPermissionsResponse], error)
+	ListRbacRoles(context.Context, *connect.Request[v1.ListRbacRolesRequest]) (*connect.Response[v1.ListRbacRolesResponse], error)
+	CreateRbacRole(context.Context, *connect.Request[v1.CreateRbacRoleRequest]) (*connect.Response[v1.CreateRbacRoleResponse], error)
+	UpdateRbacRole(context.Context, *connect.Request[v1.UpdateRbacRoleRequest]) (*connect.Response[v1.UpdateRbacRoleResponse], error)
+	DeleteRbacRole(context.Context, *connect.Request[v1.DeleteRbacRoleRequest]) (*connect.Response[v1.DeleteRbacRoleResponse], error)
+	GetUserGroupRbacRoles(context.Context, *connect.Request[v1.GetUserGroupRbacRolesRequest]) (*connect.Response[v1.GetUserGroupRbacRolesResponse], error)
+	SetUserGroupRbacRoles(context.Context, *connect.Request[v1.SetUserGroupRbacRolesRequest]) (*connect.Response[v1.SetUserGroupRbacRolesResponse], error)
+	GetRbacRoleGroups(context.Context, *connect.Request[v1.GetRbacRoleGroupsRequest]) (*connect.Response[v1.GetRbacRoleGroupsResponse], error)
+	ListApiKeys(context.Context, *connect.Request[v1.ListApiKeysRequest]) (*connect.Response[v1.ListApiKeysResponse], error)
+	CreateApiKey(context.Context, *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error)
+	UpdateApiKey(context.Context, *connect.Request[v1.UpdateApiKeyRequest]) (*connect.Response[v1.UpdateApiKeyResponse], error)
+	DeleteApiKey(context.Context, *connect.Request[v1.DeleteApiKeyRequest]) (*connect.Response[v1.DeleteApiKeyResponse], error)
 }
 
 // NewStencilBoxApiServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -364,10 +892,196 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetDataFile")),
 		connect.WithHandlerOptions(opts...),
 	)
+	stencilBoxApiServiceUpdateDataFileHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceUpdateDataFileProcedure,
+		svc.UpdateDataFile,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("UpdateDataFile")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceCreateBuildConfigHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceCreateBuildConfigProcedure,
+		svc.CreateBuildConfig,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateBuildConfig")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceCreateDataFileHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceCreateDataFileProcedure,
+		svc.CreateDataFile,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateDataFile")),
+		connect.WithHandlerOptions(opts...),
+	)
 	stencilBoxApiServiceClearBuildCacheHandler := connect.NewUnaryHandler(
 		StencilBoxApiServiceClearBuildCacheProcedure,
 		svc.ClearBuildCache,
 		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ClearBuildCache")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceLoginWithUsernameAndPasswordHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceLoginWithUsernameAndPasswordProcedure,
+		svc.LoginWithUsernameAndPassword,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("LoginWithUsernameAndPassword")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceLogoutHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceLogoutProcedure,
+		svc.Logout,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("Logout")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceChangePasswordHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceChangePasswordProcedure,
+		svc.ChangePassword,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ChangePassword")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetUsersHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetUsersProcedure,
+		svc.GetUsers,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUsers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetUserHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetUserProcedure,
+		svc.GetUser,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceCreateUserHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceCreateUserProcedure,
+		svc.CreateUser,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceDeleteUserHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceDeleteUserProcedure,
+		svc.DeleteUser,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceResetUserPasswordHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceResetUserPasswordProcedure,
+		svc.ResetUserPassword,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ResetUserPassword")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetUserAccessHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetUserAccessProcedure,
+		svc.GetUserAccess,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUserAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceSetUserGroupsHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceSetUserGroupsProcedure,
+		svc.SetUserGroups,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("SetUserGroups")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetMyPermissionsAuditHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetMyPermissionsAuditProcedure,
+		svc.GetMyPermissionsAudit,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetMyPermissionsAudit")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceListUserGroupsHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceListUserGroupsProcedure,
+		svc.ListUserGroups,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListUserGroups")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceCreateUserGroupHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceCreateUserGroupProcedure,
+		svc.CreateUserGroup,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateUserGroup")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceDeleteUserGroupHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceDeleteUserGroupProcedure,
+		svc.DeleteUserGroup,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteUserGroup")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetUserGroupMembersHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetUserGroupMembersProcedure,
+		svc.GetUserGroupMembers,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUserGroupMembers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceSetUserGroupMembersHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceSetUserGroupMembersProcedure,
+		svc.SetUserGroupMembers,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("SetUserGroupMembers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceListRbacPermissionsHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceListRbacPermissionsProcedure,
+		svc.ListRbacPermissions,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListRbacPermissions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceListRbacRolesHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceListRbacRolesProcedure,
+		svc.ListRbacRoles,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListRbacRoles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceCreateRbacRoleHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceCreateRbacRoleProcedure,
+		svc.CreateRbacRole,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateRbacRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceUpdateRbacRoleHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceUpdateRbacRoleProcedure,
+		svc.UpdateRbacRole,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("UpdateRbacRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceDeleteRbacRoleHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceDeleteRbacRoleProcedure,
+		svc.DeleteRbacRole,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteRbacRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetUserGroupRbacRolesHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetUserGroupRbacRolesProcedure,
+		svc.GetUserGroupRbacRoles,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetUserGroupRbacRoles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceSetUserGroupRbacRolesHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceSetUserGroupRbacRolesProcedure,
+		svc.SetUserGroupRbacRoles,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("SetUserGroupRbacRoles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceGetRbacRoleGroupsHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceGetRbacRoleGroupsProcedure,
+		svc.GetRbacRoleGroups,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("GetRbacRoleGroups")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceListApiKeysHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceListApiKeysProcedure,
+		svc.ListApiKeys,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("ListApiKeys")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceCreateApiKeyHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceCreateApiKeyProcedure,
+		svc.CreateApiKey,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("CreateApiKey")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceUpdateApiKeyHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceUpdateApiKeyProcedure,
+		svc.UpdateApiKey,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("UpdateApiKey")),
+		connect.WithHandlerOptions(opts...),
+	)
+	stencilBoxApiServiceDeleteApiKeyHandler := connect.NewUnaryHandler(
+		StencilBoxApiServiceDeleteApiKeyProcedure,
+		svc.DeleteApiKey,
+		connect.WithSchema(stencilBoxApiServiceMethods.ByName("DeleteApiKey")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/StencilBox.clientapi.v1.StencilBoxApiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -396,8 +1110,70 @@ func NewStencilBoxApiServiceHandler(svc StencilBoxApiServiceHandler, opts ...con
 			stencilBoxApiServiceListDataFilesHandler.ServeHTTP(w, r)
 		case StencilBoxApiServiceGetDataFileProcedure:
 			stencilBoxApiServiceGetDataFileHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceUpdateDataFileProcedure:
+			stencilBoxApiServiceUpdateDataFileHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceCreateBuildConfigProcedure:
+			stencilBoxApiServiceCreateBuildConfigHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceCreateDataFileProcedure:
+			stencilBoxApiServiceCreateDataFileHandler.ServeHTTP(w, r)
 		case StencilBoxApiServiceClearBuildCacheProcedure:
 			stencilBoxApiServiceClearBuildCacheHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceLoginWithUsernameAndPasswordProcedure:
+			stencilBoxApiServiceLoginWithUsernameAndPasswordHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceLogoutProcedure:
+			stencilBoxApiServiceLogoutHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceChangePasswordProcedure:
+			stencilBoxApiServiceChangePasswordHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetUsersProcedure:
+			stencilBoxApiServiceGetUsersHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetUserProcedure:
+			stencilBoxApiServiceGetUserHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceCreateUserProcedure:
+			stencilBoxApiServiceCreateUserHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceDeleteUserProcedure:
+			stencilBoxApiServiceDeleteUserHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceResetUserPasswordProcedure:
+			stencilBoxApiServiceResetUserPasswordHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetUserAccessProcedure:
+			stencilBoxApiServiceGetUserAccessHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceSetUserGroupsProcedure:
+			stencilBoxApiServiceSetUserGroupsHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetMyPermissionsAuditProcedure:
+			stencilBoxApiServiceGetMyPermissionsAuditHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceListUserGroupsProcedure:
+			stencilBoxApiServiceListUserGroupsHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceCreateUserGroupProcedure:
+			stencilBoxApiServiceCreateUserGroupHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceDeleteUserGroupProcedure:
+			stencilBoxApiServiceDeleteUserGroupHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetUserGroupMembersProcedure:
+			stencilBoxApiServiceGetUserGroupMembersHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceSetUserGroupMembersProcedure:
+			stencilBoxApiServiceSetUserGroupMembersHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceListRbacPermissionsProcedure:
+			stencilBoxApiServiceListRbacPermissionsHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceListRbacRolesProcedure:
+			stencilBoxApiServiceListRbacRolesHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceCreateRbacRoleProcedure:
+			stencilBoxApiServiceCreateRbacRoleHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceUpdateRbacRoleProcedure:
+			stencilBoxApiServiceUpdateRbacRoleHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceDeleteRbacRoleProcedure:
+			stencilBoxApiServiceDeleteRbacRoleHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetUserGroupRbacRolesProcedure:
+			stencilBoxApiServiceGetUserGroupRbacRolesHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceSetUserGroupRbacRolesProcedure:
+			stencilBoxApiServiceSetUserGroupRbacRolesHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceGetRbacRoleGroupsProcedure:
+			stencilBoxApiServiceGetRbacRoleGroupsHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceListApiKeysProcedure:
+			stencilBoxApiServiceListApiKeysHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceCreateApiKeyProcedure:
+			stencilBoxApiServiceCreateApiKeyHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceUpdateApiKeyProcedure:
+			stencilBoxApiServiceUpdateApiKeyHandler.ServeHTTP(w, r)
+		case StencilBoxApiServiceDeleteApiKeyProcedure:
+			stencilBoxApiServiceDeleteApiKeyHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -455,6 +1231,130 @@ func (UnimplementedStencilBoxApiServiceHandler) GetDataFile(context.Context, *co
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile is not implemented"))
 }
 
+func (UnimplementedStencilBoxApiServiceHandler) UpdateDataFile(context.Context, *connect.Request[v1.UpdateDataFileRequest]) (*connect.Response[v1.UpdateDataFileResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.UpdateDataFile is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) CreateBuildConfig(context.Context, *connect.Request[v1.CreateBuildConfigRequest]) (*connect.Response[v1.CreateBuildConfigResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.CreateBuildConfig is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) CreateDataFile(context.Context, *connect.Request[v1.CreateDataFileRequest]) (*connect.Response[v1.CreateDataFileResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.CreateDataFile is not implemented"))
+}
+
 func (UnimplementedStencilBoxApiServiceHandler) ClearBuildCache(context.Context, *connect.Request[v1.ClearBuildCacheRequest]) (*connect.Response[v1.ClearBuildCacheResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) LoginWithUsernameAndPassword(context.Context, *connect.Request[v1.LoginWithUsernameAndPasswordRequest]) (*connect.Response[v1.LoginWithUsernameAndPasswordResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.LoginWithUsernameAndPassword is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.Logout is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ChangePassword(context.Context, *connect.Request[v1.ChangePasswordRequest]) (*connect.Response[v1.ChangePasswordResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ChangePassword is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetUsers(context.Context, *connect.Request[v1.GetUsersRequest]) (*connect.Response[v1.GetUsersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetUsers is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetUser is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.CreateUser is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) DeleteUser(context.Context, *connect.Request[v1.DeleteUserRequest]) (*connect.Response[v1.DeleteUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.DeleteUser is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ResetUserPassword(context.Context, *connect.Request[v1.ResetUserPasswordRequest]) (*connect.Response[v1.ResetUserPasswordResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ResetUserPassword is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetUserAccess(context.Context, *connect.Request[v1.GetUserAccessRequest]) (*connect.Response[v1.GetUserAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetUserAccess is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) SetUserGroups(context.Context, *connect.Request[v1.SetUserGroupsRequest]) (*connect.Response[v1.SetUserGroupsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroups is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetMyPermissionsAudit(context.Context, *connect.Request[v1.GetMyPermissionsAuditRequest]) (*connect.Response[v1.GetMyPermissionsAuditResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetMyPermissionsAudit is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ListUserGroups(context.Context, *connect.Request[v1.ListUserGroupsRequest]) (*connect.Response[v1.ListUserGroupsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ListUserGroups is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) CreateUserGroup(context.Context, *connect.Request[v1.CreateUserGroupRequest]) (*connect.Response[v1.CreateUserGroupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.CreateUserGroup is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) DeleteUserGroup(context.Context, *connect.Request[v1.DeleteUserGroupRequest]) (*connect.Response[v1.DeleteUserGroupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.DeleteUserGroup is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetUserGroupMembers(context.Context, *connect.Request[v1.GetUserGroupMembersRequest]) (*connect.Response[v1.GetUserGroupMembersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupMembers is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) SetUserGroupMembers(context.Context, *connect.Request[v1.SetUserGroupMembersRequest]) (*connect.Response[v1.SetUserGroupMembersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupMembers is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ListRbacPermissions(context.Context, *connect.Request[v1.ListRbacPermissionsRequest]) (*connect.Response[v1.ListRbacPermissionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ListRbacPermissions is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ListRbacRoles(context.Context, *connect.Request[v1.ListRbacRolesRequest]) (*connect.Response[v1.ListRbacRolesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ListRbacRoles is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) CreateRbacRole(context.Context, *connect.Request[v1.CreateRbacRoleRequest]) (*connect.Response[v1.CreateRbacRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.CreateRbacRole is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) UpdateRbacRole(context.Context, *connect.Request[v1.UpdateRbacRoleRequest]) (*connect.Response[v1.UpdateRbacRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.UpdateRbacRole is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) DeleteRbacRole(context.Context, *connect.Request[v1.DeleteRbacRoleRequest]) (*connect.Response[v1.DeleteRbacRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.DeleteRbacRole is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetUserGroupRbacRoles(context.Context, *connect.Request[v1.GetUserGroupRbacRolesRequest]) (*connect.Response[v1.GetUserGroupRbacRolesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupRbacRoles is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) SetUserGroupRbacRoles(context.Context, *connect.Request[v1.SetUserGroupRbacRolesRequest]) (*connect.Response[v1.SetUserGroupRbacRolesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupRbacRoles is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) GetRbacRoleGroups(context.Context, *connect.Request[v1.GetRbacRoleGroupsRequest]) (*connect.Response[v1.GetRbacRoleGroupsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.GetRbacRoleGroups is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) ListApiKeys(context.Context, *connect.Request[v1.ListApiKeysRequest]) (*connect.Response[v1.ListApiKeysResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.ListApiKeys is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) CreateApiKey(context.Context, *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.CreateApiKey is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) UpdateApiKey(context.Context, *connect.Request[v1.UpdateApiKeyRequest]) (*connect.Response[v1.UpdateApiKeyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.UpdateApiKey is not implemented"))
+}
+
+func (UnimplementedStencilBoxApiServiceHandler) DeleteApiKey(context.Context, *connect.Request[v1.DeleteApiKeyRequest]) (*connect.Response[v1.DeleteApiKeyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("StencilBox.clientapi.v1.StencilBoxApiService.DeleteApiKey is not implemented"))
 }

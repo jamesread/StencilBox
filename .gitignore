@@ -9,3 +9,7 @@ tmp/
 .vite
 sbom.spdx.json
 stencilbox-build-history.json*
+
+# SQLite database (users, groups, roles, sessions)
+stencilbox.db
+stencilbox.db-*

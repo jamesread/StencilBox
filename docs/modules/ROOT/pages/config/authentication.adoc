@@ -1,0 +1,139 @@
+= Authentication and Access Control
+
+The StencilBox web UI and API need a login. Built sites in the output directory stay public: anyone who can reach StencilBox can view them.
+
+Users, groups, roles and sessions are stored in a SQLite database, `stencilbox.db`, next to `config.yaml` (`/config/stencilbox.db` in Docker). StencilBox creates the database and applies any schema changes when it starts, so there is no separate migration step. Back the file up with the rest of `/config`.
+
+== Running without a database
+
+StencilBox can also run without a database. It then has no user accounts, and instead trusts whoever is using it *from the same computer*:
+
+* Requests made directly from localhost (`127.0.0.1` or `::1`) are signed in as `localhost`. They can do everything except things that need a database: building, editing data files and creating build configs all work.
+* Every other request is refused. That includes requests through a reverse proxy (any request with `X-Forwarded-For`, `X-Real-IP`, `Forwarded` or `X-Forwarded-Host`), even when the proxy runs on the same computer, because a proxy makes everyone look local.
+* Logins, user accounts, groups, roles and API keys are not available. MCP works from localhost, without an API key.
+* Built sites are public as always.
+
+StencilBox runs without a database when:
+
+* `config.yaml` has `database: {enabled: false}`, or the environment has `STENCILBOX_DB_DISABLED=true`, or
+* the database cannot be opened, for example because the config directory is read-only. StencilBox logs an error and carries on without it, rather than not starting.
+
+NOTE: In Docker, the browser's requests reach the container from the Docker network, not from localhost, so without a database they are refused. Use a database in Docker (the default), or run the container with host networking.
+
+[source,yaml]
+----
+database:
+  enabled: false
+----
+
+== First login
+
+When the database has no users, StencilBox creates one:
+
+* Username: `admin`
+* Password: `admin`
+
+Log in, click your username in the top right, and change the password. Until you do, the web UI shows a warning to superusers.
+
+If you are locked out, start StencilBox once with `STENCILBOX_RESET_ADMIN_PASSWORD=1`. This sets the `admin` password back to `admin` and puts `admin` back in the Administrators group. Remove the variable and restart afterwards.
+
+== Users, groups, roles and permissions
+
+Access is group based:
+
+* A *permission* allows one kind of action, such as `users.create` or `rbac.manage`. The build permissions are `buildconfigs.view` (build configs, history, templates and data files), `builds.run` (start builds and clear caches), `datafiles.edit` (replace data files, see xref:config/api.adoc[API and MCP]), `buildconfigs.manage` (create build configs and add data files; superusers only by default) and `buildconfigs.git-pull`. `app.access` covers the rest of everyday use.
+* A *role* is a set of permissions.
+* A *group* has roles. Users get every permission from every role of every group they are in.
+
+Permissions are never given to a user directly. To give someone access, add them to a group that has the role you want.
+
+Two groups and two roles always exist and cannot be deleted:
+
+|===
+| Name | Kind | Purpose
+| `Everyone` | Group | Every user is a member. Has the `member` role.
+| `Administrators` | Group | Has the `superuser` role.
+| `member` | Role | Normal use of StencilBox: `app.access` and the build permissions.
+| `superuser` | Role | Every permission, including ones added in later versions. Its permissions cannot be edited.
+|===
+
+StencilBox refuses any change that would leave no user with `superuser`.
+
+Manage all of this from *Control Panel > Identity & Access* in the web UI. Each user can see their own groups and permissions under their username > *My Permissions*.
+
+== API keys
+
+Scripts can call the API with an API key instead of a browser session. Create one from your username > *API Keys*, then send it as a header:
+
+[source]
+----
+Authorization: Bearer sbk_...
+----
+
+The key is shown once, when it is created.
+
+By default a key can do everything its owner can. When you create a key, or later by clicking it, you can narrow it:
+
+* *Permissions*: only the permissions you tick. For example, a key for a CI job that rebuilds a site needs only `builds.run`.
+* *Build configs*: only the build configs you tick. Building, clearing caches, and reading configs, history and data files are refused for any other build config, and lists only show the allowed ones.
+
+A key never has more access than its owner has right now. If the owner loses a permission, or is deleted, their keys lose it too.
+
+API keys cannot create, change or delete API keys, or change passwords. Those need a login in the web UI, so a narrow key cannot be used to make a broader one.
+
+[source,bash]
+----
+curl -X POST https://stencilbox.example.com/api/StencilBox.clientapi.v1.StencilBoxApiService/ClearBuildCache \
+  -H 'Authorization: Bearer sbk_...' \
+  -H 'Content-Type: application/json' \
+  -d '{"configName": "My links homepage"}'
+----
+
+== Single sign-on and reverse proxies
+
+The `auth` block in `config.yaml` configures https://github.com/jamesread/httpauthshim[httpauthshim]. Users signed in this way are still StencilBox users, and still get their access from groups.
+
+JWT (for example Cloudflare Access, or an OAuth2 proxy that issues JWTs)::
+StencilBox creates the user on their first visit and adds them to `Everyone`. Give them more access by adding them to groups.
++
+[source,yaml]
+----
+auth:
+  jwt:
+    certsUrl: https://example.cloudflareaccess.com/cdn-cgi/access/certs
+    aud: your-application-audience-tag
+    claimUsername: email
+    header: Cf-Access-Jwt-Assertion
+----
+
+Trusted headers::
+A reverse proxy sets the username in a header. The user must already exist in StencilBox.
++
+[source,yaml]
+----
+auth:
+  httpHeader:
+    username: X-Forwarded-User
+----
++
+WARNING: Only use trusted headers when every request reaches StencilBox through the proxy, and the proxy strips this header from incoming requests. Otherwise anyone can set the header and log in as any user.
+
+mTLS::
+Set `auth.mtls.enabled: true` to accept client certificates. See the httpauthshim documentation for the options.
+
+The `auth.localUsers` option from earlier versions of StencilBox is no longer used. Create those users in the web UI instead.
+
+== Session cookies
+
+The login form sets an `HttpOnly`, `SameSite=Strict` cookie called `stencilbox-sid`. The cookie is marked `Secure` when the request arrived over HTTPS, either directly or through a proxy that sets `X-Forwarded-Proto: https`.
+
+== Environment variables
+
+|===
+| Variable | Description | Default
+| `STENCILBOX_DB_PATH` | Path to the SQLite database. | `stencilbox.db` in the config directory
+| `STENCILBOX_DB_DISABLED` | `true` runs without a database: localhost-only access, see <<_running_without_a_database>>. | Unset
+| `STENCILBOX_SECURE_COOKIES` | `true` or `false` to force the `Secure` cookie flag on or off. | Decided per request, from the scheme
+| `STENCILBOX_RESET_ADMIN_PASSWORD` | When set, reset the `admin` password to `admin` at startup. | Unset
+| `STENCILBOX_DEV_DISABLE_AUTH` | `true` runs every request as an anonymous superuser. For development only; never set this on a server others can reach. | Unset
+|===

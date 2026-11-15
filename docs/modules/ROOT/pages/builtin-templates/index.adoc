@@ -3,3 +3,4 @@
 ** xref:builtin-templates/links-homepage.adoc[Links Homepage]
 ** xref:builtin-templates/iframe-sidebar.adoc[IFrame Sidebar]
 ** xref:builtin-templates/status-page.adoc[Status Page]
+** xref:builtin-templates/status-dashboard.adoc[Status Dashboard]

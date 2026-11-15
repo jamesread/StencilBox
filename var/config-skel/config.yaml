@@ -1,11 +1,15 @@
 configVersion: 1
 
-# Authentication configuration
-# When enabled, protects /api/* and /webui/* routes with HTTP Basic Authentication
-# The output directory (/) remains public for serving built sites
-# Uses httpauthshim configuration format - see https://github.com/jamesread/httpauthshim
+# The web UI and API need a login; built sites in the output directory stay public.
+# Users, groups and roles live in stencilbox.db next to this file. On first start,
+# StencilBox creates the user "admin" with password "admin" - change it after logging in.
+#
+# This block configures single sign-on (JWT, trusted proxy headers, mTLS) using the
+# httpauthshim format: https://github.com/jamesread/httpauthshim
+# See https://jamesread.github.io/StencilBox/config/authentication.html
 auth: {}
 
-# For advanced auth configuration (OAuth2, JWT, mTLS, etc.), use the full auth config structure
-# See httpauthshim documentation for all available options:
-# https://github.com/jamesread/httpauthshim
+# Users, groups, roles and API keys need the database (stencilbox.db). Set enabled: false to
+# run without one: then only requests made directly from localhost are accepted.
+# database:
+#   enabled: false

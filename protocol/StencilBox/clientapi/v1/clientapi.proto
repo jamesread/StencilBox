@@ -77,6 +77,19 @@ message GetStatusResponse {
 
   // Directory where users can add their own templates (empty if none is writable).
   string custom_templates_path = 7;
+
+  // Identity of the caller. GetStatus is callable without logging in; path fields above are
+  // only filled in for logged-in users.
+  string username = 8;
+  bool is_logged_in = 9;
+  // Effective permissions (the full catalog for a superuser), sorted.
+  repeated string rbac_permissions = 10;
+  bool rbac_is_superuser = 11;
+  // Set for superusers while the default admin account still has the default password.
+  bool admin_uses_default_password = 12;
+  // false when StencilBox runs without a database: no logins, IAM or API keys, and only
+  // requests from localhost are accepted.
+  bool database_enabled = 13;
 }
 
 message GetBuildConfigsRequest {
@@ -163,6 +176,58 @@ message GetDataFileResponse {
   string path = 2;
   string build_config_name = 3;
   string datafile_name = 4;
+  // SHA-256 of content (hex). Pass it to UpdateDataFile as expected_sha256 to avoid
+  // overwriting someone else's change.
+  string sha256 = 5;
+}
+
+// UpdateDataFile replaces a data file named in a build config. The content must be valid YAML
+// (or JSON). Every build config that uses the file is rebuilt.
+message UpdateDataFileRequest {
+  string build_config_name = 1;
+  string datafile_name = 2;
+  string content = 3;
+  // Optional. When set, the update is refused unless the file on disk still has this hash.
+  string expected_sha256 = 4;
+}
+
+message UpdateDataFileResponse {
+  string sha256 = 1;
+  string path = 2;
+  // Build configs that use this data file, now being rebuilt in the background.
+  repeated string rebuilding_build_configs = 3;
+}
+
+// CreateBuildConfig writes a new build config file into the build configs directory.
+message CreateBuildConfigRequest {
+  // The build config's name; also used for its file name.
+  string config_name = 1;
+  string template = 2;
+  // Where the site is built, relative to the output directory, eg "homepage".
+  string output_dir = 3;
+  bool build_on_startup = 4;
+}
+
+message CreateBuildConfigResponse {
+  BuildConfig build_config = 1;
+}
+
+// CreateDataFile adds a data file to a build config: it writes the file (unless it already
+// exists and no content is given) and adds it to the build config's datafiles.
+message CreateDataFileRequest {
+  string build_config_name = 1;
+  // The name templates use for the data, eg "links".
+  string datafile_name = 2;
+  // Optional path relative to the build configs directory. Default: data/<config>-<name>.yaml
+  string path = 3;
+  // YAML content for a new file. Leave empty to use a file that already exists at path.
+  string content = 4;
+}
+
+message CreateDataFileResponse {
+  string path = 1;
+  string sha256 = 2;
+  repeated string rebuilding_build_configs = 3;
 }
 
 message ClearBuildCacheRequest {
@@ -173,6 +238,315 @@ message ClearBuildCacheResponse {
   bool success = 1;
   string message = 2;
   string cache_path = 3;
+}
+
+// ---- Authentication ----
+
+message LoginWithUsernameAndPasswordRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginWithUsernameAndPasswordResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message LogoutRequest {
+}
+
+message LogoutResponse {
+  bool success = 1;
+}
+
+message ChangePasswordRequest {
+  string current_password = 1;
+  string new_password = 2;
+}
+
+message ChangePasswordResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ---- Users ----
+
+message IamUser {
+  int32 id = 1;
+  string username = 2;
+  string created_by = 3;
+  bool has_password = 4;
+}
+
+message GetUsersRequest {
+}
+
+message GetUsersResponse {
+  repeated IamUser users = 1;
+}
+
+message GetUserRequest {
+  int32 user_id = 1;
+}
+
+message GetUserResponse {
+  IamUser user = 1;
+}
+
+message CreateUserRequest {
+  string username = 1;
+  // Optional; at least 8 characters when set. Users without a password cannot use the login form.
+  string password = 2;
+}
+
+message CreateUserResponse {
+  IamUser user = 1;
+}
+
+message DeleteUserRequest {
+  int32 user_id = 1;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+}
+
+message ResetUserPasswordRequest {
+  int32 user_id = 1;
+  string new_password = 2;
+}
+
+message ResetUserPasswordResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message PermissionAuditRow {
+  string permission = 1;
+  bool granted = 2;
+  repeated string granting_groups = 3;
+}
+
+// Effective access for a user. Read-only: access is changed through group membership.
+message GetUserAccessRequest {
+  int32 user_id = 1;
+}
+
+message GetUserAccessResponse {
+  repeated int32 group_ids = 1;
+  repeated string group_names = 2;
+  repeated string role_names = 3;
+  bool is_superuser = 4;
+  repeated PermissionAuditRow permissions = 5;
+}
+
+message SetUserGroupsRequest {
+  int32 user_id = 1;
+  repeated int32 group_ids = 2;
+}
+
+message SetUserGroupsResponse {
+  bool success = 1;
+}
+
+message GetMyPermissionsAuditRequest {
+}
+
+message GetMyPermissionsAuditResponse {
+  repeated string group_names = 1;
+  repeated string role_names = 2;
+  bool is_superuser = 3;
+  repeated PermissionAuditRow permissions = 4;
+}
+
+// ---- User groups ----
+
+message UserGroup {
+  int32 id = 1;
+  string name = 2;
+  int32 member_count = 3;
+}
+
+message ListUserGroupsRequest {
+}
+
+message ListUserGroupsResponse {
+  repeated UserGroup groups = 1;
+}
+
+message CreateUserGroupRequest {
+  string name = 1;
+}
+
+message CreateUserGroupResponse {
+  UserGroup group = 1;
+}
+
+message DeleteUserGroupRequest {
+  int32 group_id = 1;
+}
+
+message DeleteUserGroupResponse {
+  bool success = 1;
+}
+
+message GetUserGroupMembersRequest {
+  int32 group_id = 1;
+}
+
+message GetUserGroupMembersResponse {
+  repeated int32 user_ids = 1;
+}
+
+message SetUserGroupMembersRequest {
+  int32 group_id = 1;
+  repeated int32 user_ids = 2;
+}
+
+message SetUserGroupMembersResponse {
+  bool success = 1;
+}
+
+// ---- RBAC ----
+
+message RbacPermission {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message RbacRole {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  repeated int32 permission_ids = 4;
+  int32 group_count = 5;
+  int32 user_count = 6;
+}
+
+message ListRbacPermissionsRequest {
+}
+
+message ListRbacPermissionsResponse {
+  repeated RbacPermission permissions = 1;
+}
+
+message ListRbacRolesRequest {
+}
+
+message ListRbacRolesResponse {
+  repeated RbacRole roles = 1;
+}
+
+message CreateRbacRoleRequest {
+  string name = 1;
+  string description = 2;
+  repeated int32 permission_ids = 3;
+}
+
+message CreateRbacRoleResponse {
+  RbacRole role = 1;
+}
+
+message UpdateRbacRoleRequest {
+  int32 role_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated int32 permission_ids = 4;
+}
+
+message UpdateRbacRoleResponse {
+  RbacRole role = 1;
+}
+
+message DeleteRbacRoleRequest {
+  int32 role_id = 1;
+}
+
+message DeleteRbacRoleResponse {
+  bool success = 1;
+}
+
+message GetUserGroupRbacRolesRequest {
+  int32 group_id = 1;
+}
+
+message GetUserGroupRbacRolesResponse {
+  repeated int32 role_ids = 1;
+}
+
+message SetUserGroupRbacRolesRequest {
+  int32 group_id = 1;
+  repeated int32 role_ids = 2;
+}
+
+message SetUserGroupRbacRolesResponse {
+  bool success = 1;
+}
+
+message GetRbacRoleGroupsRequest {
+  int32 role_id = 1;
+}
+
+message GetRbacRoleGroupsResponse {
+  repeated string group_names = 1;
+}
+
+// ---- API keys (self-service) ----
+
+message ApiKey {
+  int32 id = 1;
+  string name = 2;
+  string created_at = 3;
+  string last_used_at = 4;
+  // Only the last characters, so a user can tell keys apart.
+  string key_hint = 5;
+  ApiKeyScope scope = 6;
+}
+
+// What an API key may do. The owner's current permissions are always the ceiling.
+message ApiKeyScope {
+  // false: every permission the owner has. true: only those listed.
+  bool restrict_permissions = 1;
+  repeated string permissions = 2;
+  // false: every build config. true: only those listed (by name).
+  bool restrict_build_configs = 3;
+  repeated string build_configs = 4;
+}
+
+message ListApiKeysRequest {
+}
+
+message ListApiKeysResponse {
+  repeated ApiKey api_keys = 1;
+}
+
+message CreateApiKeyRequest {
+  string name = 1;
+  ApiKeyScope scope = 2;
+}
+
+message CreateApiKeyResponse {
+  ApiKey api_key = 1;
+  // The secret, returned once. Send it as "Authorization: Bearer <key>".
+  string key = 2;
+}
+
+message UpdateApiKeyRequest {
+  int32 api_key_id = 1;
+  ApiKeyScope scope = 2;
+}
+
+message UpdateApiKeyResponse {
+  ApiKey api_key = 1;
+}
+
+message DeleteApiKeyRequest {
+  int32 api_key_id = 1;
+}
+
+message DeleteApiKeyResponse {
+  bool success = 1;
 }
 
 service StencilBoxApiService {
@@ -200,5 +574,44 @@ service StencilBoxApiService {
 
   rpc GetDataFile(GetDataFileRequest) returns (GetDataFileResponse);
 
+  rpc UpdateDataFile(UpdateDataFileRequest) returns (UpdateDataFileResponse);
+
+  rpc CreateBuildConfig(CreateBuildConfigRequest) returns (CreateBuildConfigResponse);
+
+  rpc CreateDataFile(CreateDataFileRequest) returns (CreateDataFileResponse);
+
   rpc ClearBuildCache(ClearBuildCacheRequest) returns (ClearBuildCacheResponse);
+
+  rpc LoginWithUsernameAndPassword(LoginWithUsernameAndPasswordRequest) returns (LoginWithUsernameAndPasswordResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc ResetUserPassword(ResetUserPasswordRequest) returns (ResetUserPasswordResponse);
+  rpc GetUserAccess(GetUserAccessRequest) returns (GetUserAccessResponse);
+  rpc SetUserGroups(SetUserGroupsRequest) returns (SetUserGroupsResponse);
+  rpc GetMyPermissionsAudit(GetMyPermissionsAuditRequest) returns (GetMyPermissionsAuditResponse);
+
+  rpc ListUserGroups(ListUserGroupsRequest) returns (ListUserGroupsResponse);
+  rpc CreateUserGroup(CreateUserGroupRequest) returns (CreateUserGroupResponse);
+  rpc DeleteUserGroup(DeleteUserGroupRequest) returns (DeleteUserGroupResponse);
+  rpc GetUserGroupMembers(GetUserGroupMembersRequest) returns (GetUserGroupMembersResponse);
+  rpc SetUserGroupMembers(SetUserGroupMembersRequest) returns (SetUserGroupMembersResponse);
+
+  rpc ListRbacPermissions(ListRbacPermissionsRequest) returns (ListRbacPermissionsResponse);
+  rpc ListRbacRoles(ListRbacRolesRequest) returns (ListRbacRolesResponse);
+  rpc CreateRbacRole(CreateRbacRoleRequest) returns (CreateRbacRoleResponse);
+  rpc UpdateRbacRole(UpdateRbacRoleRequest) returns (UpdateRbacRoleResponse);
+  rpc DeleteRbacRole(DeleteRbacRoleRequest) returns (DeleteRbacRoleResponse);
+  rpc GetUserGroupRbacRoles(GetUserGroupRbacRolesRequest) returns (GetUserGroupRbacRolesResponse);
+  rpc SetUserGroupRbacRoles(SetUserGroupRbacRolesRequest) returns (SetUserGroupRbacRolesResponse);
+  rpc GetRbacRoleGroups(GetRbacRoleGroupsRequest) returns (GetRbacRoleGroupsResponse);
+
+  rpc ListApiKeys(ListApiKeysRequest) returns (ListApiKeysResponse);
+  rpc CreateApiKey(CreateApiKeyRequest) returns (CreateApiKeyResponse);
+  rpc UpdateApiKey(UpdateApiKeyRequest) returns (UpdateApiKeyResponse);
+  rpc DeleteApiKey(DeleteApiKeyRequest) returns (DeleteApiKeyResponse);
 }

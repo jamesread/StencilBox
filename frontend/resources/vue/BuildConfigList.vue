@@ -21,6 +21,11 @@
 					<HugeiconsIcon :icon = "GitCommitIcon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />
 					<span>{{ isPulling ? 'Pulling...' : 'Git Pull' }}</span>
 				</button>
+
+				<button v-if="canManage" type="button" class="inline-icon good" @click="createDialog.open()">
+					<HugeiconsIcon :icon="FileAddIcon" width="1em" height="1em" :strokeWidth="2.5" aria-hidden="true" />
+					<span>Create</span>
+				</button>
 			</template>
 
 		<Table
@@ -60,8 +65,13 @@
 			</a>
 		</template>
 
-		<p>
-		    To create a new build config, you need to create a YAML file in the build configs directory. You cannot create a build config from the UI yet.
+		<p v-if="canManage">
+			Use <strong>Create</strong> above to make a build config here, then add data files to it from its page.
+			You can also write build config YAML files in the build configs directory by hand.
+		</p>
+		<p v-else>
+			To create a new build config, create a YAML file in the build configs directory, or ask an
+			administrator for the <code>buildconfigs.manage</code> permission.
 		</p>
 		<dl v-if="status">
 			<dt>Build configs directory</dt>
@@ -76,6 +86,8 @@
 		</dl>
 	</Section>
 
+	<CreateBuildConfigDialog ref="createDialog" @created="onCreated" />
+
 	<dialog ref="errorDialog" class = "bad">
 		<h2>Error</h2>
 		<p v-if="errorMessage">{{ errorMessage }}</p>
@@ -86,12 +98,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { HugeiconsIcon } from '@hugeicons/vue';
 import { Configuration01Icon, FileAddIcon, GitCommitIcon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 import Section from 'picocrank/vue/components/Section.vue';
 import Table from 'picocrank/vue/components/Table.vue';
+import CreateBuildConfigDialog from './CreateBuildConfigDialog.vue';
+import { useAppStatus } from '../../scripts/appStatus.js';
 
 const headers = ref([
 	{ label: 'Name', key: 'name', width: '25%', sortable: true },
@@ -107,6 +121,13 @@ const errorDialog = ref(null);
 const errorMessage = ref(null);
 const canGitPull = ref(false);
 const isPulling = ref(false);
+const createDialog = ref(null);
+const { hasPermission } = useAppStatus();
+const canManage = computed(() => hasPermission('buildconfigs.manage'));
+
+function onCreated(name) {
+	router.push({ name: 'buildConfig', params: { name } });
+}
 
 async function getBuildConfigs() {
 	try {

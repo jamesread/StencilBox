@@ -1,0 +1,141 @@
+= Status Dashboard
+
+The status dashboard is a personal dashboard of things that need your attention: pull requests to review, failed builds, emails to answer, home alerts, and so on. Items come from different *sources*, are sorted into *categories*, and are shown most urgent first. It is built from one YAML data file, has no JavaScript, and is styled with https://github.com/jamesread/femtocrank[femtocrank], like the StencilBox web UI, including its light and dark modes.
+
+The page shows:
+
+* summary tiles: how many items need attention, are urgent, are overdue, or are waiting on someone else,
+* a strip of sources, each with its number of open items and whether it synced,
+* a column per category, listing its open items by priority, with due dates such as "Overdue by 2 days" or "Due tomorrow",
+* finished items, folded away under *Done*.
+
+StencilBox does not fetch anything from your sources itself. Keep the data file up to date from scripts (for example, one that lists your GitHub review requests), from an AI assistant, or by hand:
+
+* edit it in the web UI, under *Data Files*,
+* push it with the `UpdateDataFile` API or the `stencilbox_update_data_file` MCP tool (see xref:config/api.adoc[API and MCP]), or
+* change the file on disk.
+
+Every save rebuilds the dashboard. For a script, create an API key limited to `buildconfigs.view` and `datafiles.edit` on the dashboard's build config only.
+
+Due dates are worked out when the page is built, so a page that is not rebuilt for a few days shows them as they were then. The footer says when it was built.
+
+== Example
+
+StencilBox ships an example, built at `/my-dashboard/`:
+
+[source,yaml]
+.buildconfigs/status-dashboard.yaml
+----
+name: My status dashboard
+
+outputdir: my-dashboard
+
+template: status-dashboard
+
+datafiles:
+  dashboard: data/status-dashboard.yaml
+----
+
+The data file must be called `dashboard` in the build config. To make another from the web UI: *Build Configs > Create*, choose the `status-dashboard` template, then *Add data file* named `dashboard`.
+
+== Data file
+
+[source,yaml]
+.buildconfigs/data/status-dashboard.yaml (shortened)
+----
+title: My dashboard
+greeting: Good morning! Here is what needs you today.
+lastUpdated: 2026-11-16T08:00:00Z
+
+sources:
+  - id: github
+    name: GitHub
+    icon: 🐙
+    url: https://github.com/notifications
+    status: ok
+    lastSynced: 2026-11-16T07:55:00Z
+
+  - id: ci
+    name: CI
+    icon: ⚙️
+    status: warning
+
+categories:
+  - id: work
+    name: Work
+    icon: 💼
+  - id: home
+    name: Home
+    icon: 🏡
+
+items:
+  - title: Production deploy failed on main
+    source: ci
+    category: work
+    priority: urgent
+    url: https://ci.example.com/pipelines/1234
+    note: The integration tests timed out twice in a row.
+    tags: [deploy]
+
+  - title: "Review PR #482: Add API key scopes"
+    source: github
+    category: work
+    priority: high
+    due: 2026-11-16
+
+  - title: Security review sign-off
+    source: email
+    category: work
+    state: waiting
+----
+
+=== Fields
+
+|===
+| Field | Description
+
+| `title`, `greeting` | The page heading, and the line under it.
+| `lastUpdated` | Shown at the top right. A date, or date and time.
+| `sources[]` | `id` (what items refer to), `name`, and optionally `icon` (an emoji or short text), `url`, `status` and `lastSynced`.
+| `sources[].status` | Whether the source synced: `ok` (green dot), `warning` (amber) or `error` (red).
+| `categories[]` | `id` (what items refer to), `name` and optionally `icon`. Each category is a column, in this order. Items with any other category go in an *Other* column.
+| `items[]` | `title` (required), `source`, `category`, `priority`, `state`, `due`, `url`, `note`, `tags` (a list) and, for done items, `completed`.
+| `items[].priority` | `urgent`, `high`, `normal` or `low`. Anything else, or nothing, counts as `normal`. Items are listed urgent first.
+| `items[].state` | `todo` (or nothing), `waiting`, `blocked` or `done`. Waiting and blocked items are marked, and counted on their own tile. Done items are folded away.
+| `items[].due` | A date or date and time. Shown relative to the build ("Due tomorrow"), and in red when overdue.
+|===
+
+Everything from the data file is escaped before it is written into the page, and links that are not `http`, `https` or `mailto` are dropped, so the data file cannot add HTML or scripts to the page. Colours come from femtocrank: urgent items and blocked items are red, high priority is orange, overdue dates are amber, and waiting items are blue.
+
+== Styling with femtocrank
+
+The template's `metadata.yaml` asks for the `femtocrank` layer:
+
+[source,yaml]
+.templates/status-dashboard/metadata.yaml
+----
+layers:
+  - femtocrank
+----
+
+At build time StencilBox copies femtocrank's CSS next to the page as `femtocrank.css` and `femtocrank-dark.css`, and Vite bundles it into the built site, so the page needs nothing from the internet. Your own templates can do the same, and use femtocrank's classes (`section`, `.section-header`, `.tag`, `.stat-display`, `.annotation`, and the colour classes `good`, `bad`, `warning`, `severe`, `note` and `info`).
+
+femtocrank is installed with StencilBox's build tools (`var/tools`, or `/app/tools` in the container image). A layer can also be a directory under `layers/`, whose files are copied the same way.
+
+== Template functions
+
+The template uses functions that any StencilBox template can use:
+
+|===
+| Function | Example | Does
+
+| `where` | `where .items "category" "work"` | Items whose key equals a value
+| `whereNot` | `whereNot .items "state" "done"` | Items whose key does not equal a value
+| `whereIn` | `whereIn .items "state" (list "waiting" "blocked") true` | Items whose key is (`true`) or is not (`false`) in a list
+| `pluck` | `pluck .categories "id"` | One key from every item
+| `list`, `dict` | `dict "item" . "sources" $sources` | Build a list or map, eg to pass several values to a sub-template
+| `overdue` | `len (overdue .items)` | Items whose `due` is before the build day
+| `dueLabel`, `isOverdue` | `dueLabel .due` | "Overdue by 2 days", "Due today", "Due in 3 days", "Due 2 Dec"
+| `formatDateTime` | `formatDateTime .lastUpdated` | "16 Nov 2026, 08:00 UTC"
+| `safeURL` | `.url \| safeURL \| html` | Drops links that could run script
+|===

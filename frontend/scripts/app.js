@@ -22,14 +22,10 @@ function setupVue() {
 }
 
 function createApiClient() {
-	let baseUrl = '/api/'
-
-	if (window.location.hostname.includes('localhost') && window.location.port === '5173') {
-		baseUrl = 'http://localhost:8080/api/'
-	}
-
+	// Always same-origin, so the session cookie is sent. In development Vite proxies /api to the
+	// service (see vite.config.js).
 	window.transport = createConnectTransport({
-		baseUrl: baseUrl,
+		baseUrl: '/api/',
 	})
 
 	window.client = createClient(StencilBoxApiService, window.transport)

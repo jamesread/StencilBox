@@ -1,4 +1,4 @@
 configVersion: 1
 
-# Auth disabled for integration tests
+# Users and roles live in the database; see iam.spec.js for the default admin login.
 auth: {}

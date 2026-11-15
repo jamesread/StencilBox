@@ -1,7 +1,8 @@
 // Starts the StencilBox service with -configdir and runs mocha.
 
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import waitOn from 'wait-on'
@@ -23,9 +24,14 @@ async function main() {
     throw new Error(`Frontend build not found at ${frontendDist}. Run "make frontend" from the repository root first.`)
   }
 
+  // A fresh database per run, so the default admin/admin account always exists.
+  const dbDir = mkdtempSync(join(tmpdir(), 'stencilbox-it-'))
+  process.on('exit', () => rmSync(dbDir, { recursive: true, force: true }))
+
   const env = {
     ...process.env,
     PORT: testPort,
+    STENCILBOX_DB_PATH: join(dbDir, 'stencilbox.db'),
   }
 
   const child = spawn(serviceBin, ['-configdir', testsDir], {

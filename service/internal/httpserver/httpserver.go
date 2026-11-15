@@ -1,14 +1,19 @@
 package httpserver
 
 import (
+	"database/sql"
+
 	clientapiconnect "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
 	"github.com/jamesread/StencilBox/internal/clientapi"
 	"github.com/jamesread/StencilBox/internal/config"
+	"github.com/jamesread/StencilBox/internal/database"
+	"github.com/jamesread/StencilBox/internal/iam"
+	"github.com/jamesread/StencilBox/internal/mcp"
 	"github.com/jamesread/StencilBox/internal/reqctx"
+	iamsqlite "github.com/jamesread/armature-iam/store/sqlite"
 	"github.com/jamesread/golure/pkg/dirs"
-	auth "github.com/jamesread/httpauthshim"
-	"github.com/jamesread/httpauthshim/sessions"
 
+	"connectrpc.com/connect"
 	connectcors "connectrpc.com/cors"
 
 	"github.com/rs/cors"
@@ -37,11 +42,13 @@ func withCors(h http.Handler) http.Handler {
 	return mw.Handler(h)
 }
 
-func getNewApiHandler(authCtx *auth.AuthShimContext) (string, http.Handler, *clientapi.ClientApi) {
-	apiServer := clientapi.NewServer(authCtx)
+func getNewApiHandler(authenticator iam.Authenticator, authLayer *iam.AuthLayer, db *sql.DB) (string, http.Handler, *clientapi.ClientApi) {
+	apiServer := clientapi.NewServer(authLayer, db)
 
-	path, handler := clientapiconnect.NewStencilBoxApiServiceHandler(apiServer)
-	handler = withCors(http.StripPrefix("/api", handler))
+	path, handler := clientapiconnect.NewStencilBoxApiServiceHandler(apiServer,
+		connect.WithInterceptors(apiServer.ScopeInterceptor()))
+	// Strip /api first: the auth middleware infers the procedure from the URL path.
+	handler = withCors(http.StripPrefix("/api", withHttpRequest(authenticator.WrapHandler(handler))))
 
 	log.Infof("API path: /api/%s", path)
 
@@ -165,96 +172,84 @@ func normalizeListenAddr(port string) string {
 	return "0.0.0.0:" + port
 }
 
-// withAuth wraps an http.Handler with authentication middleware
-func withAuth(authCtx *auth.AuthShimContext, h http.Handler) http.Handler {
+// withHttpRequest stores the *http.Request in the context, so handlers can see TLS state.
+func withHttpRequest(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := authCtx.AuthFromHttpReq(r)
-
-		if user == nil || user.IsGuest() {
-			// Not authenticated, return 401
-			w.Header().Set("WWW-Authenticate", `Basic realm="StencilBox"`)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		// Store http.Request in context for use in API handlers
-		r = r.WithContext(reqctx.WithHttpRequest(r.Context(), r))
-
-		// User is authenticated, proceed with request
-		h.ServeHTTP(w, r)
+		h.ServeHTTP(w, r.WithContext(reqctx.WithHttpRequest(r.Context(), r)))
 	})
 }
 
-// setupAuth initializes and returns the authentication context
-func setupAuth() (*auth.AuthShimContext, error) {
-	// Load config from config.yaml file
-	appConfig := config.LoadConfig()
-
-	// Use auth config from config.yaml if available
-	if appConfig.Auth == nil {
-		log.Debug("No auth configuration found in config.yaml")
-		return nil, nil
+// setupIAM opens the database (applying migrations), bootstraps users and RBAC, and builds the
+// Connect authentication layer from the config.yaml auth block.
+// openDatabase opens the database (applying migrations) and bootstraps users and RBAC. It
+// returns nil when the database is turned off, or cannot be opened: StencilBox then runs with
+// localhost-only access rather than not at all.
+func openDatabase(ctx context.Context, appConfig *config.Config) *sql.DB {
+	if !appConfig.DatabaseEnabled() {
+		log.Warn("The database is turned off (database.enabled / STENCILBOX_DB_DISABLED): only requests from localhost are accepted, and user accounts, IAM and API keys are unavailable.")
+		return nil
 	}
 
-	authCfg := appConfig.Auth
-	log.Debug("Auth config loaded from config.yaml")
-
-	// Check if auth is enabled via LocalUsers
-	if !authCfg.LocalUsers.Enabled {
-		log.Info("Authentication is disabled")
-		return nil, nil
+	db, err := database.Open(ctx, database.Path(config.ConfigDir()))
+	if err == nil {
+		err = iam.Bootstrap(ctx, iamsqlite.New(db))
+		if err != nil {
+			_ = db.Close()
+		}
 	}
-
-	// Validate that we have users configured
-	if len(authCfg.LocalUsers.Users) == 0 {
-		log.Warn("Authentication is enabled but no users are configured. Authentication disabled.")
-		return nil, nil
-	}
-
-	authCtx, err := auth.NewAuthShimContext(authCfg, sessions.NewSessionStorage(nil))
 	if err != nil {
-		return nil, err
+		log.Errorf("Could not open the database, so StencilBox is running WITHOUT one: only requests from localhost are accepted, and user accounts, IAM and API keys are unavailable. Fix the database (or set database.enabled: false to silence this). Error: %v", err)
+		return nil
 	}
+	return db
+}
 
-	log.Info("Authentication enabled")
-	return authCtx, nil
+// setupAuth returns the authenticator for the API and MCP, and the IAM layer when there is a
+// database. A broken auth block in config.yaml is fatal: that is a mistake to fix, not degrade.
+func setupAuth(db *sql.DB, appConfig *config.Config) (iam.Authenticator, *iam.AuthLayer) {
+	if db == nil {
+		return iam.LocalhostAuth{}, nil
+	}
+	authLayer, err := iam.NewAuthLayer(iamsqlite.New(db), appConfig.Auth)
+	if err != nil {
+		log.Fatalf("Failed to set up authentication from config.yaml: %v", err)
+	}
+	return authLayer, authLayer
 }
 
 func Start() {
-	// Setup authentication first
-	authCtx, err := setupAuth()
-	if err != nil {
-		log.Fatalf("Failed to setup authentication: %v", err)
-	}
-
-	// Ensure auth context is cleaned up on shutdown
-	if authCtx != nil {
+	appConfig := config.LoadConfig()
+	db := openDatabase(context.Background(), appConfig)
+	if db != nil {
 		defer func() {
-			if err := authCtx.Shutdown(); err != nil {
-				log.Errorf("Error shutting down auth context: %v", err)
+			if err := db.Close(); err != nil {
+				log.Errorf("Error closing database: %v", err)
 			}
 		}()
 	}
+	authenticator, authLayer := setupAuth(db, appConfig)
 
-	apiPath, apiHandler, apiServer := getNewApiHandler(authCtx)
+	apiPath, apiHandler, apiServer := getNewApiHandler(authenticator, authLayer, db)
 
 	mux := http.NewServeMux()
 
-	// Apply authentication to API and webui routes if auth is enabled
-	if authCtx != nil {
-		mux.Handle("/api"+apiPath, withAuth(authCtx, apiHandler))
-		mux.Handle("/webui/", withAuth(authCtx, getNewWebUIHandler(findWebuiDir())))
-	} else {
-		mux.Handle("/api"+apiPath, apiHandler)
-		mux.Handle("/webui/", getNewWebUIHandler(findWebuiDir()))
-	}
+	// API calls are authenticated per procedure by the auth layer. The web UI is static files
+	// that show a login form until GetStatus reports a logged-in user.
+	mux.Handle("/api"+apiPath, apiHandler)
+	mux.Handle("/webui/", getNewWebUIHandler(findWebuiDir()))
+
+	// MCP for AI assistants. With a database: Bearer API keys only (no cookies). Without one:
+	// localhost only. Tools call the API above in-process, so they get the same access checks.
+	mux.Handle(mcp.Path, authenticator.WrapMCPHandler(mcp.NewHandler(apiHandler)))
+	log.Infof("MCP path: %s", mcp.Path)
 
 	// Output directory (built sites) is always public - no auth required
 	mux.Handle("/", getOutputHandler(apiServer.BaseOutputDir))
 
 	srv := &http.Server{
-		Addr:    getHttpServerAddress(),
-		Handler: mux,
+		Addr:              getHttpServerAddress(),
+		Handler:           mux,
+		ReadHeaderTimeout: 30 * time.Second,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

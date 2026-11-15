@@ -15,6 +15,7 @@ logLevel: info
 |===
 | Option       | Description           | Default         | Live Reloadable          | Documentation
 | `configVersion` | The version of the configuration file. | 1 | No | ---
+| `auth`          | Single sign-on: JWT, trusted proxy headers or mTLS. | `{}` | No | xref:config/authentication.adoc[Authentication]
 | `logLevel`      | The log level to use. | info            | Yes                      | One of `debug`, `info`, `warn`, `error`.
 | `showFooter`    | Whether to show the footer in the web UI. | true           | No                      | ---
 |===
@@ -26,6 +27,7 @@ logLevel: info
 | `STENCILBOX_TEMPLATES_DIR` | Directory searched for custom templates, before the built-in templates. See xref:templates/index.adoc[Templates]. | `/config/templates`
 | `STENCILBOX_STATE_DIR` | Directory where build history is saved (`stencilbox-build-history.json`), so it survives restarts. This is never inside the output directory, because that is served publicly. | The parent of the output directory, eg `/config`
 | `STENCILBOX_OUTPUT_DIR` | Directory where built sites are written and served from. | `/config/output`
+| `STENCILBOX_DB_PATH` | The SQLite database for users, groups and roles. See xref:config/authentication.adoc[Authentication]. | `/config/stencilbox.db`
 |===
 
 == Stopping StencilBox

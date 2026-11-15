@@ -16,7 +16,7 @@
 	</Section>
 
 	<Section title = "You will need to write YAML!" :icon = "File01Icon">
-		<p>StencilBox uses YAML to define build configurations, and data files. you won't find a "create" button in the StencilBox interface. The way that StencilBox works is that you write a YAML file that defines a build configuration, and a data file that contains the data for the build. Then you run the build, and StencilBox will use the build configuration to build the data file, and the template to build the output.</p>
+		<p>StencilBox uses YAML to define build configurations, and data files. You can create build configs and edit their data files in the web UI, or write the YAML files by hand. Then you run the build, and StencilBox will use the build configuration to build the data file, and the template to build the output.</p>
 
 		<a class = "button inline-icon" href = "https://jamesread.github.io/StencilBox/getting-started.html">
 			<HugeiconsIcon :icon = "LinkSquare01Icon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />

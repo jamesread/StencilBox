@@ -2,12 +2,14 @@ package clientapi
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -18,10 +20,10 @@ import (
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
 	"github.com/jamesread/StencilBox/internal/buildinfo"
 	"github.com/jamesread/StencilBox/internal/generator"
-	"github.com/jamesread/StencilBox/internal/reqctx"
+	"github.com/jamesread/StencilBox/internal/iam"
 	"github.com/jamesread/StencilBox/internal/watcher"
+	"github.com/jamesread/armature-iam/rbac"
 	"github.com/jamesread/golure/pkg/dirs"
-	auth "github.com/jamesread/httpauthshim"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,7 +37,12 @@ type ClientApi struct {
 	buildHistory  map[string][]*pb.BuildHistoryEntry // config name -> history entries
 	historyMu     sync.RWMutex                       // protects buildHistory
 	historyPath   string                             // where buildHistory is persisted
-	authCtx       *auth.AuthShimContext              // authentication context (may be nil)
+	auth          *iam.AuthLayer                     // IAM store and auth middleware (nil in some tests)
+	iamDB         *sql.DB                            // database behind auth.Store
+
+	defaultAdminPassword atomic.Bool // the admin account still has the default password
+
+	dataFilesMu sync.Mutex // serialises UpdateDataFile, so expected_sha256 checks are reliable
 
 	builds       sync.WaitGroup     // builds in progress, waited for on shutdown
 	buildCtx     context.Context    // parent context for automatic builds
@@ -54,9 +61,11 @@ type Template struct {
 	Description      string
 }
 
-func NewServer(authCtx *auth.AuthShimContext) *ClientApi {
+func NewServer(authLayer *iam.AuthLayer, db *sql.DB) *ClientApi {
 	api := &ClientApi{}
-	api.authCtx = authCtx
+	api.auth = authLayer
+	api.iamDB = db
+	api.refreshDefaultAdminPassword(context.Background())
 	api.buildConfigs = buildconfigs.ReadConfigFiles()
 	api.BaseOutputDir, _ = filepath.Abs(findOutputDir())
 	api.historyPath = buildHistoryPath(api.BaseOutputDir)
@@ -146,15 +155,18 @@ func (c *ClientApi) Init(ctx context.Context, req *connect.Request[pb.InitReques
 		}
 	}
 
-	response.SearchHints = c.buildSearchHints()
+	response.SearchHints = c.buildSearchHints(ctx)
 
 	return connect.NewResponse(response), nil
 }
 
-func (c *ClientApi) buildSearchHints() *pb.SearchHints {
+func (c *ClientApi) buildSearchHints(ctx context.Context) *pb.SearchHints {
 	hints := &pb.SearchHints{}
 
 	for name := range c.buildConfigs {
+		if !buildConfigAllowed(ctx, name) {
+			continue
+		}
 		hints.BuildConfigs = append(hints.BuildConfigs, name)
 	}
 
@@ -321,6 +333,9 @@ func (c *ClientApi) GetBuildConfigs(ctx context.Context, req *connect.Request[pb
 	response.CanGitPull = buildconfigs.CanGitPull()
 
 	for name, bc := range c.buildConfigs {
+		if !buildConfigAllowed(ctx, name) {
+			continue
+		}
 		response.BuildConfigs = append(response.BuildConfigs, &pb.BuildConfig{
 			Name:         name,
 			Template:     bc.Template,
@@ -343,18 +358,18 @@ func (c *ClientApi) GetTemplates(ctx context.Context, req *connect.Request[pb.Ge
 			Name:         template.Name,
 			Source:       template.Source,
 			Status:       template.Status,
-			BuildConfigs: c.getBuildConfigsForTemplate(template.Name),
+			BuildConfigs: c.getBuildConfigsForTemplate(ctx, template.Name),
 		})
 	}
 
 	return connect.NewResponse(response), nil
 }
 
-func (c *ClientApi) getBuildConfigsForTemplate(templateName string) []string {
+func (c *ClientApi) getBuildConfigsForTemplate(ctx context.Context, templateName string) []string {
 	buildConfigs := []string{}
 
 	for _, bc := range c.buildConfigs {
-		if bc.Template == templateName {
+		if bc.Template == templateName && buildConfigAllowed(ctx, bc.Name) {
 			buildConfigs = append(buildConfigs, bc.Name)
 		}
 	}
@@ -373,14 +388,30 @@ func inContainer() bool {
 }
 
 func (c *ClientApi) GetStatus(ctx context.Context, req *connect.Request[pb.GetStatusRequest]) (*connect.Response[pb.GetStatusResponse], error) {
-	dir, _ := buildconfigs.GetConfigDir()
-
 	response := &pb.GetStatusResponse{
-		InContainer:         inContainer(),
-		OutputPath:          c.BaseOutputDir,
-		TemplatesPath:       templateDirsString(),
-		BuildConfigsDir:     dir,
-		CustomTemplatesPath: generator.CustomTemplatesDir(),
+		InContainer:     inContainer(),
+		RbacPermissions: []string{},
+		DatabaseEnabled: c.iamDB != nil,
+	}
+
+	// GetStatus is callable by guests: identity and server paths only for logged-in users.
+	au := authUser(ctx)
+	if au == nil {
+		return connect.NewResponse(response), nil
+	}
+
+	response.IsLoggedIn = true
+	response.Username = au.User.Username
+	response.RbacPermissions = c.rbacPermissionNames(ctx, au)
+	response.RbacIsSuperuser = au.RBAC != nil && au.RBAC.IsSuperuser
+	response.AdminUsesDefaultPassword = response.RbacIsSuperuser && c.defaultAdminPassword.Load()
+
+	if au.HasPermission(rbac.PermissionAppAccess) {
+		dir, _ := buildconfigs.GetConfigDir()
+		response.OutputPath = c.BaseOutputDir
+		response.TemplatesPath = templateDirsString()
+		response.BuildConfigsDir = dir
+		response.CustomTemplatesPath = generator.CustomTemplatesDir()
 	}
 
 	return connect.NewResponse(response), nil
@@ -409,7 +440,7 @@ func (c *ClientApi) GetTemplate(ctx context.Context, req *connect.Request[pb.Get
 			Source:           template.Source,
 			Status:           template.Status,
 			DocumentationUrl: template.DocumentationURL,
-			BuildConfigs:     c.getBuildConfigsForTemplate(template.Name),
+			BuildConfigs:     c.getBuildConfigsForTemplate(ctx, template.Name),
 			Description:      template.Description,
 		}
 
@@ -556,31 +587,13 @@ func (c *ClientApi) GetBuildHistory(ctx context.Context, req *connect.Request[pb
 	return connect.NewResponse(response), nil
 }
 
-// GetCurrentUser returns the currently authenticated user
+// GetCurrentUser returns the logged-in user. Kept for API clients; the web UI uses GetStatus.
 func (c *ClientApi) GetCurrentUser(ctx context.Context, req *connect.Request[pb.GetCurrentUserRequest]) (*connect.Response[pb.GetCurrentUserResponse], error) {
-	response := &pb.GetCurrentUserResponse{
-		IsAuthenticated: false,
-		Username:        "",
-	}
+	response := &pb.GetCurrentUserResponse{}
 
-	// If auth is not enabled, return guest user
-	if c.authCtx == nil {
-		return connect.NewResponse(response), nil
-	}
-
-	// Extract http.Request from context (stored by withAuth middleware)
-	httpReq := reqctx.HttpRequest(ctx)
-	if httpReq == nil {
-		// If we can't get the request, return guest user
-		return connect.NewResponse(response), nil
-	}
-
-	// Extract user from request
-	user := c.authCtx.AuthFromHttpReq(httpReq)
-
-	if user != nil && !user.IsGuest() {
+	if au := authUser(ctx); au != nil {
 		response.IsAuthenticated = true
-		response.Username = user.Username
+		response.Username = au.User.Username
 	}
 
 	return connect.NewResponse(response), nil
@@ -633,6 +646,9 @@ func (c *ClientApi) ListDataFiles(ctx context.Context, req *connect.Request[pb.L
 	dataFileMap := make(map[string]*pb.DataFile) // key: buildConfigName:datafileName
 
 	for configName, buildConfig := range c.buildConfigs {
+		if !buildConfigAllowed(ctx, configName) {
+			continue
+		}
 		configDir := filepath.Dir(buildConfig.Path)
 		for datafileName, datafilePath := range buildConfig.Datafiles {
 			// Create unique key to avoid duplicates
@@ -651,39 +667,6 @@ func (c *ClientApi) ListDataFiles(ctx context.Context, req *connect.Request[pb.L
 	for _, df := range dataFileMap {
 		response.DataFiles = append(response.DataFiles, df)
 	}
-
-	return connect.NewResponse(response), nil
-}
-
-func (c *ClientApi) GetDataFile(ctx context.Context, req *connect.Request[pb.GetDataFileRequest]) (*connect.Response[pb.GetDataFileResponse], error) {
-	response := &pb.GetDataFileResponse{}
-
-	// Find the build config
-	buildConfig, found := c.buildConfigs[req.Msg.BuildConfigName]
-	if !found {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.BuildConfigName))
-	}
-
-	// Find the data file path
-	datafilePath, found := buildConfig.Datafiles[req.Msg.DatafileName]
-	if !found {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("data file %s not found in build config %s", req.Msg.DatafileName, req.Msg.BuildConfigName))
-	}
-
-	// Resolve absolute path
-	configDir := filepath.Dir(buildConfig.Path)
-	absPath := filepath.Join(configDir, datafilePath)
-
-	// Read the file content
-	content, err := os.ReadFile(absPath)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to read data file: %w", err))
-	}
-
-	response.Content = string(content)
-	response.Path = absPath
-	response.BuildConfigName = req.Msg.BuildConfigName
-	response.DatafileName = req.Msg.DatafileName
 
 	return connect.NewResponse(response), nil
 }

@@ -638,8 +638,20 @@ type GetStatusResponse struct {
 	BuildConfigsDir string                 `protobuf:"bytes,6,opt,name=build_configs_dir,json=buildConfigsDir,proto3" json:"build_configs_dir,omitempty"`
 	// Directory where users can add their own templates (empty if none is writable).
 	CustomTemplatesPath string `protobuf:"bytes,7,opt,name=custom_templates_path,json=customTemplatesPath,proto3" json:"custom_templates_path,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// Identity of the caller. GetStatus is callable without logging in; path fields above are
+	// only filled in for logged-in users.
+	Username   string `protobuf:"bytes,8,opt,name=username,proto3" json:"username,omitempty"`
+	IsLoggedIn bool   `protobuf:"varint,9,opt,name=is_logged_in,json=isLoggedIn,proto3" json:"is_logged_in,omitempty"`
+	// Effective permissions (the full catalog for a superuser), sorted.
+	RbacPermissions []string `protobuf:"bytes,10,rep,name=rbac_permissions,json=rbacPermissions,proto3" json:"rbac_permissions,omitempty"`
+	RbacIsSuperuser bool     `protobuf:"varint,11,opt,name=rbac_is_superuser,json=rbacIsSuperuser,proto3" json:"rbac_is_superuser,omitempty"`
+	// Set for superusers while the default admin account still has the default password.
+	AdminUsesDefaultPassword bool `protobuf:"varint,12,opt,name=admin_uses_default_password,json=adminUsesDefaultPassword,proto3" json:"admin_uses_default_password,omitempty"`
+	// false when StencilBox runs without a database: no logins, IAM or API keys, and only
+	// requests from localhost are accepted.
+	DatabaseEnabled bool `protobuf:"varint,13,opt,name=database_enabled,json=databaseEnabled,proto3" json:"database_enabled,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetStatusResponse) Reset() {
@@ -705,6 +717,48 @@ func (x *GetStatusResponse) GetCustomTemplatesPath() string {
 		return x.CustomTemplatesPath
 	}
 	return ""
+}
+
+func (x *GetStatusResponse) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *GetStatusResponse) GetIsLoggedIn() bool {
+	if x != nil {
+		return x.IsLoggedIn
+	}
+	return false
+}
+
+func (x *GetStatusResponse) GetRbacPermissions() []string {
+	if x != nil {
+		return x.RbacPermissions
+	}
+	return nil
+}
+
+func (x *GetStatusResponse) GetRbacIsSuperuser() bool {
+	if x != nil {
+		return x.RbacIsSuperuser
+	}
+	return false
+}
+
+func (x *GetStatusResponse) GetAdminUsesDefaultPassword() bool {
+	if x != nil {
+		return x.AdminUsesDefaultPassword
+	}
+	return false
+}
+
+func (x *GetStatusResponse) GetDatabaseEnabled() bool {
+	if x != nil {
+		return x.DatabaseEnabled
+	}
+	return false
 }
 
 type GetBuildConfigsRequest struct {
@@ -1542,8 +1596,11 @@ type GetDataFileResponse struct {
 	Path            string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
 	BuildConfigName string                 `protobuf:"bytes,3,opt,name=build_config_name,json=buildConfigName,proto3" json:"build_config_name,omitempty"`
 	DatafileName    string                 `protobuf:"bytes,4,opt,name=datafile_name,json=datafileName,proto3" json:"datafile_name,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// SHA-256 of content (hex). Pass it to UpdateDataFile as expected_sha256 to avoid
+	// overwriting someone else's change.
+	Sha256        string `protobuf:"bytes,5,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetDataFileResponse) Reset() {
@@ -1604,6 +1661,393 @@ func (x *GetDataFileResponse) GetDatafileName() string {
 	return ""
 }
 
+func (x *GetDataFileResponse) GetSha256() string {
+	if x != nil {
+		return x.Sha256
+	}
+	return ""
+}
+
+// UpdateDataFile replaces a data file named in a build config. The content must be valid YAML
+// (or JSON). Every build config that uses the file is rebuilt.
+type UpdateDataFileRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	BuildConfigName string                 `protobuf:"bytes,1,opt,name=build_config_name,json=buildConfigName,proto3" json:"build_config_name,omitempty"`
+	DatafileName    string                 `protobuf:"bytes,2,opt,name=datafile_name,json=datafileName,proto3" json:"datafile_name,omitempty"`
+	Content         string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	// Optional. When set, the update is refused unless the file on disk still has this hash.
+	ExpectedSha256 string `protobuf:"bytes,4,opt,name=expected_sha256,json=expectedSha256,proto3" json:"expected_sha256,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *UpdateDataFileRequest) Reset() {
+	*x = UpdateDataFileRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDataFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDataFileRequest) ProtoMessage() {}
+
+func (x *UpdateDataFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDataFileRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDataFileRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *UpdateDataFileRequest) GetBuildConfigName() string {
+	if x != nil {
+		return x.BuildConfigName
+	}
+	return ""
+}
+
+func (x *UpdateDataFileRequest) GetDatafileName() string {
+	if x != nil {
+		return x.DatafileName
+	}
+	return ""
+}
+
+func (x *UpdateDataFileRequest) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *UpdateDataFileRequest) GetExpectedSha256() string {
+	if x != nil {
+		return x.ExpectedSha256
+	}
+	return ""
+}
+
+type UpdateDataFileResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Sha256 string                 `protobuf:"bytes,1,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	Path   string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	// Build configs that use this data file, now being rebuilt in the background.
+	RebuildingBuildConfigs []string `protobuf:"bytes,3,rep,name=rebuilding_build_configs,json=rebuildingBuildConfigs,proto3" json:"rebuilding_build_configs,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *UpdateDataFileResponse) Reset() {
+	*x = UpdateDataFileResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDataFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDataFileResponse) ProtoMessage() {}
+
+func (x *UpdateDataFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDataFileResponse.ProtoReflect.Descriptor instead.
+func (*UpdateDataFileResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *UpdateDataFileResponse) GetSha256() string {
+	if x != nil {
+		return x.Sha256
+	}
+	return ""
+}
+
+func (x *UpdateDataFileResponse) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *UpdateDataFileResponse) GetRebuildingBuildConfigs() []string {
+	if x != nil {
+		return x.RebuildingBuildConfigs
+	}
+	return nil
+}
+
+// CreateBuildConfig writes a new build config file into the build configs directory.
+type CreateBuildConfigRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The build config's name; also used for its file name.
+	ConfigName string `protobuf:"bytes,1,opt,name=config_name,json=configName,proto3" json:"config_name,omitempty"`
+	Template   string `protobuf:"bytes,2,opt,name=template,proto3" json:"template,omitempty"`
+	// Where the site is built, relative to the output directory, eg "homepage".
+	OutputDir      string `protobuf:"bytes,3,opt,name=output_dir,json=outputDir,proto3" json:"output_dir,omitempty"`
+	BuildOnStartup bool   `protobuf:"varint,4,opt,name=build_on_startup,json=buildOnStartup,proto3" json:"build_on_startup,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *CreateBuildConfigRequest) Reset() {
+	*x = CreateBuildConfigRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateBuildConfigRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateBuildConfigRequest) ProtoMessage() {}
+
+func (x *CreateBuildConfigRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateBuildConfigRequest.ProtoReflect.Descriptor instead.
+func (*CreateBuildConfigRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *CreateBuildConfigRequest) GetConfigName() string {
+	if x != nil {
+		return x.ConfigName
+	}
+	return ""
+}
+
+func (x *CreateBuildConfigRequest) GetTemplate() string {
+	if x != nil {
+		return x.Template
+	}
+	return ""
+}
+
+func (x *CreateBuildConfigRequest) GetOutputDir() string {
+	if x != nil {
+		return x.OutputDir
+	}
+	return ""
+}
+
+func (x *CreateBuildConfigRequest) GetBuildOnStartup() bool {
+	if x != nil {
+		return x.BuildOnStartup
+	}
+	return false
+}
+
+type CreateBuildConfigResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BuildConfig   *BuildConfig           `protobuf:"bytes,1,opt,name=build_config,json=buildConfig,proto3" json:"build_config,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateBuildConfigResponse) Reset() {
+	*x = CreateBuildConfigResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateBuildConfigResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateBuildConfigResponse) ProtoMessage() {}
+
+func (x *CreateBuildConfigResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateBuildConfigResponse.ProtoReflect.Descriptor instead.
+func (*CreateBuildConfigResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *CreateBuildConfigResponse) GetBuildConfig() *BuildConfig {
+	if x != nil {
+		return x.BuildConfig
+	}
+	return nil
+}
+
+// CreateDataFile adds a data file to a build config: it writes the file (unless it already
+// exists and no content is given) and adds it to the build config's datafiles.
+type CreateDataFileRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	BuildConfigName string                 `protobuf:"bytes,1,opt,name=build_config_name,json=buildConfigName,proto3" json:"build_config_name,omitempty"`
+	// The name templates use for the data, eg "links".
+	DatafileName string `protobuf:"bytes,2,opt,name=datafile_name,json=datafileName,proto3" json:"datafile_name,omitempty"`
+	// Optional path relative to the build configs directory. Default: data/<config>-<name>.yaml
+	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	// YAML content for a new file. Leave empty to use a file that already exists at path.
+	Content       string `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDataFileRequest) Reset() {
+	*x = CreateDataFileRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDataFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDataFileRequest) ProtoMessage() {}
+
+func (x *CreateDataFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDataFileRequest.ProtoReflect.Descriptor instead.
+func (*CreateDataFileRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *CreateDataFileRequest) GetBuildConfigName() string {
+	if x != nil {
+		return x.BuildConfigName
+	}
+	return ""
+}
+
+func (x *CreateDataFileRequest) GetDatafileName() string {
+	if x != nil {
+		return x.DatafileName
+	}
+	return ""
+}
+
+func (x *CreateDataFileRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *CreateDataFileRequest) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+type CreateDataFileResponse struct {
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	Path                   string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Sha256                 string                 `protobuf:"bytes,2,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	RebuildingBuildConfigs []string               `protobuf:"bytes,3,rep,name=rebuilding_build_configs,json=rebuildingBuildConfigs,proto3" json:"rebuilding_build_configs,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *CreateDataFileResponse) Reset() {
+	*x = CreateDataFileResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDataFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDataFileResponse) ProtoMessage() {}
+
+func (x *CreateDataFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDataFileResponse.ProtoReflect.Descriptor instead.
+func (*CreateDataFileResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *CreateDataFileResponse) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *CreateDataFileResponse) GetSha256() string {
+	if x != nil {
+		return x.Sha256
+	}
+	return ""
+}
+
+func (x *CreateDataFileResponse) GetRebuildingBuildConfigs() []string {
+	if x != nil {
+		return x.RebuildingBuildConfigs
+	}
+	return nil
+}
+
 type ClearBuildCacheRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ConfigName    string                 `protobuf:"bytes,1,opt,name=config_name,json=configName,proto3" json:"config_name,omitempty"`
@@ -1613,7 +2057,7 @@ type ClearBuildCacheRequest struct {
 
 func (x *ClearBuildCacheRequest) Reset() {
 	*x = ClearBuildCacheRequest{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[29]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1625,7 +2069,7 @@ func (x *ClearBuildCacheRequest) String() string {
 func (*ClearBuildCacheRequest) ProtoMessage() {}
 
 func (x *ClearBuildCacheRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[29]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1638,7 +2082,7 @@ func (x *ClearBuildCacheRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearBuildCacheRequest.ProtoReflect.Descriptor instead.
 func (*ClearBuildCacheRequest) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{29}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ClearBuildCacheRequest) GetConfigName() string {
@@ -1659,7 +2103,7 @@ type ClearBuildCacheResponse struct {
 
 func (x *ClearBuildCacheResponse) Reset() {
 	*x = ClearBuildCacheResponse{}
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[30]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1671,7 +2115,7 @@ func (x *ClearBuildCacheResponse) String() string {
 func (*ClearBuildCacheResponse) ProtoMessage() {}
 
 func (x *ClearBuildCacheResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[30]
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1684,7 +2128,7 @@ func (x *ClearBuildCacheResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearBuildCacheResponse.ProtoReflect.Descriptor instead.
 func (*ClearBuildCacheResponse) Descriptor() ([]byte, []int) {
-	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{30}
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ClearBuildCacheResponse) GetSuccess() bool {
@@ -1706,6 +2150,3105 @@ func (x *ClearBuildCacheResponse) GetCachePath() string {
 		return x.CachePath
 	}
 	return ""
+}
+
+type LoginWithUsernameAndPasswordRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginWithUsernameAndPasswordRequest) Reset() {
+	*x = LoginWithUsernameAndPasswordRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginWithUsernameAndPasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginWithUsernameAndPasswordRequest) ProtoMessage() {}
+
+func (x *LoginWithUsernameAndPasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginWithUsernameAndPasswordRequest.ProtoReflect.Descriptor instead.
+func (*LoginWithUsernameAndPasswordRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *LoginWithUsernameAndPasswordRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *LoginWithUsernameAndPasswordRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type LoginWithUsernameAndPasswordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginWithUsernameAndPasswordResponse) Reset() {
+	*x = LoginWithUsernameAndPasswordResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginWithUsernameAndPasswordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginWithUsernameAndPasswordResponse) ProtoMessage() {}
+
+func (x *LoginWithUsernameAndPasswordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginWithUsernameAndPasswordResponse.ProtoReflect.Descriptor instead.
+func (*LoginWithUsernameAndPasswordResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *LoginWithUsernameAndPasswordResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *LoginWithUsernameAndPasswordResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type LogoutRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogoutRequest) Reset() {
+	*x = LogoutRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogoutRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogoutRequest) ProtoMessage() {}
+
+func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
+func (*LogoutRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{39}
+}
+
+type LogoutResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogoutResponse) Reset() {
+	*x = LogoutResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogoutResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogoutResponse) ProtoMessage() {}
+
+func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogoutResponse.ProtoReflect.Descriptor instead.
+func (*LogoutResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *LogoutResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type ChangePasswordRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	CurrentPassword string                 `protobuf:"bytes,1,opt,name=current_password,json=currentPassword,proto3" json:"current_password,omitempty"`
+	NewPassword     string                 `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ChangePasswordRequest) Reset() {
+	*x = ChangePasswordRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePasswordRequest) ProtoMessage() {}
+
+func (x *ChangePasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePasswordRequest.ProtoReflect.Descriptor instead.
+func (*ChangePasswordRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *ChangePasswordRequest) GetCurrentPassword() string {
+	if x != nil {
+		return x.CurrentPassword
+	}
+	return ""
+}
+
+func (x *ChangePasswordRequest) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
+type ChangePasswordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangePasswordResponse) Reset() {
+	*x = ChangePasswordResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePasswordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePasswordResponse) ProtoMessage() {}
+
+func (x *ChangePasswordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePasswordResponse.ProtoReflect.Descriptor instead.
+func (*ChangePasswordResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *ChangePasswordResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ChangePasswordResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type IamUser struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	CreatedBy     string                 `protobuf:"bytes,3,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	HasPassword   bool                   `protobuf:"varint,4,opt,name=has_password,json=hasPassword,proto3" json:"has_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IamUser) Reset() {
+	*x = IamUser{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IamUser) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IamUser) ProtoMessage() {}
+
+func (x *IamUser) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IamUser.ProtoReflect.Descriptor instead.
+func (*IamUser) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *IamUser) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *IamUser) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *IamUser) GetCreatedBy() string {
+	if x != nil {
+		return x.CreatedBy
+	}
+	return ""
+}
+
+func (x *IamUser) GetHasPassword() bool {
+	if x != nil {
+		return x.HasPassword
+	}
+	return false
+}
+
+type GetUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUsersRequest) Reset() {
+	*x = GetUsersRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUsersRequest) ProtoMessage() {}
+
+func (x *GetUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUsersRequest.ProtoReflect.Descriptor instead.
+func (*GetUsersRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{44}
+}
+
+type GetUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*IamUser             `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUsersResponse) Reset() {
+	*x = GetUsersResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUsersResponse) ProtoMessage() {}
+
+func (x *GetUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUsersResponse.ProtoReflect.Descriptor instead.
+func (*GetUsersResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *GetUsersResponse) GetUsers() []*IamUser {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+type GetUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserRequest) Reset() {
+	*x = GetUserRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserRequest) ProtoMessage() {}
+
+func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserRequest.ProtoReflect.Descriptor instead.
+func (*GetUserRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *GetUserRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GetUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *IamUser               `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserResponse) Reset() {
+	*x = GetUserResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserResponse) ProtoMessage() {}
+
+func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
+func (*GetUserResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *GetUserResponse) GetUser() *IamUser {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+type CreateUserRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Username string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// Optional; at least 8 characters when set. Users without a password cannot use the login form.
+	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateUserRequest) Reset() {
+	*x = CreateUserRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateUserRequest) ProtoMessage() {}
+
+func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateUserRequest.ProtoReflect.Descriptor instead.
+func (*CreateUserRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *CreateUserRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *CreateUserRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type CreateUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *IamUser               `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateUserResponse) Reset() {
+	*x = CreateUserResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateUserResponse) ProtoMessage() {}
+
+func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateUserResponse.ProtoReflect.Descriptor instead.
+func (*CreateUserResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *CreateUserResponse) GetUser() *IamUser {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+type DeleteUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUserRequest) Reset() {
+	*x = DeleteUserRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserRequest) ProtoMessage() {}
+
+func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserRequest.ProtoReflect.Descriptor instead.
+func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{50}
+}
+
+func (x *DeleteUserRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type DeleteUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUserResponse) Reset() {
+	*x = DeleteUserResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserResponse) ProtoMessage() {}
+
+func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[51]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserResponse.ProtoReflect.Descriptor instead.
+func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{51}
+}
+
+func (x *DeleteUserResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type ResetUserPasswordRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	NewPassword   string                 `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResetUserPasswordRequest) Reset() {
+	*x = ResetUserPasswordRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResetUserPasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetUserPasswordRequest) ProtoMessage() {}
+
+func (x *ResetUserPasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetUserPasswordRequest.ProtoReflect.Descriptor instead.
+func (*ResetUserPasswordRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{52}
+}
+
+func (x *ResetUserPasswordRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *ResetUserPasswordRequest) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
+type ResetUserPasswordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResetUserPasswordResponse) Reset() {
+	*x = ResetUserPasswordResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResetUserPasswordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetUserPasswordResponse) ProtoMessage() {}
+
+func (x *ResetUserPasswordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[53]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetUserPasswordResponse.ProtoReflect.Descriptor instead.
+func (*ResetUserPasswordResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *ResetUserPasswordResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ResetUserPasswordResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type PermissionAuditRow struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Permission     string                 `protobuf:"bytes,1,opt,name=permission,proto3" json:"permission,omitempty"`
+	Granted        bool                   `protobuf:"varint,2,opt,name=granted,proto3" json:"granted,omitempty"`
+	GrantingGroups []string               `protobuf:"bytes,3,rep,name=granting_groups,json=grantingGroups,proto3" json:"granting_groups,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *PermissionAuditRow) Reset() {
+	*x = PermissionAuditRow{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PermissionAuditRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PermissionAuditRow) ProtoMessage() {}
+
+func (x *PermissionAuditRow) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[54]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PermissionAuditRow.ProtoReflect.Descriptor instead.
+func (*PermissionAuditRow) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *PermissionAuditRow) GetPermission() string {
+	if x != nil {
+		return x.Permission
+	}
+	return ""
+}
+
+func (x *PermissionAuditRow) GetGranted() bool {
+	if x != nil {
+		return x.Granted
+	}
+	return false
+}
+
+func (x *PermissionAuditRow) GetGrantingGroups() []string {
+	if x != nil {
+		return x.GrantingGroups
+	}
+	return nil
+}
+
+// Effective access for a user. Read-only: access is changed through group membership.
+type GetUserAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserAccessRequest) Reset() {
+	*x = GetUserAccessRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserAccessRequest) ProtoMessage() {}
+
+func (x *GetUserAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserAccessRequest.ProtoReflect.Descriptor instead.
+func (*GetUserAccessRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *GetUserAccessRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GetUserAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupIds      []int32                `protobuf:"varint,1,rep,packed,name=group_ids,json=groupIds,proto3" json:"group_ids,omitempty"`
+	GroupNames    []string               `protobuf:"bytes,2,rep,name=group_names,json=groupNames,proto3" json:"group_names,omitempty"`
+	RoleNames     []string               `protobuf:"bytes,3,rep,name=role_names,json=roleNames,proto3" json:"role_names,omitempty"`
+	IsSuperuser   bool                   `protobuf:"varint,4,opt,name=is_superuser,json=isSuperuser,proto3" json:"is_superuser,omitempty"`
+	Permissions   []*PermissionAuditRow  `protobuf:"bytes,5,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserAccessResponse) Reset() {
+	*x = GetUserAccessResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserAccessResponse) ProtoMessage() {}
+
+func (x *GetUserAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[56]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserAccessResponse.ProtoReflect.Descriptor instead.
+func (*GetUserAccessResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *GetUserAccessResponse) GetGroupIds() []int32 {
+	if x != nil {
+		return x.GroupIds
+	}
+	return nil
+}
+
+func (x *GetUserAccessResponse) GetGroupNames() []string {
+	if x != nil {
+		return x.GroupNames
+	}
+	return nil
+}
+
+func (x *GetUserAccessResponse) GetRoleNames() []string {
+	if x != nil {
+		return x.RoleNames
+	}
+	return nil
+}
+
+func (x *GetUserAccessResponse) GetIsSuperuser() bool {
+	if x != nil {
+		return x.IsSuperuser
+	}
+	return false
+}
+
+func (x *GetUserAccessResponse) GetPermissions() []*PermissionAuditRow {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
+type SetUserGroupsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	GroupIds      []int32                `protobuf:"varint,2,rep,packed,name=group_ids,json=groupIds,proto3" json:"group_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserGroupsRequest) Reset() {
+	*x = SetUserGroupsRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserGroupsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserGroupsRequest) ProtoMessage() {}
+
+func (x *SetUserGroupsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[57]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserGroupsRequest.ProtoReflect.Descriptor instead.
+func (*SetUserGroupsRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *SetUserGroupsRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *SetUserGroupsRequest) GetGroupIds() []int32 {
+	if x != nil {
+		return x.GroupIds
+	}
+	return nil
+}
+
+type SetUserGroupsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserGroupsResponse) Reset() {
+	*x = SetUserGroupsResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserGroupsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserGroupsResponse) ProtoMessage() {}
+
+func (x *SetUserGroupsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserGroupsResponse.ProtoReflect.Descriptor instead.
+func (*SetUserGroupsResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *SetUserGroupsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type GetMyPermissionsAuditRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMyPermissionsAuditRequest) Reset() {
+	*x = GetMyPermissionsAuditRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMyPermissionsAuditRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMyPermissionsAuditRequest) ProtoMessage() {}
+
+func (x *GetMyPermissionsAuditRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[59]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMyPermissionsAuditRequest.ProtoReflect.Descriptor instead.
+func (*GetMyPermissionsAuditRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{59}
+}
+
+type GetMyPermissionsAuditResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupNames    []string               `protobuf:"bytes,1,rep,name=group_names,json=groupNames,proto3" json:"group_names,omitempty"`
+	RoleNames     []string               `protobuf:"bytes,2,rep,name=role_names,json=roleNames,proto3" json:"role_names,omitempty"`
+	IsSuperuser   bool                   `protobuf:"varint,3,opt,name=is_superuser,json=isSuperuser,proto3" json:"is_superuser,omitempty"`
+	Permissions   []*PermissionAuditRow  `protobuf:"bytes,4,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMyPermissionsAuditResponse) Reset() {
+	*x = GetMyPermissionsAuditResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMyPermissionsAuditResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMyPermissionsAuditResponse) ProtoMessage() {}
+
+func (x *GetMyPermissionsAuditResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMyPermissionsAuditResponse.ProtoReflect.Descriptor instead.
+func (*GetMyPermissionsAuditResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *GetMyPermissionsAuditResponse) GetGroupNames() []string {
+	if x != nil {
+		return x.GroupNames
+	}
+	return nil
+}
+
+func (x *GetMyPermissionsAuditResponse) GetRoleNames() []string {
+	if x != nil {
+		return x.RoleNames
+	}
+	return nil
+}
+
+func (x *GetMyPermissionsAuditResponse) GetIsSuperuser() bool {
+	if x != nil {
+		return x.IsSuperuser
+	}
+	return false
+}
+
+func (x *GetMyPermissionsAuditResponse) GetPermissions() []*PermissionAuditRow {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
+type UserGroup struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	MemberCount   int32                  `protobuf:"varint,3,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserGroup) Reset() {
+	*x = UserGroup{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserGroup) ProtoMessage() {}
+
+func (x *UserGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserGroup.ProtoReflect.Descriptor instead.
+func (*UserGroup) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *UserGroup) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UserGroup) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UserGroup) GetMemberCount() int32 {
+	if x != nil {
+		return x.MemberCount
+	}
+	return 0
+}
+
+type ListUserGroupsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserGroupsRequest) Reset() {
+	*x = ListUserGroupsRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserGroupsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserGroupsRequest) ProtoMessage() {}
+
+func (x *ListUserGroupsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserGroupsRequest.ProtoReflect.Descriptor instead.
+func (*ListUserGroupsRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{62}
+}
+
+type ListUserGroupsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Groups        []*UserGroup           `protobuf:"bytes,1,rep,name=groups,proto3" json:"groups,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserGroupsResponse) Reset() {
+	*x = ListUserGroupsResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserGroupsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserGroupsResponse) ProtoMessage() {}
+
+func (x *ListUserGroupsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[63]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserGroupsResponse.ProtoReflect.Descriptor instead.
+func (*ListUserGroupsResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{63}
+}
+
+func (x *ListUserGroupsResponse) GetGroups() []*UserGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+type CreateUserGroupRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateUserGroupRequest) Reset() {
+	*x = CreateUserGroupRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[64]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateUserGroupRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateUserGroupRequest) ProtoMessage() {}
+
+func (x *CreateUserGroupRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[64]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateUserGroupRequest.ProtoReflect.Descriptor instead.
+func (*CreateUserGroupRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{64}
+}
+
+func (x *CreateUserGroupRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type CreateUserGroupResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Group         *UserGroup             `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateUserGroupResponse) Reset() {
+	*x = CreateUserGroupResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[65]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateUserGroupResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateUserGroupResponse) ProtoMessage() {}
+
+func (x *CreateUserGroupResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[65]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateUserGroupResponse.ProtoReflect.Descriptor instead.
+func (*CreateUserGroupResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{65}
+}
+
+func (x *CreateUserGroupResponse) GetGroup() *UserGroup {
+	if x != nil {
+		return x.Group
+	}
+	return nil
+}
+
+type DeleteUserGroupRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       int32                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUserGroupRequest) Reset() {
+	*x = DeleteUserGroupRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[66]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUserGroupRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserGroupRequest) ProtoMessage() {}
+
+func (x *DeleteUserGroupRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[66]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserGroupRequest.ProtoReflect.Descriptor instead.
+func (*DeleteUserGroupRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{66}
+}
+
+func (x *DeleteUserGroupRequest) GetGroupId() int32 {
+	if x != nil {
+		return x.GroupId
+	}
+	return 0
+}
+
+type DeleteUserGroupResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteUserGroupResponse) Reset() {
+	*x = DeleteUserGroupResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[67]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteUserGroupResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteUserGroupResponse) ProtoMessage() {}
+
+func (x *DeleteUserGroupResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[67]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteUserGroupResponse.ProtoReflect.Descriptor instead.
+func (*DeleteUserGroupResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{67}
+}
+
+func (x *DeleteUserGroupResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type GetUserGroupMembersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       int32                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserGroupMembersRequest) Reset() {
+	*x = GetUserGroupMembersRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[68]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserGroupMembersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserGroupMembersRequest) ProtoMessage() {}
+
+func (x *GetUserGroupMembersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[68]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserGroupMembersRequest.ProtoReflect.Descriptor instead.
+func (*GetUserGroupMembersRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{68}
+}
+
+func (x *GetUserGroupMembersRequest) GetGroupId() int32 {
+	if x != nil {
+		return x.GroupId
+	}
+	return 0
+}
+
+type GetUserGroupMembersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserIds       []int32                `protobuf:"varint,1,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserGroupMembersResponse) Reset() {
+	*x = GetUserGroupMembersResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[69]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserGroupMembersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserGroupMembersResponse) ProtoMessage() {}
+
+func (x *GetUserGroupMembersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[69]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserGroupMembersResponse.ProtoReflect.Descriptor instead.
+func (*GetUserGroupMembersResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{69}
+}
+
+func (x *GetUserGroupMembersResponse) GetUserIds() []int32 {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
+type SetUserGroupMembersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       int32                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	UserIds       []int32                `protobuf:"varint,2,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserGroupMembersRequest) Reset() {
+	*x = SetUserGroupMembersRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[70]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserGroupMembersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserGroupMembersRequest) ProtoMessage() {}
+
+func (x *SetUserGroupMembersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[70]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserGroupMembersRequest.ProtoReflect.Descriptor instead.
+func (*SetUserGroupMembersRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{70}
+}
+
+func (x *SetUserGroupMembersRequest) GetGroupId() int32 {
+	if x != nil {
+		return x.GroupId
+	}
+	return 0
+}
+
+func (x *SetUserGroupMembersRequest) GetUserIds() []int32 {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
+type SetUserGroupMembersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserGroupMembersResponse) Reset() {
+	*x = SetUserGroupMembersResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[71]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserGroupMembersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserGroupMembersResponse) ProtoMessage() {}
+
+func (x *SetUserGroupMembersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[71]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserGroupMembersResponse.ProtoReflect.Descriptor instead.
+func (*SetUserGroupMembersResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{71}
+}
+
+func (x *SetUserGroupMembersResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type RbacPermission struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RbacPermission) Reset() {
+	*x = RbacPermission{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RbacPermission) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RbacPermission) ProtoMessage() {}
+
+func (x *RbacPermission) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RbacPermission.ProtoReflect.Descriptor instead.
+func (*RbacPermission) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{72}
+}
+
+func (x *RbacPermission) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *RbacPermission) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RbacPermission) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type RbacRole struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	PermissionIds []int32                `protobuf:"varint,4,rep,packed,name=permission_ids,json=permissionIds,proto3" json:"permission_ids,omitempty"`
+	GroupCount    int32                  `protobuf:"varint,5,opt,name=group_count,json=groupCount,proto3" json:"group_count,omitempty"`
+	UserCount     int32                  `protobuf:"varint,6,opt,name=user_count,json=userCount,proto3" json:"user_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RbacRole) Reset() {
+	*x = RbacRole{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RbacRole) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RbacRole) ProtoMessage() {}
+
+func (x *RbacRole) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RbacRole.ProtoReflect.Descriptor instead.
+func (*RbacRole) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{73}
+}
+
+func (x *RbacRole) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *RbacRole) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RbacRole) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *RbacRole) GetPermissionIds() []int32 {
+	if x != nil {
+		return x.PermissionIds
+	}
+	return nil
+}
+
+func (x *RbacRole) GetGroupCount() int32 {
+	if x != nil {
+		return x.GroupCount
+	}
+	return 0
+}
+
+func (x *RbacRole) GetUserCount() int32 {
+	if x != nil {
+		return x.UserCount
+	}
+	return 0
+}
+
+type ListRbacPermissionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRbacPermissionsRequest) Reset() {
+	*x = ListRbacPermissionsRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRbacPermissionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRbacPermissionsRequest) ProtoMessage() {}
+
+func (x *ListRbacPermissionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRbacPermissionsRequest.ProtoReflect.Descriptor instead.
+func (*ListRbacPermissionsRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{74}
+}
+
+type ListRbacPermissionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Permissions   []*RbacPermission      `protobuf:"bytes,1,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRbacPermissionsResponse) Reset() {
+	*x = ListRbacPermissionsResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRbacPermissionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRbacPermissionsResponse) ProtoMessage() {}
+
+func (x *ListRbacPermissionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRbacPermissionsResponse.ProtoReflect.Descriptor instead.
+func (*ListRbacPermissionsResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{75}
+}
+
+func (x *ListRbacPermissionsResponse) GetPermissions() []*RbacPermission {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
+type ListRbacRolesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRbacRolesRequest) Reset() {
+	*x = ListRbacRolesRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRbacRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRbacRolesRequest) ProtoMessage() {}
+
+func (x *ListRbacRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRbacRolesRequest.ProtoReflect.Descriptor instead.
+func (*ListRbacRolesRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{76}
+}
+
+type ListRbacRolesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Roles         []*RbacRole            `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRbacRolesResponse) Reset() {
+	*x = ListRbacRolesResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRbacRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRbacRolesResponse) ProtoMessage() {}
+
+func (x *ListRbacRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[77]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRbacRolesResponse.ProtoReflect.Descriptor instead.
+func (*ListRbacRolesResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{77}
+}
+
+func (x *ListRbacRolesResponse) GetRoles() []*RbacRole {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+type CreateRbacRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	PermissionIds []int32                `protobuf:"varint,3,rep,packed,name=permission_ids,json=permissionIds,proto3" json:"permission_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRbacRoleRequest) Reset() {
+	*x = CreateRbacRoleRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRbacRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRbacRoleRequest) ProtoMessage() {}
+
+func (x *CreateRbacRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRbacRoleRequest.ProtoReflect.Descriptor instead.
+func (*CreateRbacRoleRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{78}
+}
+
+func (x *CreateRbacRoleRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateRbacRoleRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *CreateRbacRoleRequest) GetPermissionIds() []int32 {
+	if x != nil {
+		return x.PermissionIds
+	}
+	return nil
+}
+
+type CreateRbacRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          *RbacRole              `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRbacRoleResponse) Reset() {
+	*x = CreateRbacRoleResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[79]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRbacRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRbacRoleResponse) ProtoMessage() {}
+
+func (x *CreateRbacRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[79]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRbacRoleResponse.ProtoReflect.Descriptor instead.
+func (*CreateRbacRoleResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{79}
+}
+
+func (x *CreateRbacRoleResponse) GetRole() *RbacRole {
+	if x != nil {
+		return x.Role
+	}
+	return nil
+}
+
+type UpdateRbacRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoleId        int32                  `protobuf:"varint,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	PermissionIds []int32                `protobuf:"varint,4,rep,packed,name=permission_ids,json=permissionIds,proto3" json:"permission_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateRbacRoleRequest) Reset() {
+	*x = UpdateRbacRoleRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[80]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateRbacRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateRbacRoleRequest) ProtoMessage() {}
+
+func (x *UpdateRbacRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[80]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateRbacRoleRequest.ProtoReflect.Descriptor instead.
+func (*UpdateRbacRoleRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{80}
+}
+
+func (x *UpdateRbacRoleRequest) GetRoleId() int32 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+func (x *UpdateRbacRoleRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdateRbacRoleRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *UpdateRbacRoleRequest) GetPermissionIds() []int32 {
+	if x != nil {
+		return x.PermissionIds
+	}
+	return nil
+}
+
+type UpdateRbacRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          *RbacRole              `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateRbacRoleResponse) Reset() {
+	*x = UpdateRbacRoleResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[81]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateRbacRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateRbacRoleResponse) ProtoMessage() {}
+
+func (x *UpdateRbacRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[81]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateRbacRoleResponse.ProtoReflect.Descriptor instead.
+func (*UpdateRbacRoleResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{81}
+}
+
+func (x *UpdateRbacRoleResponse) GetRole() *RbacRole {
+	if x != nil {
+		return x.Role
+	}
+	return nil
+}
+
+type DeleteRbacRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoleId        int32                  `protobuf:"varint,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteRbacRoleRequest) Reset() {
+	*x = DeleteRbacRoleRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[82]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteRbacRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRbacRoleRequest) ProtoMessage() {}
+
+func (x *DeleteRbacRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[82]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRbacRoleRequest.ProtoReflect.Descriptor instead.
+func (*DeleteRbacRoleRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{82}
+}
+
+func (x *DeleteRbacRoleRequest) GetRoleId() int32 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+type DeleteRbacRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteRbacRoleResponse) Reset() {
+	*x = DeleteRbacRoleResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[83]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteRbacRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRbacRoleResponse) ProtoMessage() {}
+
+func (x *DeleteRbacRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[83]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRbacRoleResponse.ProtoReflect.Descriptor instead.
+func (*DeleteRbacRoleResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{83}
+}
+
+func (x *DeleteRbacRoleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type GetUserGroupRbacRolesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       int32                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserGroupRbacRolesRequest) Reset() {
+	*x = GetUserGroupRbacRolesRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[84]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserGroupRbacRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserGroupRbacRolesRequest) ProtoMessage() {}
+
+func (x *GetUserGroupRbacRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[84]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserGroupRbacRolesRequest.ProtoReflect.Descriptor instead.
+func (*GetUserGroupRbacRolesRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{84}
+}
+
+func (x *GetUserGroupRbacRolesRequest) GetGroupId() int32 {
+	if x != nil {
+		return x.GroupId
+	}
+	return 0
+}
+
+type GetUserGroupRbacRolesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoleIds       []int32                `protobuf:"varint,1,rep,packed,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserGroupRbacRolesResponse) Reset() {
+	*x = GetUserGroupRbacRolesResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[85]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserGroupRbacRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserGroupRbacRolesResponse) ProtoMessage() {}
+
+func (x *GetUserGroupRbacRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[85]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserGroupRbacRolesResponse.ProtoReflect.Descriptor instead.
+func (*GetUserGroupRbacRolesResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{85}
+}
+
+func (x *GetUserGroupRbacRolesResponse) GetRoleIds() []int32 {
+	if x != nil {
+		return x.RoleIds
+	}
+	return nil
+}
+
+type SetUserGroupRbacRolesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       int32                  `protobuf:"varint,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	RoleIds       []int32                `protobuf:"varint,2,rep,packed,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserGroupRbacRolesRequest) Reset() {
+	*x = SetUserGroupRbacRolesRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[86]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserGroupRbacRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserGroupRbacRolesRequest) ProtoMessage() {}
+
+func (x *SetUserGroupRbacRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[86]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserGroupRbacRolesRequest.ProtoReflect.Descriptor instead.
+func (*SetUserGroupRbacRolesRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{86}
+}
+
+func (x *SetUserGroupRbacRolesRequest) GetGroupId() int32 {
+	if x != nil {
+		return x.GroupId
+	}
+	return 0
+}
+
+func (x *SetUserGroupRbacRolesRequest) GetRoleIds() []int32 {
+	if x != nil {
+		return x.RoleIds
+	}
+	return nil
+}
+
+type SetUserGroupRbacRolesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetUserGroupRbacRolesResponse) Reset() {
+	*x = SetUserGroupRbacRolesResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[87]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetUserGroupRbacRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetUserGroupRbacRolesResponse) ProtoMessage() {}
+
+func (x *SetUserGroupRbacRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[87]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetUserGroupRbacRolesResponse.ProtoReflect.Descriptor instead.
+func (*SetUserGroupRbacRolesResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{87}
+}
+
+func (x *SetUserGroupRbacRolesResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type GetRbacRoleGroupsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoleId        int32                  `protobuf:"varint,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetRbacRoleGroupsRequest) Reset() {
+	*x = GetRbacRoleGroupsRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[88]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetRbacRoleGroupsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRbacRoleGroupsRequest) ProtoMessage() {}
+
+func (x *GetRbacRoleGroupsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[88]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRbacRoleGroupsRequest.ProtoReflect.Descriptor instead.
+func (*GetRbacRoleGroupsRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{88}
+}
+
+func (x *GetRbacRoleGroupsRequest) GetRoleId() int32 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+type GetRbacRoleGroupsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupNames    []string               `protobuf:"bytes,1,rep,name=group_names,json=groupNames,proto3" json:"group_names,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetRbacRoleGroupsResponse) Reset() {
+	*x = GetRbacRoleGroupsResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[89]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetRbacRoleGroupsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRbacRoleGroupsResponse) ProtoMessage() {}
+
+func (x *GetRbacRoleGroupsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[89]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRbacRoleGroupsResponse.ProtoReflect.Descriptor instead.
+func (*GetRbacRoleGroupsResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{89}
+}
+
+func (x *GetRbacRoleGroupsResponse) GetGroupNames() []string {
+	if x != nil {
+		return x.GroupNames
+	}
+	return nil
+}
+
+type ApiKey struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Id         int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name       string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	CreatedAt  string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastUsedAt string                 `protobuf:"bytes,4,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
+	// Only the last characters, so a user can tell keys apart.
+	KeyHint       string       `protobuf:"bytes,5,opt,name=key_hint,json=keyHint,proto3" json:"key_hint,omitempty"`
+	Scope         *ApiKeyScope `protobuf:"bytes,6,opt,name=scope,proto3" json:"scope,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApiKey) Reset() {
+	*x = ApiKey{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[90]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApiKey) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApiKey) ProtoMessage() {}
+
+func (x *ApiKey) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[90]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApiKey.ProtoReflect.Descriptor instead.
+func (*ApiKey) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{90}
+}
+
+func (x *ApiKey) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ApiKey) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ApiKey) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *ApiKey) GetLastUsedAt() string {
+	if x != nil {
+		return x.LastUsedAt
+	}
+	return ""
+}
+
+func (x *ApiKey) GetKeyHint() string {
+	if x != nil {
+		return x.KeyHint
+	}
+	return ""
+}
+
+func (x *ApiKey) GetScope() *ApiKeyScope {
+	if x != nil {
+		return x.Scope
+	}
+	return nil
+}
+
+// What an API key may do. The owner's current permissions are always the ceiling.
+type ApiKeyScope struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// false: every permission the owner has. true: only those listed.
+	RestrictPermissions bool     `protobuf:"varint,1,opt,name=restrict_permissions,json=restrictPermissions,proto3" json:"restrict_permissions,omitempty"`
+	Permissions         []string `protobuf:"bytes,2,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	// false: every build config. true: only those listed (by name).
+	RestrictBuildConfigs bool     `protobuf:"varint,3,opt,name=restrict_build_configs,json=restrictBuildConfigs,proto3" json:"restrict_build_configs,omitempty"`
+	BuildConfigs         []string `protobuf:"bytes,4,rep,name=build_configs,json=buildConfigs,proto3" json:"build_configs,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ApiKeyScope) Reset() {
+	*x = ApiKeyScope{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[91]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApiKeyScope) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApiKeyScope) ProtoMessage() {}
+
+func (x *ApiKeyScope) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[91]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApiKeyScope.ProtoReflect.Descriptor instead.
+func (*ApiKeyScope) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{91}
+}
+
+func (x *ApiKeyScope) GetRestrictPermissions() bool {
+	if x != nil {
+		return x.RestrictPermissions
+	}
+	return false
+}
+
+func (x *ApiKeyScope) GetPermissions() []string {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
+func (x *ApiKeyScope) GetRestrictBuildConfigs() bool {
+	if x != nil {
+		return x.RestrictBuildConfigs
+	}
+	return false
+}
+
+func (x *ApiKeyScope) GetBuildConfigs() []string {
+	if x != nil {
+		return x.BuildConfigs
+	}
+	return nil
+}
+
+type ListApiKeysRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListApiKeysRequest) Reset() {
+	*x = ListApiKeysRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[92]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListApiKeysRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListApiKeysRequest) ProtoMessage() {}
+
+func (x *ListApiKeysRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[92]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListApiKeysRequest.ProtoReflect.Descriptor instead.
+func (*ListApiKeysRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{92}
+}
+
+type ListApiKeysResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ApiKeys       []*ApiKey              `protobuf:"bytes,1,rep,name=api_keys,json=apiKeys,proto3" json:"api_keys,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListApiKeysResponse) Reset() {
+	*x = ListApiKeysResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[93]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListApiKeysResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListApiKeysResponse) ProtoMessage() {}
+
+func (x *ListApiKeysResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[93]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListApiKeysResponse.ProtoReflect.Descriptor instead.
+func (*ListApiKeysResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{93}
+}
+
+func (x *ListApiKeysResponse) GetApiKeys() []*ApiKey {
+	if x != nil {
+		return x.ApiKeys
+	}
+	return nil
+}
+
+type CreateApiKeyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Scope         *ApiKeyScope           `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateApiKeyRequest) Reset() {
+	*x = CreateApiKeyRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[94]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateApiKeyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateApiKeyRequest) ProtoMessage() {}
+
+func (x *CreateApiKeyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[94]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateApiKeyRequest.ProtoReflect.Descriptor instead.
+func (*CreateApiKeyRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{94}
+}
+
+func (x *CreateApiKeyRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateApiKeyRequest) GetScope() *ApiKeyScope {
+	if x != nil {
+		return x.Scope
+	}
+	return nil
+}
+
+type CreateApiKeyResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	ApiKey *ApiKey                `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
+	// The secret, returned once. Send it as "Authorization: Bearer <key>".
+	Key           string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateApiKeyResponse) Reset() {
+	*x = CreateApiKeyResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[95]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateApiKeyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateApiKeyResponse) ProtoMessage() {}
+
+func (x *CreateApiKeyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[95]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateApiKeyResponse.ProtoReflect.Descriptor instead.
+func (*CreateApiKeyResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{95}
+}
+
+func (x *CreateApiKeyResponse) GetApiKey() *ApiKey {
+	if x != nil {
+		return x.ApiKey
+	}
+	return nil
+}
+
+func (x *CreateApiKeyResponse) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+type UpdateApiKeyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ApiKeyId      int32                  `protobuf:"varint,1,opt,name=api_key_id,json=apiKeyId,proto3" json:"api_key_id,omitempty"`
+	Scope         *ApiKeyScope           `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateApiKeyRequest) Reset() {
+	*x = UpdateApiKeyRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[96]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateApiKeyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateApiKeyRequest) ProtoMessage() {}
+
+func (x *UpdateApiKeyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[96]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateApiKeyRequest.ProtoReflect.Descriptor instead.
+func (*UpdateApiKeyRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{96}
+}
+
+func (x *UpdateApiKeyRequest) GetApiKeyId() int32 {
+	if x != nil {
+		return x.ApiKeyId
+	}
+	return 0
+}
+
+func (x *UpdateApiKeyRequest) GetScope() *ApiKeyScope {
+	if x != nil {
+		return x.Scope
+	}
+	return nil
+}
+
+type UpdateApiKeyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ApiKey        *ApiKey                `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateApiKeyResponse) Reset() {
+	*x = UpdateApiKeyResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[97]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateApiKeyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateApiKeyResponse) ProtoMessage() {}
+
+func (x *UpdateApiKeyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[97]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateApiKeyResponse.ProtoReflect.Descriptor instead.
+func (*UpdateApiKeyResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{97}
+}
+
+func (x *UpdateApiKeyResponse) GetApiKey() *ApiKey {
+	if x != nil {
+		return x.ApiKey
+	}
+	return nil
+}
+
+type DeleteApiKeyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ApiKeyId      int32                  `protobuf:"varint,1,opt,name=api_key_id,json=apiKeyId,proto3" json:"api_key_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteApiKeyRequest) Reset() {
+	*x = DeleteApiKeyRequest{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[98]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteApiKeyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteApiKeyRequest) ProtoMessage() {}
+
+func (x *DeleteApiKeyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[98]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteApiKeyRequest.ProtoReflect.Descriptor instead.
+func (*DeleteApiKeyRequest) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{98}
+}
+
+func (x *DeleteApiKeyRequest) GetApiKeyId() int32 {
+	if x != nil {
+		return x.ApiKeyId
+	}
+	return 0
+}
+
+type DeleteApiKeyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteApiKeyResponse) Reset() {
+	*x = DeleteApiKeyResponse{}
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[99]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteApiKeyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteApiKeyResponse) ProtoMessage() {}
+
+func (x *DeleteApiKeyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_StencilBox_clientapi_v1_clientapi_proto_msgTypes[99]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteApiKeyResponse.ProtoReflect.Descriptor instead.
+func (*DeleteApiKeyResponse) Descriptor() ([]byte, []int) {
+	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP(), []int{99}
+}
+
+func (x *DeleteApiKeyResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 var File_StencilBox_clientapi_v1_clientapi_proto protoreflect.FileDescriptor
@@ -1762,14 +5305,22 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\x13GetTemplatesRequest\"W\n" +
 	"\x14GetTemplatesResponse\x12?\n" +
 	"\ttemplates\x18\x01 \x03(\v2!.StencilBox.clientapi.v1.TemplateR\ttemplates\"\x12\n" +
-	"\x10GetStatusRequest\"\xde\x01\n" +
+	"\x10GetStatusRequest\"\xdd\x03\n" +
 	"\x11GetStatusResponse\x12!\n" +
 	"\fin_container\x18\x02 \x01(\bR\vinContainer\x12%\n" +
 	"\x0etemplates_path\x18\x04 \x01(\tR\rtemplatesPath\x12\x1f\n" +
 	"\voutput_path\x18\x05 \x01(\tR\n" +
 	"outputPath\x12*\n" +
 	"\x11build_configs_dir\x18\x06 \x01(\tR\x0fbuildConfigsDir\x122\n" +
-	"\x15custom_templates_path\x18\a \x01(\tR\x13customTemplatesPath\"\x18\n" +
+	"\x15custom_templates_path\x18\a \x01(\tR\x13customTemplatesPath\x12\x1a\n" +
+	"\busername\x18\b \x01(\tR\busername\x12 \n" +
+	"\fis_logged_in\x18\t \x01(\bR\n" +
+	"isLoggedIn\x12)\n" +
+	"\x10rbac_permissions\x18\n" +
+	" \x03(\tR\x0frbacPermissions\x12*\n" +
+	"\x11rbac_is_superuser\x18\v \x01(\bR\x0frbacIsSuperuser\x12=\n" +
+	"\x1badmin_uses_default_password\x18\f \x01(\bR\x18adminUsesDefaultPassword\x12)\n" +
+	"\x10database_enabled\x18\r \x01(\bR\x0fdatabaseEnabled\"\x18\n" +
 	"\x16GetBuildConfigsRequest\"\x86\x01\n" +
 	"\x17GetBuildConfigsResponse\x12I\n" +
 	"\rbuild_configs\x18\x01 \x03(\v2$.StencilBox.clientapi.v1.BuildConfigR\fbuildConfigs\x12 \n" +
@@ -1819,12 +5370,40 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"canGitPull\"e\n" +
 	"\x12GetDataFileRequest\x12*\n" +
 	"\x11build_config_name\x18\x01 \x01(\tR\x0fbuildConfigName\x12#\n" +
-	"\rdatafile_name\x18\x02 \x01(\tR\fdatafileName\"\x94\x01\n" +
+	"\rdatafile_name\x18\x02 \x01(\tR\fdatafileName\"\xac\x01\n" +
 	"\x13GetDataFileResponse\x12\x18\n" +
 	"\acontent\x18\x01 \x01(\tR\acontent\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12*\n" +
 	"\x11build_config_name\x18\x03 \x01(\tR\x0fbuildConfigName\x12#\n" +
-	"\rdatafile_name\x18\x04 \x01(\tR\fdatafileName\"9\n" +
+	"\rdatafile_name\x18\x04 \x01(\tR\fdatafileName\x12\x16\n" +
+	"\x06sha256\x18\x05 \x01(\tR\x06sha256\"\xab\x01\n" +
+	"\x15UpdateDataFileRequest\x12*\n" +
+	"\x11build_config_name\x18\x01 \x01(\tR\x0fbuildConfigName\x12#\n" +
+	"\rdatafile_name\x18\x02 \x01(\tR\fdatafileName\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\x12'\n" +
+	"\x0fexpected_sha256\x18\x04 \x01(\tR\x0eexpectedSha256\"~\n" +
+	"\x16UpdateDataFileResponse\x12\x16\n" +
+	"\x06sha256\x18\x01 \x01(\tR\x06sha256\x12\x12\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\x128\n" +
+	"\x18rebuilding_build_configs\x18\x03 \x03(\tR\x16rebuildingBuildConfigs\"\xa0\x01\n" +
+	"\x18CreateBuildConfigRequest\x12\x1f\n" +
+	"\vconfig_name\x18\x01 \x01(\tR\n" +
+	"configName\x12\x1a\n" +
+	"\btemplate\x18\x02 \x01(\tR\btemplate\x12\x1d\n" +
+	"\n" +
+	"output_dir\x18\x03 \x01(\tR\toutputDir\x12(\n" +
+	"\x10build_on_startup\x18\x04 \x01(\bR\x0ebuildOnStartup\"d\n" +
+	"\x19CreateBuildConfigResponse\x12G\n" +
+	"\fbuild_config\x18\x01 \x01(\v2$.StencilBox.clientapi.v1.BuildConfigR\vbuildConfig\"\x96\x01\n" +
+	"\x15CreateDataFileRequest\x12*\n" +
+	"\x11build_config_name\x18\x01 \x01(\tR\x0fbuildConfigName\x12#\n" +
+	"\rdatafile_name\x18\x02 \x01(\tR\fdatafileName\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12\x18\n" +
+	"\acontent\x18\x04 \x01(\tR\acontent\"~\n" +
+	"\x16CreateDataFileResponse\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x16\n" +
+	"\x06sha256\x18\x02 \x01(\tR\x06sha256\x128\n" +
+	"\x18rebuilding_build_configs\x18\x03 \x03(\tR\x16rebuildingBuildConfigs\"9\n" +
 	"\x16ClearBuildCacheRequest\x12\x1f\n" +
 	"\vconfig_name\x18\x01 \x01(\tR\n" +
 	"configName\"l\n" +
@@ -1832,7 +5411,187 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1d\n" +
 	"\n" +
-	"cache_path\x18\x03 \x01(\tR\tcachePath2\x8b\v\n" +
+	"cache_path\x18\x03 \x01(\tR\tcachePath\"]\n" +
+	"#LoginWithUsernameAndPasswordRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"Z\n" +
+	"$LoginWithUsernameAndPasswordResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x0f\n" +
+	"\rLogoutRequest\"*\n" +
+	"\x0eLogoutResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"e\n" +
+	"\x15ChangePasswordRequest\x12)\n" +
+	"\x10current_password\x18\x01 \x01(\tR\x0fcurrentPassword\x12!\n" +
+	"\fnew_password\x18\x02 \x01(\tR\vnewPassword\"L\n" +
+	"\x16ChangePasswordResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"w\n" +
+	"\aIamUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
+	"\n" +
+	"created_by\x18\x03 \x01(\tR\tcreatedBy\x12!\n" +
+	"\fhas_password\x18\x04 \x01(\bR\vhasPassword\"\x11\n" +
+	"\x0fGetUsersRequest\"J\n" +
+	"\x10GetUsersResponse\x126\n" +
+	"\x05users\x18\x01 \x03(\v2 .StencilBox.clientapi.v1.IamUserR\x05users\")\n" +
+	"\x0eGetUserRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\"G\n" +
+	"\x0fGetUserResponse\x124\n" +
+	"\x04user\x18\x01 \x01(\v2 .StencilBox.clientapi.v1.IamUserR\x04user\"K\n" +
+	"\x11CreateUserRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"J\n" +
+	"\x12CreateUserResponse\x124\n" +
+	"\x04user\x18\x01 \x01(\v2 .StencilBox.clientapi.v1.IamUserR\x04user\",\n" +
+	"\x11DeleteUserRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\".\n" +
+	"\x12DeleteUserResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"V\n" +
+	"\x18ResetUserPasswordRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12!\n" +
+	"\fnew_password\x18\x02 \x01(\tR\vnewPassword\"O\n" +
+	"\x19ResetUserPasswordResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"w\n" +
+	"\x12PermissionAuditRow\x12\x1e\n" +
+	"\n" +
+	"permission\x18\x01 \x01(\tR\n" +
+	"permission\x12\x18\n" +
+	"\agranted\x18\x02 \x01(\bR\agranted\x12'\n" +
+	"\x0fgranting_groups\x18\x03 \x03(\tR\x0egrantingGroups\"/\n" +
+	"\x14GetUserAccessRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\"\xe6\x01\n" +
+	"\x15GetUserAccessResponse\x12\x1b\n" +
+	"\tgroup_ids\x18\x01 \x03(\x05R\bgroupIds\x12\x1f\n" +
+	"\vgroup_names\x18\x02 \x03(\tR\n" +
+	"groupNames\x12\x1d\n" +
+	"\n" +
+	"role_names\x18\x03 \x03(\tR\troleNames\x12!\n" +
+	"\fis_superuser\x18\x04 \x01(\bR\visSuperuser\x12M\n" +
+	"\vpermissions\x18\x05 \x03(\v2+.StencilBox.clientapi.v1.PermissionAuditRowR\vpermissions\"L\n" +
+	"\x14SetUserGroupsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12\x1b\n" +
+	"\tgroup_ids\x18\x02 \x03(\x05R\bgroupIds\"1\n" +
+	"\x15SetUserGroupsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x1e\n" +
+	"\x1cGetMyPermissionsAuditRequest\"\xd1\x01\n" +
+	"\x1dGetMyPermissionsAuditResponse\x12\x1f\n" +
+	"\vgroup_names\x18\x01 \x03(\tR\n" +
+	"groupNames\x12\x1d\n" +
+	"\n" +
+	"role_names\x18\x02 \x03(\tR\troleNames\x12!\n" +
+	"\fis_superuser\x18\x03 \x01(\bR\visSuperuser\x12M\n" +
+	"\vpermissions\x18\x04 \x03(\v2+.StencilBox.clientapi.v1.PermissionAuditRowR\vpermissions\"R\n" +
+	"\tUserGroup\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12!\n" +
+	"\fmember_count\x18\x03 \x01(\x05R\vmemberCount\"\x17\n" +
+	"\x15ListUserGroupsRequest\"T\n" +
+	"\x16ListUserGroupsResponse\x12:\n" +
+	"\x06groups\x18\x01 \x03(\v2\".StencilBox.clientapi.v1.UserGroupR\x06groups\",\n" +
+	"\x16CreateUserGroupRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"S\n" +
+	"\x17CreateUserGroupResponse\x128\n" +
+	"\x05group\x18\x01 \x01(\v2\".StencilBox.clientapi.v1.UserGroupR\x05group\"3\n" +
+	"\x16DeleteUserGroupRequest\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\x05R\agroupId\"3\n" +
+	"\x17DeleteUserGroupResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"7\n" +
+	"\x1aGetUserGroupMembersRequest\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\x05R\agroupId\"8\n" +
+	"\x1bGetUserGroupMembersResponse\x12\x19\n" +
+	"\buser_ids\x18\x01 \x03(\x05R\auserIds\"R\n" +
+	"\x1aSetUserGroupMembersRequest\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\x05R\agroupId\x12\x19\n" +
+	"\buser_ids\x18\x02 \x03(\x05R\auserIds\"7\n" +
+	"\x1bSetUserGroupMembersResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"V\n" +
+	"\x0eRbacPermission\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\"\xb7\x01\n" +
+	"\bRbacRole\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12%\n" +
+	"\x0epermission_ids\x18\x04 \x03(\x05R\rpermissionIds\x12\x1f\n" +
+	"\vgroup_count\x18\x05 \x01(\x05R\n" +
+	"groupCount\x12\x1d\n" +
+	"\n" +
+	"user_count\x18\x06 \x01(\x05R\tuserCount\"\x1c\n" +
+	"\x1aListRbacPermissionsRequest\"h\n" +
+	"\x1bListRbacPermissionsResponse\x12I\n" +
+	"\vpermissions\x18\x01 \x03(\v2'.StencilBox.clientapi.v1.RbacPermissionR\vpermissions\"\x16\n" +
+	"\x14ListRbacRolesRequest\"P\n" +
+	"\x15ListRbacRolesResponse\x127\n" +
+	"\x05roles\x18\x01 \x03(\v2!.StencilBox.clientapi.v1.RbacRoleR\x05roles\"t\n" +
+	"\x15CreateRbacRoleRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12%\n" +
+	"\x0epermission_ids\x18\x03 \x03(\x05R\rpermissionIds\"O\n" +
+	"\x16CreateRbacRoleResponse\x125\n" +
+	"\x04role\x18\x01 \x01(\v2!.StencilBox.clientapi.v1.RbacRoleR\x04role\"\x8d\x01\n" +
+	"\x15UpdateRbacRoleRequest\x12\x17\n" +
+	"\arole_id\x18\x01 \x01(\x05R\x06roleId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12%\n" +
+	"\x0epermission_ids\x18\x04 \x03(\x05R\rpermissionIds\"O\n" +
+	"\x16UpdateRbacRoleResponse\x125\n" +
+	"\x04role\x18\x01 \x01(\v2!.StencilBox.clientapi.v1.RbacRoleR\x04role\"0\n" +
+	"\x15DeleteRbacRoleRequest\x12\x17\n" +
+	"\arole_id\x18\x01 \x01(\x05R\x06roleId\"2\n" +
+	"\x16DeleteRbacRoleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"9\n" +
+	"\x1cGetUserGroupRbacRolesRequest\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\x05R\agroupId\":\n" +
+	"\x1dGetUserGroupRbacRolesResponse\x12\x19\n" +
+	"\brole_ids\x18\x01 \x03(\x05R\aroleIds\"T\n" +
+	"\x1cSetUserGroupRbacRolesRequest\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\x05R\agroupId\x12\x19\n" +
+	"\brole_ids\x18\x02 \x03(\x05R\aroleIds\"9\n" +
+	"\x1dSetUserGroupRbacRolesResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"3\n" +
+	"\x18GetRbacRoleGroupsRequest\x12\x17\n" +
+	"\arole_id\x18\x01 \x01(\x05R\x06roleId\"<\n" +
+	"\x19GetRbacRoleGroupsResponse\x12\x1f\n" +
+	"\vgroup_names\x18\x01 \x03(\tR\n" +
+	"groupNames\"\xc4\x01\n" +
+	"\x06ApiKey\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\x12 \n" +
+	"\flast_used_at\x18\x04 \x01(\tR\n" +
+	"lastUsedAt\x12\x19\n" +
+	"\bkey_hint\x18\x05 \x01(\tR\akeyHint\x12:\n" +
+	"\x05scope\x18\x06 \x01(\v2$.StencilBox.clientapi.v1.ApiKeyScopeR\x05scope\"\xbd\x01\n" +
+	"\vApiKeyScope\x121\n" +
+	"\x14restrict_permissions\x18\x01 \x01(\bR\x13restrictPermissions\x12 \n" +
+	"\vpermissions\x18\x02 \x03(\tR\vpermissions\x124\n" +
+	"\x16restrict_build_configs\x18\x03 \x01(\bR\x14restrictBuildConfigs\x12#\n" +
+	"\rbuild_configs\x18\x04 \x03(\tR\fbuildConfigs\"\x14\n" +
+	"\x12ListApiKeysRequest\"Q\n" +
+	"\x13ListApiKeysResponse\x12:\n" +
+	"\bapi_keys\x18\x01 \x03(\v2\x1f.StencilBox.clientapi.v1.ApiKeyR\aapiKeys\"e\n" +
+	"\x13CreateApiKeyRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12:\n" +
+	"\x05scope\x18\x02 \x01(\v2$.StencilBox.clientapi.v1.ApiKeyScopeR\x05scope\"b\n" +
+	"\x14CreateApiKeyResponse\x128\n" +
+	"\aapi_key\x18\x01 \x01(\v2\x1f.StencilBox.clientapi.v1.ApiKeyR\x06apiKey\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\"o\n" +
+	"\x13UpdateApiKeyRequest\x12\x1c\n" +
+	"\n" +
+	"api_key_id\x18\x01 \x01(\x05R\bapiKeyId\x12:\n" +
+	"\x05scope\x18\x02 \x01(\v2$.StencilBox.clientapi.v1.ApiKeyScopeR\x05scope\"P\n" +
+	"\x14UpdateApiKeyResponse\x128\n" +
+	"\aapi_key\x18\x01 \x01(\v2\x1f.StencilBox.clientapi.v1.ApiKeyR\x06apiKey\"3\n" +
+	"\x13DeleteApiKeyRequest\x12\x1c\n" +
+	"\n" +
+	"api_key_id\x18\x01 \x01(\x05R\bapiKeyId\"0\n" +
+	"\x14DeleteApiKeyResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xbb'\n" +
 	"\x14StencilBoxApiService\x12S\n" +
 	"\x04Init\x12$.StencilBox.clientapi.v1.InitRequest\x1a%.StencilBox.clientapi.v1.InitResponse\x12c\n" +
 	"\n" +
@@ -1846,8 +5605,41 @@ const file_StencilBox_clientapi_v1_clientapi_proto_rawDesc = "" +
 	"\x0eGetCurrentUser\x12..StencilBox.clientapi.v1.GetCurrentUserRequest\x1a/.StencilBox.clientapi.v1.GetCurrentUserResponse\x12\\\n" +
 	"\aGitPull\x12'.StencilBox.clientapi.v1.GitPullRequest\x1a(.StencilBox.clientapi.v1.GitPullResponse\x12n\n" +
 	"\rListDataFiles\x12-.StencilBox.clientapi.v1.ListDataFilesRequest\x1a..StencilBox.clientapi.v1.ListDataFilesResponse\x12h\n" +
-	"\vGetDataFile\x12+.StencilBox.clientapi.v1.GetDataFileRequest\x1a,.StencilBox.clientapi.v1.GetDataFileResponse\x12t\n" +
-	"\x0fClearBuildCache\x12/.StencilBox.clientapi.v1.ClearBuildCacheRequest\x1a0.StencilBox.clientapi.v1.ClearBuildCacheResponseBJZHgithub.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1;clientapi_pbb\x06proto3"
+	"\vGetDataFile\x12+.StencilBox.clientapi.v1.GetDataFileRequest\x1a,.StencilBox.clientapi.v1.GetDataFileResponse\x12q\n" +
+	"\x0eUpdateDataFile\x12..StencilBox.clientapi.v1.UpdateDataFileRequest\x1a/.StencilBox.clientapi.v1.UpdateDataFileResponse\x12z\n" +
+	"\x11CreateBuildConfig\x121.StencilBox.clientapi.v1.CreateBuildConfigRequest\x1a2.StencilBox.clientapi.v1.CreateBuildConfigResponse\x12q\n" +
+	"\x0eCreateDataFile\x12..StencilBox.clientapi.v1.CreateDataFileRequest\x1a/.StencilBox.clientapi.v1.CreateDataFileResponse\x12t\n" +
+	"\x0fClearBuildCache\x12/.StencilBox.clientapi.v1.ClearBuildCacheRequest\x1a0.StencilBox.clientapi.v1.ClearBuildCacheResponse\x12\x9b\x01\n" +
+	"\x1cLoginWithUsernameAndPassword\x12<.StencilBox.clientapi.v1.LoginWithUsernameAndPasswordRequest\x1a=.StencilBox.clientapi.v1.LoginWithUsernameAndPasswordResponse\x12Y\n" +
+	"\x06Logout\x12&.StencilBox.clientapi.v1.LogoutRequest\x1a'.StencilBox.clientapi.v1.LogoutResponse\x12q\n" +
+	"\x0eChangePassword\x12..StencilBox.clientapi.v1.ChangePasswordRequest\x1a/.StencilBox.clientapi.v1.ChangePasswordResponse\x12_\n" +
+	"\bGetUsers\x12(.StencilBox.clientapi.v1.GetUsersRequest\x1a).StencilBox.clientapi.v1.GetUsersResponse\x12\\\n" +
+	"\aGetUser\x12'.StencilBox.clientapi.v1.GetUserRequest\x1a(.StencilBox.clientapi.v1.GetUserResponse\x12e\n" +
+	"\n" +
+	"CreateUser\x12*.StencilBox.clientapi.v1.CreateUserRequest\x1a+.StencilBox.clientapi.v1.CreateUserResponse\x12e\n" +
+	"\n" +
+	"DeleteUser\x12*.StencilBox.clientapi.v1.DeleteUserRequest\x1a+.StencilBox.clientapi.v1.DeleteUserResponse\x12z\n" +
+	"\x11ResetUserPassword\x121.StencilBox.clientapi.v1.ResetUserPasswordRequest\x1a2.StencilBox.clientapi.v1.ResetUserPasswordResponse\x12n\n" +
+	"\rGetUserAccess\x12-.StencilBox.clientapi.v1.GetUserAccessRequest\x1a..StencilBox.clientapi.v1.GetUserAccessResponse\x12n\n" +
+	"\rSetUserGroups\x12-.StencilBox.clientapi.v1.SetUserGroupsRequest\x1a..StencilBox.clientapi.v1.SetUserGroupsResponse\x12\x86\x01\n" +
+	"\x15GetMyPermissionsAudit\x125.StencilBox.clientapi.v1.GetMyPermissionsAuditRequest\x1a6.StencilBox.clientapi.v1.GetMyPermissionsAuditResponse\x12q\n" +
+	"\x0eListUserGroups\x12..StencilBox.clientapi.v1.ListUserGroupsRequest\x1a/.StencilBox.clientapi.v1.ListUserGroupsResponse\x12t\n" +
+	"\x0fCreateUserGroup\x12/.StencilBox.clientapi.v1.CreateUserGroupRequest\x1a0.StencilBox.clientapi.v1.CreateUserGroupResponse\x12t\n" +
+	"\x0fDeleteUserGroup\x12/.StencilBox.clientapi.v1.DeleteUserGroupRequest\x1a0.StencilBox.clientapi.v1.DeleteUserGroupResponse\x12\x80\x01\n" +
+	"\x13GetUserGroupMembers\x123.StencilBox.clientapi.v1.GetUserGroupMembersRequest\x1a4.StencilBox.clientapi.v1.GetUserGroupMembersResponse\x12\x80\x01\n" +
+	"\x13SetUserGroupMembers\x123.StencilBox.clientapi.v1.SetUserGroupMembersRequest\x1a4.StencilBox.clientapi.v1.SetUserGroupMembersResponse\x12\x80\x01\n" +
+	"\x13ListRbacPermissions\x123.StencilBox.clientapi.v1.ListRbacPermissionsRequest\x1a4.StencilBox.clientapi.v1.ListRbacPermissionsResponse\x12n\n" +
+	"\rListRbacRoles\x12-.StencilBox.clientapi.v1.ListRbacRolesRequest\x1a..StencilBox.clientapi.v1.ListRbacRolesResponse\x12q\n" +
+	"\x0eCreateRbacRole\x12..StencilBox.clientapi.v1.CreateRbacRoleRequest\x1a/.StencilBox.clientapi.v1.CreateRbacRoleResponse\x12q\n" +
+	"\x0eUpdateRbacRole\x12..StencilBox.clientapi.v1.UpdateRbacRoleRequest\x1a/.StencilBox.clientapi.v1.UpdateRbacRoleResponse\x12q\n" +
+	"\x0eDeleteRbacRole\x12..StencilBox.clientapi.v1.DeleteRbacRoleRequest\x1a/.StencilBox.clientapi.v1.DeleteRbacRoleResponse\x12\x86\x01\n" +
+	"\x15GetUserGroupRbacRoles\x125.StencilBox.clientapi.v1.GetUserGroupRbacRolesRequest\x1a6.StencilBox.clientapi.v1.GetUserGroupRbacRolesResponse\x12\x86\x01\n" +
+	"\x15SetUserGroupRbacRoles\x125.StencilBox.clientapi.v1.SetUserGroupRbacRolesRequest\x1a6.StencilBox.clientapi.v1.SetUserGroupRbacRolesResponse\x12z\n" +
+	"\x11GetRbacRoleGroups\x121.StencilBox.clientapi.v1.GetRbacRoleGroupsRequest\x1a2.StencilBox.clientapi.v1.GetRbacRoleGroupsResponse\x12h\n" +
+	"\vListApiKeys\x12+.StencilBox.clientapi.v1.ListApiKeysRequest\x1a,.StencilBox.clientapi.v1.ListApiKeysResponse\x12k\n" +
+	"\fCreateApiKey\x12,.StencilBox.clientapi.v1.CreateApiKeyRequest\x1a-.StencilBox.clientapi.v1.CreateApiKeyResponse\x12k\n" +
+	"\fUpdateApiKey\x12,.StencilBox.clientapi.v1.UpdateApiKeyRequest\x1a-.StencilBox.clientapi.v1.UpdateApiKeyResponse\x12k\n" +
+	"\fDeleteApiKey\x12,.StencilBox.clientapi.v1.DeleteApiKeyRequest\x1a-.StencilBox.clientapi.v1.DeleteApiKeyResponseBJZHgithub.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1;clientapi_pbb\x06proto3"
 
 var (
 	file_StencilBox_clientapi_v1_clientapi_proto_rawDescOnce sync.Once
@@ -1861,81 +5653,230 @@ func file_StencilBox_clientapi_v1_clientapi_proto_rawDescGZIP() []byte {
 	return file_StencilBox_clientapi_v1_clientapi_proto_rawDescData
 }
 
-var file_StencilBox_clientapi_v1_clientapi_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_StencilBox_clientapi_v1_clientapi_proto_msgTypes = make([]protoimpl.MessageInfo, 101)
 var file_StencilBox_clientapi_v1_clientapi_proto_goTypes = []any{
-	(*InitRequest)(nil),             // 0: StencilBox.clientapi.v1.InitRequest
-	(*SearchHints)(nil),             // 1: StencilBox.clientapi.v1.SearchHints
-	(*InitResponse)(nil),            // 2: StencilBox.clientapi.v1.InitResponse
-	(*Template)(nil),                // 3: StencilBox.clientapi.v1.Template
-	(*BuildConfig)(nil),             // 4: StencilBox.clientapi.v1.BuildConfig
-	(*BuildRequest)(nil),            // 5: StencilBox.clientapi.v1.BuildRequest
-	(*BuildUpdateResponse)(nil),     // 6: StencilBox.clientapi.v1.BuildUpdateResponse
-	(*GetTemplatesRequest)(nil),     // 7: StencilBox.clientapi.v1.GetTemplatesRequest
-	(*GetTemplatesResponse)(nil),    // 8: StencilBox.clientapi.v1.GetTemplatesResponse
-	(*GetStatusRequest)(nil),        // 9: StencilBox.clientapi.v1.GetStatusRequest
-	(*GetStatusResponse)(nil),       // 10: StencilBox.clientapi.v1.GetStatusResponse
-	(*GetBuildConfigsRequest)(nil),  // 11: StencilBox.clientapi.v1.GetBuildConfigsRequest
-	(*GetBuildConfigsResponse)(nil), // 12: StencilBox.clientapi.v1.GetBuildConfigsResponse
-	(*GetBuildConfigRequest)(nil),   // 13: StencilBox.clientapi.v1.GetBuildConfigRequest
-	(*GetBuildConfigResponse)(nil),  // 14: StencilBox.clientapi.v1.GetBuildConfigResponse
-	(*GetTemplateRequest)(nil),      // 15: StencilBox.clientapi.v1.GetTemplateRequest
-	(*GetTemplateResponse)(nil),     // 16: StencilBox.clientapi.v1.GetTemplateResponse
-	(*BuildHistoryEntry)(nil),       // 17: StencilBox.clientapi.v1.BuildHistoryEntry
-	(*GetBuildHistoryRequest)(nil),  // 18: StencilBox.clientapi.v1.GetBuildHistoryRequest
-	(*GetBuildHistoryResponse)(nil), // 19: StencilBox.clientapi.v1.GetBuildHistoryResponse
-	(*GetCurrentUserRequest)(nil),   // 20: StencilBox.clientapi.v1.GetCurrentUserRequest
-	(*GetCurrentUserResponse)(nil),  // 21: StencilBox.clientapi.v1.GetCurrentUserResponse
-	(*GitPullRequest)(nil),          // 22: StencilBox.clientapi.v1.GitPullRequest
-	(*GitPullResponse)(nil),         // 23: StencilBox.clientapi.v1.GitPullResponse
-	(*DataFile)(nil),                // 24: StencilBox.clientapi.v1.DataFile
-	(*ListDataFilesRequest)(nil),    // 25: StencilBox.clientapi.v1.ListDataFilesRequest
-	(*ListDataFilesResponse)(nil),   // 26: StencilBox.clientapi.v1.ListDataFilesResponse
-	(*GetDataFileRequest)(nil),      // 27: StencilBox.clientapi.v1.GetDataFileRequest
-	(*GetDataFileResponse)(nil),     // 28: StencilBox.clientapi.v1.GetDataFileResponse
-	(*ClearBuildCacheRequest)(nil),  // 29: StencilBox.clientapi.v1.ClearBuildCacheRequest
-	(*ClearBuildCacheResponse)(nil), // 30: StencilBox.clientapi.v1.ClearBuildCacheResponse
-	nil,                             // 31: StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
+	(*InitRequest)(nil),                          // 0: StencilBox.clientapi.v1.InitRequest
+	(*SearchHints)(nil),                          // 1: StencilBox.clientapi.v1.SearchHints
+	(*InitResponse)(nil),                         // 2: StencilBox.clientapi.v1.InitResponse
+	(*Template)(nil),                             // 3: StencilBox.clientapi.v1.Template
+	(*BuildConfig)(nil),                          // 4: StencilBox.clientapi.v1.BuildConfig
+	(*BuildRequest)(nil),                         // 5: StencilBox.clientapi.v1.BuildRequest
+	(*BuildUpdateResponse)(nil),                  // 6: StencilBox.clientapi.v1.BuildUpdateResponse
+	(*GetTemplatesRequest)(nil),                  // 7: StencilBox.clientapi.v1.GetTemplatesRequest
+	(*GetTemplatesResponse)(nil),                 // 8: StencilBox.clientapi.v1.GetTemplatesResponse
+	(*GetStatusRequest)(nil),                     // 9: StencilBox.clientapi.v1.GetStatusRequest
+	(*GetStatusResponse)(nil),                    // 10: StencilBox.clientapi.v1.GetStatusResponse
+	(*GetBuildConfigsRequest)(nil),               // 11: StencilBox.clientapi.v1.GetBuildConfigsRequest
+	(*GetBuildConfigsResponse)(nil),              // 12: StencilBox.clientapi.v1.GetBuildConfigsResponse
+	(*GetBuildConfigRequest)(nil),                // 13: StencilBox.clientapi.v1.GetBuildConfigRequest
+	(*GetBuildConfigResponse)(nil),               // 14: StencilBox.clientapi.v1.GetBuildConfigResponse
+	(*GetTemplateRequest)(nil),                   // 15: StencilBox.clientapi.v1.GetTemplateRequest
+	(*GetTemplateResponse)(nil),                  // 16: StencilBox.clientapi.v1.GetTemplateResponse
+	(*BuildHistoryEntry)(nil),                    // 17: StencilBox.clientapi.v1.BuildHistoryEntry
+	(*GetBuildHistoryRequest)(nil),               // 18: StencilBox.clientapi.v1.GetBuildHistoryRequest
+	(*GetBuildHistoryResponse)(nil),              // 19: StencilBox.clientapi.v1.GetBuildHistoryResponse
+	(*GetCurrentUserRequest)(nil),                // 20: StencilBox.clientapi.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),               // 21: StencilBox.clientapi.v1.GetCurrentUserResponse
+	(*GitPullRequest)(nil),                       // 22: StencilBox.clientapi.v1.GitPullRequest
+	(*GitPullResponse)(nil),                      // 23: StencilBox.clientapi.v1.GitPullResponse
+	(*DataFile)(nil),                             // 24: StencilBox.clientapi.v1.DataFile
+	(*ListDataFilesRequest)(nil),                 // 25: StencilBox.clientapi.v1.ListDataFilesRequest
+	(*ListDataFilesResponse)(nil),                // 26: StencilBox.clientapi.v1.ListDataFilesResponse
+	(*GetDataFileRequest)(nil),                   // 27: StencilBox.clientapi.v1.GetDataFileRequest
+	(*GetDataFileResponse)(nil),                  // 28: StencilBox.clientapi.v1.GetDataFileResponse
+	(*UpdateDataFileRequest)(nil),                // 29: StencilBox.clientapi.v1.UpdateDataFileRequest
+	(*UpdateDataFileResponse)(nil),               // 30: StencilBox.clientapi.v1.UpdateDataFileResponse
+	(*CreateBuildConfigRequest)(nil),             // 31: StencilBox.clientapi.v1.CreateBuildConfigRequest
+	(*CreateBuildConfigResponse)(nil),            // 32: StencilBox.clientapi.v1.CreateBuildConfigResponse
+	(*CreateDataFileRequest)(nil),                // 33: StencilBox.clientapi.v1.CreateDataFileRequest
+	(*CreateDataFileResponse)(nil),               // 34: StencilBox.clientapi.v1.CreateDataFileResponse
+	(*ClearBuildCacheRequest)(nil),               // 35: StencilBox.clientapi.v1.ClearBuildCacheRequest
+	(*ClearBuildCacheResponse)(nil),              // 36: StencilBox.clientapi.v1.ClearBuildCacheResponse
+	(*LoginWithUsernameAndPasswordRequest)(nil),  // 37: StencilBox.clientapi.v1.LoginWithUsernameAndPasswordRequest
+	(*LoginWithUsernameAndPasswordResponse)(nil), // 38: StencilBox.clientapi.v1.LoginWithUsernameAndPasswordResponse
+	(*LogoutRequest)(nil),                        // 39: StencilBox.clientapi.v1.LogoutRequest
+	(*LogoutResponse)(nil),                       // 40: StencilBox.clientapi.v1.LogoutResponse
+	(*ChangePasswordRequest)(nil),                // 41: StencilBox.clientapi.v1.ChangePasswordRequest
+	(*ChangePasswordResponse)(nil),               // 42: StencilBox.clientapi.v1.ChangePasswordResponse
+	(*IamUser)(nil),                              // 43: StencilBox.clientapi.v1.IamUser
+	(*GetUsersRequest)(nil),                      // 44: StencilBox.clientapi.v1.GetUsersRequest
+	(*GetUsersResponse)(nil),                     // 45: StencilBox.clientapi.v1.GetUsersResponse
+	(*GetUserRequest)(nil),                       // 46: StencilBox.clientapi.v1.GetUserRequest
+	(*GetUserResponse)(nil),                      // 47: StencilBox.clientapi.v1.GetUserResponse
+	(*CreateUserRequest)(nil),                    // 48: StencilBox.clientapi.v1.CreateUserRequest
+	(*CreateUserResponse)(nil),                   // 49: StencilBox.clientapi.v1.CreateUserResponse
+	(*DeleteUserRequest)(nil),                    // 50: StencilBox.clientapi.v1.DeleteUserRequest
+	(*DeleteUserResponse)(nil),                   // 51: StencilBox.clientapi.v1.DeleteUserResponse
+	(*ResetUserPasswordRequest)(nil),             // 52: StencilBox.clientapi.v1.ResetUserPasswordRequest
+	(*ResetUserPasswordResponse)(nil),            // 53: StencilBox.clientapi.v1.ResetUserPasswordResponse
+	(*PermissionAuditRow)(nil),                   // 54: StencilBox.clientapi.v1.PermissionAuditRow
+	(*GetUserAccessRequest)(nil),                 // 55: StencilBox.clientapi.v1.GetUserAccessRequest
+	(*GetUserAccessResponse)(nil),                // 56: StencilBox.clientapi.v1.GetUserAccessResponse
+	(*SetUserGroupsRequest)(nil),                 // 57: StencilBox.clientapi.v1.SetUserGroupsRequest
+	(*SetUserGroupsResponse)(nil),                // 58: StencilBox.clientapi.v1.SetUserGroupsResponse
+	(*GetMyPermissionsAuditRequest)(nil),         // 59: StencilBox.clientapi.v1.GetMyPermissionsAuditRequest
+	(*GetMyPermissionsAuditResponse)(nil),        // 60: StencilBox.clientapi.v1.GetMyPermissionsAuditResponse
+	(*UserGroup)(nil),                            // 61: StencilBox.clientapi.v1.UserGroup
+	(*ListUserGroupsRequest)(nil),                // 62: StencilBox.clientapi.v1.ListUserGroupsRequest
+	(*ListUserGroupsResponse)(nil),               // 63: StencilBox.clientapi.v1.ListUserGroupsResponse
+	(*CreateUserGroupRequest)(nil),               // 64: StencilBox.clientapi.v1.CreateUserGroupRequest
+	(*CreateUserGroupResponse)(nil),              // 65: StencilBox.clientapi.v1.CreateUserGroupResponse
+	(*DeleteUserGroupRequest)(nil),               // 66: StencilBox.clientapi.v1.DeleteUserGroupRequest
+	(*DeleteUserGroupResponse)(nil),              // 67: StencilBox.clientapi.v1.DeleteUserGroupResponse
+	(*GetUserGroupMembersRequest)(nil),           // 68: StencilBox.clientapi.v1.GetUserGroupMembersRequest
+	(*GetUserGroupMembersResponse)(nil),          // 69: StencilBox.clientapi.v1.GetUserGroupMembersResponse
+	(*SetUserGroupMembersRequest)(nil),           // 70: StencilBox.clientapi.v1.SetUserGroupMembersRequest
+	(*SetUserGroupMembersResponse)(nil),          // 71: StencilBox.clientapi.v1.SetUserGroupMembersResponse
+	(*RbacPermission)(nil),                       // 72: StencilBox.clientapi.v1.RbacPermission
+	(*RbacRole)(nil),                             // 73: StencilBox.clientapi.v1.RbacRole
+	(*ListRbacPermissionsRequest)(nil),           // 74: StencilBox.clientapi.v1.ListRbacPermissionsRequest
+	(*ListRbacPermissionsResponse)(nil),          // 75: StencilBox.clientapi.v1.ListRbacPermissionsResponse
+	(*ListRbacRolesRequest)(nil),                 // 76: StencilBox.clientapi.v1.ListRbacRolesRequest
+	(*ListRbacRolesResponse)(nil),                // 77: StencilBox.clientapi.v1.ListRbacRolesResponse
+	(*CreateRbacRoleRequest)(nil),                // 78: StencilBox.clientapi.v1.CreateRbacRoleRequest
+	(*CreateRbacRoleResponse)(nil),               // 79: StencilBox.clientapi.v1.CreateRbacRoleResponse
+	(*UpdateRbacRoleRequest)(nil),                // 80: StencilBox.clientapi.v1.UpdateRbacRoleRequest
+	(*UpdateRbacRoleResponse)(nil),               // 81: StencilBox.clientapi.v1.UpdateRbacRoleResponse
+	(*DeleteRbacRoleRequest)(nil),                // 82: StencilBox.clientapi.v1.DeleteRbacRoleRequest
+	(*DeleteRbacRoleResponse)(nil),               // 83: StencilBox.clientapi.v1.DeleteRbacRoleResponse
+	(*GetUserGroupRbacRolesRequest)(nil),         // 84: StencilBox.clientapi.v1.GetUserGroupRbacRolesRequest
+	(*GetUserGroupRbacRolesResponse)(nil),        // 85: StencilBox.clientapi.v1.GetUserGroupRbacRolesResponse
+	(*SetUserGroupRbacRolesRequest)(nil),         // 86: StencilBox.clientapi.v1.SetUserGroupRbacRolesRequest
+	(*SetUserGroupRbacRolesResponse)(nil),        // 87: StencilBox.clientapi.v1.SetUserGroupRbacRolesResponse
+	(*GetRbacRoleGroupsRequest)(nil),             // 88: StencilBox.clientapi.v1.GetRbacRoleGroupsRequest
+	(*GetRbacRoleGroupsResponse)(nil),            // 89: StencilBox.clientapi.v1.GetRbacRoleGroupsResponse
+	(*ApiKey)(nil),                               // 90: StencilBox.clientapi.v1.ApiKey
+	(*ApiKeyScope)(nil),                          // 91: StencilBox.clientapi.v1.ApiKeyScope
+	(*ListApiKeysRequest)(nil),                   // 92: StencilBox.clientapi.v1.ListApiKeysRequest
+	(*ListApiKeysResponse)(nil),                  // 93: StencilBox.clientapi.v1.ListApiKeysResponse
+	(*CreateApiKeyRequest)(nil),                  // 94: StencilBox.clientapi.v1.CreateApiKeyRequest
+	(*CreateApiKeyResponse)(nil),                 // 95: StencilBox.clientapi.v1.CreateApiKeyResponse
+	(*UpdateApiKeyRequest)(nil),                  // 96: StencilBox.clientapi.v1.UpdateApiKeyRequest
+	(*UpdateApiKeyResponse)(nil),                 // 97: StencilBox.clientapi.v1.UpdateApiKeyResponse
+	(*DeleteApiKeyRequest)(nil),                  // 98: StencilBox.clientapi.v1.DeleteApiKeyRequest
+	(*DeleteApiKeyResponse)(nil),                 // 99: StencilBox.clientapi.v1.DeleteApiKeyResponse
+	nil,                                          // 100: StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
 }
 var file_StencilBox_clientapi_v1_clientapi_proto_depIdxs = []int32{
-	1,  // 0: StencilBox.clientapi.v1.InitResponse.search_hints:type_name -> StencilBox.clientapi.v1.SearchHints
-	31, // 1: StencilBox.clientapi.v1.BuildConfig.datafiles:type_name -> StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
-	3,  // 2: StencilBox.clientapi.v1.GetTemplatesResponse.templates:type_name -> StencilBox.clientapi.v1.Template
-	4,  // 3: StencilBox.clientapi.v1.GetBuildConfigsResponse.build_configs:type_name -> StencilBox.clientapi.v1.BuildConfig
-	4,  // 4: StencilBox.clientapi.v1.GetBuildConfigResponse.build_config:type_name -> StencilBox.clientapi.v1.BuildConfig
-	3,  // 5: StencilBox.clientapi.v1.GetTemplateResponse.template:type_name -> StencilBox.clientapi.v1.Template
-	17, // 6: StencilBox.clientapi.v1.GetBuildHistoryResponse.entries:type_name -> StencilBox.clientapi.v1.BuildHistoryEntry
-	24, // 7: StencilBox.clientapi.v1.ListDataFilesResponse.data_files:type_name -> StencilBox.clientapi.v1.DataFile
-	0,  // 8: StencilBox.clientapi.v1.StencilBoxApiService.Init:input_type -> StencilBox.clientapi.v1.InitRequest
-	5,  // 9: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:input_type -> StencilBox.clientapi.v1.BuildRequest
-	7,  // 10: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:input_type -> StencilBox.clientapi.v1.GetTemplatesRequest
-	15, // 11: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:input_type -> StencilBox.clientapi.v1.GetTemplateRequest
-	9,  // 12: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:input_type -> StencilBox.clientapi.v1.GetStatusRequest
-	11, // 13: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:input_type -> StencilBox.clientapi.v1.GetBuildConfigsRequest
-	13, // 14: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:input_type -> StencilBox.clientapi.v1.GetBuildConfigRequest
-	18, // 15: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:input_type -> StencilBox.clientapi.v1.GetBuildHistoryRequest
-	20, // 16: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:input_type -> StencilBox.clientapi.v1.GetCurrentUserRequest
-	22, // 17: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:input_type -> StencilBox.clientapi.v1.GitPullRequest
-	25, // 18: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:input_type -> StencilBox.clientapi.v1.ListDataFilesRequest
-	27, // 19: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:input_type -> StencilBox.clientapi.v1.GetDataFileRequest
-	29, // 20: StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache:input_type -> StencilBox.clientapi.v1.ClearBuildCacheRequest
-	2,  // 21: StencilBox.clientapi.v1.StencilBoxApiService.Init:output_type -> StencilBox.clientapi.v1.InitResponse
-	6,  // 22: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:output_type -> StencilBox.clientapi.v1.BuildUpdateResponse
-	8,  // 23: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:output_type -> StencilBox.clientapi.v1.GetTemplatesResponse
-	16, // 24: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:output_type -> StencilBox.clientapi.v1.GetTemplateResponse
-	10, // 25: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:output_type -> StencilBox.clientapi.v1.GetStatusResponse
-	12, // 26: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:output_type -> StencilBox.clientapi.v1.GetBuildConfigsResponse
-	14, // 27: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:output_type -> StencilBox.clientapi.v1.GetBuildConfigResponse
-	19, // 28: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:output_type -> StencilBox.clientapi.v1.GetBuildHistoryResponse
-	21, // 29: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:output_type -> StencilBox.clientapi.v1.GetCurrentUserResponse
-	23, // 30: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:output_type -> StencilBox.clientapi.v1.GitPullResponse
-	26, // 31: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:output_type -> StencilBox.clientapi.v1.ListDataFilesResponse
-	28, // 32: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:output_type -> StencilBox.clientapi.v1.GetDataFileResponse
-	30, // 33: StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache:output_type -> StencilBox.clientapi.v1.ClearBuildCacheResponse
-	21, // [21:34] is the sub-list for method output_type
-	8,  // [8:21] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	1,   // 0: StencilBox.clientapi.v1.InitResponse.search_hints:type_name -> StencilBox.clientapi.v1.SearchHints
+	100, // 1: StencilBox.clientapi.v1.BuildConfig.datafiles:type_name -> StencilBox.clientapi.v1.BuildConfig.DatafilesEntry
+	3,   // 2: StencilBox.clientapi.v1.GetTemplatesResponse.templates:type_name -> StencilBox.clientapi.v1.Template
+	4,   // 3: StencilBox.clientapi.v1.GetBuildConfigsResponse.build_configs:type_name -> StencilBox.clientapi.v1.BuildConfig
+	4,   // 4: StencilBox.clientapi.v1.GetBuildConfigResponse.build_config:type_name -> StencilBox.clientapi.v1.BuildConfig
+	3,   // 5: StencilBox.clientapi.v1.GetTemplateResponse.template:type_name -> StencilBox.clientapi.v1.Template
+	17,  // 6: StencilBox.clientapi.v1.GetBuildHistoryResponse.entries:type_name -> StencilBox.clientapi.v1.BuildHistoryEntry
+	24,  // 7: StencilBox.clientapi.v1.ListDataFilesResponse.data_files:type_name -> StencilBox.clientapi.v1.DataFile
+	4,   // 8: StencilBox.clientapi.v1.CreateBuildConfigResponse.build_config:type_name -> StencilBox.clientapi.v1.BuildConfig
+	43,  // 9: StencilBox.clientapi.v1.GetUsersResponse.users:type_name -> StencilBox.clientapi.v1.IamUser
+	43,  // 10: StencilBox.clientapi.v1.GetUserResponse.user:type_name -> StencilBox.clientapi.v1.IamUser
+	43,  // 11: StencilBox.clientapi.v1.CreateUserResponse.user:type_name -> StencilBox.clientapi.v1.IamUser
+	54,  // 12: StencilBox.clientapi.v1.GetUserAccessResponse.permissions:type_name -> StencilBox.clientapi.v1.PermissionAuditRow
+	54,  // 13: StencilBox.clientapi.v1.GetMyPermissionsAuditResponse.permissions:type_name -> StencilBox.clientapi.v1.PermissionAuditRow
+	61,  // 14: StencilBox.clientapi.v1.ListUserGroupsResponse.groups:type_name -> StencilBox.clientapi.v1.UserGroup
+	61,  // 15: StencilBox.clientapi.v1.CreateUserGroupResponse.group:type_name -> StencilBox.clientapi.v1.UserGroup
+	72,  // 16: StencilBox.clientapi.v1.ListRbacPermissionsResponse.permissions:type_name -> StencilBox.clientapi.v1.RbacPermission
+	73,  // 17: StencilBox.clientapi.v1.ListRbacRolesResponse.roles:type_name -> StencilBox.clientapi.v1.RbacRole
+	73,  // 18: StencilBox.clientapi.v1.CreateRbacRoleResponse.role:type_name -> StencilBox.clientapi.v1.RbacRole
+	73,  // 19: StencilBox.clientapi.v1.UpdateRbacRoleResponse.role:type_name -> StencilBox.clientapi.v1.RbacRole
+	91,  // 20: StencilBox.clientapi.v1.ApiKey.scope:type_name -> StencilBox.clientapi.v1.ApiKeyScope
+	90,  // 21: StencilBox.clientapi.v1.ListApiKeysResponse.api_keys:type_name -> StencilBox.clientapi.v1.ApiKey
+	91,  // 22: StencilBox.clientapi.v1.CreateApiKeyRequest.scope:type_name -> StencilBox.clientapi.v1.ApiKeyScope
+	90,  // 23: StencilBox.clientapi.v1.CreateApiKeyResponse.api_key:type_name -> StencilBox.clientapi.v1.ApiKey
+	91,  // 24: StencilBox.clientapi.v1.UpdateApiKeyRequest.scope:type_name -> StencilBox.clientapi.v1.ApiKeyScope
+	90,  // 25: StencilBox.clientapi.v1.UpdateApiKeyResponse.api_key:type_name -> StencilBox.clientapi.v1.ApiKey
+	0,   // 26: StencilBox.clientapi.v1.StencilBoxApiService.Init:input_type -> StencilBox.clientapi.v1.InitRequest
+	5,   // 27: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:input_type -> StencilBox.clientapi.v1.BuildRequest
+	7,   // 28: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:input_type -> StencilBox.clientapi.v1.GetTemplatesRequest
+	15,  // 29: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:input_type -> StencilBox.clientapi.v1.GetTemplateRequest
+	9,   // 30: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:input_type -> StencilBox.clientapi.v1.GetStatusRequest
+	11,  // 31: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:input_type -> StencilBox.clientapi.v1.GetBuildConfigsRequest
+	13,  // 32: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:input_type -> StencilBox.clientapi.v1.GetBuildConfigRequest
+	18,  // 33: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:input_type -> StencilBox.clientapi.v1.GetBuildHistoryRequest
+	20,  // 34: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:input_type -> StencilBox.clientapi.v1.GetCurrentUserRequest
+	22,  // 35: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:input_type -> StencilBox.clientapi.v1.GitPullRequest
+	25,  // 36: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:input_type -> StencilBox.clientapi.v1.ListDataFilesRequest
+	27,  // 37: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:input_type -> StencilBox.clientapi.v1.GetDataFileRequest
+	29,  // 38: StencilBox.clientapi.v1.StencilBoxApiService.UpdateDataFile:input_type -> StencilBox.clientapi.v1.UpdateDataFileRequest
+	31,  // 39: StencilBox.clientapi.v1.StencilBoxApiService.CreateBuildConfig:input_type -> StencilBox.clientapi.v1.CreateBuildConfigRequest
+	33,  // 40: StencilBox.clientapi.v1.StencilBoxApiService.CreateDataFile:input_type -> StencilBox.clientapi.v1.CreateDataFileRequest
+	35,  // 41: StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache:input_type -> StencilBox.clientapi.v1.ClearBuildCacheRequest
+	37,  // 42: StencilBox.clientapi.v1.StencilBoxApiService.LoginWithUsernameAndPassword:input_type -> StencilBox.clientapi.v1.LoginWithUsernameAndPasswordRequest
+	39,  // 43: StencilBox.clientapi.v1.StencilBoxApiService.Logout:input_type -> StencilBox.clientapi.v1.LogoutRequest
+	41,  // 44: StencilBox.clientapi.v1.StencilBoxApiService.ChangePassword:input_type -> StencilBox.clientapi.v1.ChangePasswordRequest
+	44,  // 45: StencilBox.clientapi.v1.StencilBoxApiService.GetUsers:input_type -> StencilBox.clientapi.v1.GetUsersRequest
+	46,  // 46: StencilBox.clientapi.v1.StencilBoxApiService.GetUser:input_type -> StencilBox.clientapi.v1.GetUserRequest
+	48,  // 47: StencilBox.clientapi.v1.StencilBoxApiService.CreateUser:input_type -> StencilBox.clientapi.v1.CreateUserRequest
+	50,  // 48: StencilBox.clientapi.v1.StencilBoxApiService.DeleteUser:input_type -> StencilBox.clientapi.v1.DeleteUserRequest
+	52,  // 49: StencilBox.clientapi.v1.StencilBoxApiService.ResetUserPassword:input_type -> StencilBox.clientapi.v1.ResetUserPasswordRequest
+	55,  // 50: StencilBox.clientapi.v1.StencilBoxApiService.GetUserAccess:input_type -> StencilBox.clientapi.v1.GetUserAccessRequest
+	57,  // 51: StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroups:input_type -> StencilBox.clientapi.v1.SetUserGroupsRequest
+	59,  // 52: StencilBox.clientapi.v1.StencilBoxApiService.GetMyPermissionsAudit:input_type -> StencilBox.clientapi.v1.GetMyPermissionsAuditRequest
+	62,  // 53: StencilBox.clientapi.v1.StencilBoxApiService.ListUserGroups:input_type -> StencilBox.clientapi.v1.ListUserGroupsRequest
+	64,  // 54: StencilBox.clientapi.v1.StencilBoxApiService.CreateUserGroup:input_type -> StencilBox.clientapi.v1.CreateUserGroupRequest
+	66,  // 55: StencilBox.clientapi.v1.StencilBoxApiService.DeleteUserGroup:input_type -> StencilBox.clientapi.v1.DeleteUserGroupRequest
+	68,  // 56: StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupMembers:input_type -> StencilBox.clientapi.v1.GetUserGroupMembersRequest
+	70,  // 57: StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupMembers:input_type -> StencilBox.clientapi.v1.SetUserGroupMembersRequest
+	74,  // 58: StencilBox.clientapi.v1.StencilBoxApiService.ListRbacPermissions:input_type -> StencilBox.clientapi.v1.ListRbacPermissionsRequest
+	76,  // 59: StencilBox.clientapi.v1.StencilBoxApiService.ListRbacRoles:input_type -> StencilBox.clientapi.v1.ListRbacRolesRequest
+	78,  // 60: StencilBox.clientapi.v1.StencilBoxApiService.CreateRbacRole:input_type -> StencilBox.clientapi.v1.CreateRbacRoleRequest
+	80,  // 61: StencilBox.clientapi.v1.StencilBoxApiService.UpdateRbacRole:input_type -> StencilBox.clientapi.v1.UpdateRbacRoleRequest
+	82,  // 62: StencilBox.clientapi.v1.StencilBoxApiService.DeleteRbacRole:input_type -> StencilBox.clientapi.v1.DeleteRbacRoleRequest
+	84,  // 63: StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupRbacRoles:input_type -> StencilBox.clientapi.v1.GetUserGroupRbacRolesRequest
+	86,  // 64: StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupRbacRoles:input_type -> StencilBox.clientapi.v1.SetUserGroupRbacRolesRequest
+	88,  // 65: StencilBox.clientapi.v1.StencilBoxApiService.GetRbacRoleGroups:input_type -> StencilBox.clientapi.v1.GetRbacRoleGroupsRequest
+	92,  // 66: StencilBox.clientapi.v1.StencilBoxApiService.ListApiKeys:input_type -> StencilBox.clientapi.v1.ListApiKeysRequest
+	94,  // 67: StencilBox.clientapi.v1.StencilBoxApiService.CreateApiKey:input_type -> StencilBox.clientapi.v1.CreateApiKeyRequest
+	96,  // 68: StencilBox.clientapi.v1.StencilBoxApiService.UpdateApiKey:input_type -> StencilBox.clientapi.v1.UpdateApiKeyRequest
+	98,  // 69: StencilBox.clientapi.v1.StencilBoxApiService.DeleteApiKey:input_type -> StencilBox.clientapi.v1.DeleteApiKeyRequest
+	2,   // 70: StencilBox.clientapi.v1.StencilBoxApiService.Init:output_type -> StencilBox.clientapi.v1.InitResponse
+	6,   // 71: StencilBox.clientapi.v1.StencilBoxApiService.StartBuild:output_type -> StencilBox.clientapi.v1.BuildUpdateResponse
+	8,   // 72: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplates:output_type -> StencilBox.clientapi.v1.GetTemplatesResponse
+	16,  // 73: StencilBox.clientapi.v1.StencilBoxApiService.GetTemplate:output_type -> StencilBox.clientapi.v1.GetTemplateResponse
+	10,  // 74: StencilBox.clientapi.v1.StencilBoxApiService.GetStatus:output_type -> StencilBox.clientapi.v1.GetStatusResponse
+	12,  // 75: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfigs:output_type -> StencilBox.clientapi.v1.GetBuildConfigsResponse
+	14,  // 76: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildConfig:output_type -> StencilBox.clientapi.v1.GetBuildConfigResponse
+	19,  // 77: StencilBox.clientapi.v1.StencilBoxApiService.GetBuildHistory:output_type -> StencilBox.clientapi.v1.GetBuildHistoryResponse
+	21,  // 78: StencilBox.clientapi.v1.StencilBoxApiService.GetCurrentUser:output_type -> StencilBox.clientapi.v1.GetCurrentUserResponse
+	23,  // 79: StencilBox.clientapi.v1.StencilBoxApiService.GitPull:output_type -> StencilBox.clientapi.v1.GitPullResponse
+	26,  // 80: StencilBox.clientapi.v1.StencilBoxApiService.ListDataFiles:output_type -> StencilBox.clientapi.v1.ListDataFilesResponse
+	28,  // 81: StencilBox.clientapi.v1.StencilBoxApiService.GetDataFile:output_type -> StencilBox.clientapi.v1.GetDataFileResponse
+	30,  // 82: StencilBox.clientapi.v1.StencilBoxApiService.UpdateDataFile:output_type -> StencilBox.clientapi.v1.UpdateDataFileResponse
+	32,  // 83: StencilBox.clientapi.v1.StencilBoxApiService.CreateBuildConfig:output_type -> StencilBox.clientapi.v1.CreateBuildConfigResponse
+	34,  // 84: StencilBox.clientapi.v1.StencilBoxApiService.CreateDataFile:output_type -> StencilBox.clientapi.v1.CreateDataFileResponse
+	36,  // 85: StencilBox.clientapi.v1.StencilBoxApiService.ClearBuildCache:output_type -> StencilBox.clientapi.v1.ClearBuildCacheResponse
+	38,  // 86: StencilBox.clientapi.v1.StencilBoxApiService.LoginWithUsernameAndPassword:output_type -> StencilBox.clientapi.v1.LoginWithUsernameAndPasswordResponse
+	40,  // 87: StencilBox.clientapi.v1.StencilBoxApiService.Logout:output_type -> StencilBox.clientapi.v1.LogoutResponse
+	42,  // 88: StencilBox.clientapi.v1.StencilBoxApiService.ChangePassword:output_type -> StencilBox.clientapi.v1.ChangePasswordResponse
+	45,  // 89: StencilBox.clientapi.v1.StencilBoxApiService.GetUsers:output_type -> StencilBox.clientapi.v1.GetUsersResponse
+	47,  // 90: StencilBox.clientapi.v1.StencilBoxApiService.GetUser:output_type -> StencilBox.clientapi.v1.GetUserResponse
+	49,  // 91: StencilBox.clientapi.v1.StencilBoxApiService.CreateUser:output_type -> StencilBox.clientapi.v1.CreateUserResponse
+	51,  // 92: StencilBox.clientapi.v1.StencilBoxApiService.DeleteUser:output_type -> StencilBox.clientapi.v1.DeleteUserResponse
+	53,  // 93: StencilBox.clientapi.v1.StencilBoxApiService.ResetUserPassword:output_type -> StencilBox.clientapi.v1.ResetUserPasswordResponse
+	56,  // 94: StencilBox.clientapi.v1.StencilBoxApiService.GetUserAccess:output_type -> StencilBox.clientapi.v1.GetUserAccessResponse
+	58,  // 95: StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroups:output_type -> StencilBox.clientapi.v1.SetUserGroupsResponse
+	60,  // 96: StencilBox.clientapi.v1.StencilBoxApiService.GetMyPermissionsAudit:output_type -> StencilBox.clientapi.v1.GetMyPermissionsAuditResponse
+	63,  // 97: StencilBox.clientapi.v1.StencilBoxApiService.ListUserGroups:output_type -> StencilBox.clientapi.v1.ListUserGroupsResponse
+	65,  // 98: StencilBox.clientapi.v1.StencilBoxApiService.CreateUserGroup:output_type -> StencilBox.clientapi.v1.CreateUserGroupResponse
+	67,  // 99: StencilBox.clientapi.v1.StencilBoxApiService.DeleteUserGroup:output_type -> StencilBox.clientapi.v1.DeleteUserGroupResponse
+	69,  // 100: StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupMembers:output_type -> StencilBox.clientapi.v1.GetUserGroupMembersResponse
+	71,  // 101: StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupMembers:output_type -> StencilBox.clientapi.v1.SetUserGroupMembersResponse
+	75,  // 102: StencilBox.clientapi.v1.StencilBoxApiService.ListRbacPermissions:output_type -> StencilBox.clientapi.v1.ListRbacPermissionsResponse
+	77,  // 103: StencilBox.clientapi.v1.StencilBoxApiService.ListRbacRoles:output_type -> StencilBox.clientapi.v1.ListRbacRolesResponse
+	79,  // 104: StencilBox.clientapi.v1.StencilBoxApiService.CreateRbacRole:output_type -> StencilBox.clientapi.v1.CreateRbacRoleResponse
+	81,  // 105: StencilBox.clientapi.v1.StencilBoxApiService.UpdateRbacRole:output_type -> StencilBox.clientapi.v1.UpdateRbacRoleResponse
+	83,  // 106: StencilBox.clientapi.v1.StencilBoxApiService.DeleteRbacRole:output_type -> StencilBox.clientapi.v1.DeleteRbacRoleResponse
+	85,  // 107: StencilBox.clientapi.v1.StencilBoxApiService.GetUserGroupRbacRoles:output_type -> StencilBox.clientapi.v1.GetUserGroupRbacRolesResponse
+	87,  // 108: StencilBox.clientapi.v1.StencilBoxApiService.SetUserGroupRbacRoles:output_type -> StencilBox.clientapi.v1.SetUserGroupRbacRolesResponse
+	89,  // 109: StencilBox.clientapi.v1.StencilBoxApiService.GetRbacRoleGroups:output_type -> StencilBox.clientapi.v1.GetRbacRoleGroupsResponse
+	93,  // 110: StencilBox.clientapi.v1.StencilBoxApiService.ListApiKeys:output_type -> StencilBox.clientapi.v1.ListApiKeysResponse
+	95,  // 111: StencilBox.clientapi.v1.StencilBoxApiService.CreateApiKey:output_type -> StencilBox.clientapi.v1.CreateApiKeyResponse
+	97,  // 112: StencilBox.clientapi.v1.StencilBoxApiService.UpdateApiKey:output_type -> StencilBox.clientapi.v1.UpdateApiKeyResponse
+	99,  // 113: StencilBox.clientapi.v1.StencilBoxApiService.DeleteApiKey:output_type -> StencilBox.clientapi.v1.DeleteApiKeyResponse
+	70,  // [70:114] is the sub-list for method output_type
+	26,  // [26:70] is the sub-list for method input_type
+	26,  // [26:26] is the sub-list for extension type_name
+	26,  // [26:26] is the sub-list for extension extendee
+	0,   // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_StencilBox_clientapi_v1_clientapi_proto_init() }
@@ -1949,7 +5890,7 @@ func file_StencilBox_clientapi_v1_clientapi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_StencilBox_clientapi_v1_clientapi_proto_rawDesc), len(file_StencilBox_clientapi_v1_clientapi_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   32,
+			NumMessages:   101,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

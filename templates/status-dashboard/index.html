@@ -1,0 +1,215 @@
+{{- /*
+  Personal status dashboard: things that need your attention, from several sources, sorted
+  into categories. Reads one data file, named "dashboard" in the build config.
+
+  Styled with femtocrank (https://github.com/jamesread/femtocrank), like the StencilBox web UI:
+  metadata.yaml asks for the femtocrank layer, which copies femtocrank.css and
+  femtocrank-dark.css next to this page at build time.
+
+  Every value from the data file is escaped with "html", and links go through "safeURL",
+  because data files can be edited through the API and MCP and the page may be public.
+*/ -}}
+{{- define "prioClass" -}}
+	{{- if eq . "urgent" }}urgent{{ else if eq . "high" }}high{{ else if eq . "low" }}low{{ else }}normal{{ end -}}
+{{- end -}}
+
+{{- define "sourceTag" -}}
+	{{- /* . is dict: id, sources */ -}}
+	{{- $id := .id -}}
+	{{- $found := false -}}
+	{{- range .sources }}{{ if eq (printf "%v" .id) $id }}{{ $found = true -}}
+		<span class="tag source">{{ with .icon }}<span aria-hidden="true">{{ . | html }}</span> {{ end }}{{ with .name }}{{ . | html }}{{ else }}{{ $id | html }}{{ end }}</span>
+	{{- end }}{{ end -}}
+	{{- if and (not $found) (ne $id "<nil>") }}<span class="tag source">{{ $id | html }}</span>{{ end -}}
+{{- end -}}
+
+{{- define "item" -}}
+	{{- /* . is dict: item, sources */ -}}
+	{{- $i := .item -}}
+	{{- $state := printf "%v" $i.state -}}
+	{{- $prio := printf "%v" $i.priority -}}
+	<li class="item prio-{{ template "prioClass" $prio }}">
+		<div class="item-title">
+			{{- if $i.url }}<a href="{{ $i.url | safeURL | html }}">{{ $i.title | html }}</a>{{ else }}{{ $i.title | html }}{{ end -}}
+		</div>
+		<div class="item-meta">
+			{{- if eq $prio "urgent" }}<span class="tag bad">Urgent</span>{{ end }}
+			{{- if eq $prio "high" }}<span class="tag severe">High</span>{{ end }}
+			{{- template "sourceTag" (dict "id" (printf "%v" $i.source) "sources" .sources) }}
+			{{- with $i.due }}{{ if isOverdue . }}<span class="tag warning">{{ dueLabel . | html }}</span>{{ else }}<span class="subtle">{{ dueLabel . | html }}</span>{{ end }}{{ end }}
+			{{- if eq $state "waiting" }}<span class="tag note">Waiting</span>{{ end }}
+			{{- if eq $state "blocked" }}<span class="tag bad">Blocked</span>{{ end }}
+			{{- range $i.tags }}<span class="subtle">#{{ . | html }}</span>{{ end -}}
+		</div>
+		{{- with $i.note }}
+		<p class="subtle item-note">{{ . | html }}</p>
+		{{- end }}
+	</li>
+{{- end -}}
+
+{{- define "itemsByPriority" -}}
+	{{- /* . is dict: items, sources. Urgent first; unknown priorities count as normal. */ -}}
+	{{- $sources := .sources -}}
+	{{- $buckets := list (where .items "priority" "urgent") (where .items "priority" "high") (whereIn .items "priority" (list "urgent" "high" "low") false) (where .items "priority" "low") -}}
+	<ul class="items">
+		{{- range $buckets }}{{ range . }}
+		{{ template "item" (dict "item" . "sources" $sources) }}
+		{{- end }}{{ end }}
+	</ul>
+{{- end -}}
+
+{{- define "column" -}}
+	{{- /* . is dict: name, icon, items, sources */ -}}
+	<section class="with-header-and-content">
+		<div class="section-header">
+			<h2>{{ with .icon }}<span aria-hidden="true">{{ . | html }}</span> {{ end }}{{ .name | html }}</h2>
+			<span class="tag">{{ len .items }}</span>
+		</div>
+		<div class="section-content padding">
+			{{- if .items }}
+			{{ template "itemsByPriority" (dict "items" .items "sources" .sources) }}
+			{{- else }}
+			<p class="subtle">All clear.</p>
+			{{- end }}
+		</div>
+	</section>
+{{- end -}}
+
+{{- $d := .dashboard -}}
+{{- $items := $d.items -}}
+{{- $open := whereNot $items "state" "done" -}}
+{{- $done := where $items "state" "done" -}}
+{{- $urgent := where $open "priority" "urgent" -}}
+{{- $late := overdue $open -}}
+{{- $waiting := whereIn $open "state" (list "waiting" "blocked") true -}}
+{{- $uncategorised := whereIn $open "category" (pluck $d.categories "id") false -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{{ with $d.title }}{{ . | html }}{{ else }}My dashboard{{ end }}</title>
+	<link rel="icon" type="image/png" href="favicon.png" />
+	<link rel="stylesheet" href="femtocrank.css" />
+	<link rel="stylesheet" href="femtocrank-dark.css" />
+	<style>
+		/* Layout and priority edges only; colours come from femtocrank's tokens. */
+		main { width: 100%; max-width: 90rem; margin: 0 auto; box-sizing: border-box; }
+		header .updated { margin-left: auto; padding-right: 1em; }
+		.greeting { margin: 0 0 1em; }
+
+		.tiles { grid-template-columns: repeat(auto-fit, minmax(10em, 1fr)); justify-content: stretch; margin-bottom: 1em; }
+		.tiles .stat { display: block; font-size: 2em; }
+
+		.sources { display: flex; flex-wrap: wrap; gap: .5em; margin-bottom: 1em; }
+		.sources a, .sources a:visited { text-decoration: none; color: var(--text-color); }
+		.annotation.good .annotation-val, .annotation.warning .annotation-val, .annotation.bad .annotation-val { font-weight: 600; }
+
+		.columns { grid-template-columns: repeat(auto-fill, minmax(min(100%, 24em), 1fr)); justify-content: stretch; align-items: start; }
+		.columns .section-header .tag { margin-right: .6em; }
+
+		ul.items { list-style: none; margin: 0; padding: 0; }
+		.item { border-left: 4px solid var(--karma-note); padding: .3em 0 .3em .8em; margin: 0 0 1em; }
+		.item:last-child { margin-bottom: 0; }
+		.item.prio-urgent { border-left-color: var(--button-bad-bg); }
+		.item.prio-high { border-left-color: var(--karma-severe); }
+		.item.prio-low { border-left-color: var(--border-color); }
+		.item.prio-low .item-title { color: var(--muted-text-color); }
+		.item-title { font-weight: 600; }
+		.item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .35em .5em; margin-top: .3em; font-size: .85em; }
+		.item-meta .tag { font-size: .9em; }
+		.item-meta .tag, .tag.source { text-transform: none; }
+		.item-note { margin: .3em 0 0; }
+
+		.all-clear { text-align: center; font-size: 1.2em; }
+		details summary { cursor: pointer; font-weight: 600; }
+		ul.done { list-style: none; padding: 0; margin: 1em 0 0; }
+		ul.done li { display: flex; flex-wrap: wrap; align-items: center; gap: .5em; margin-bottom: .4em; }
+		ul.done .title { text-decoration: line-through; }
+		section.done { margin-top: 1em; }
+
+		/* femtocrank drops main's padding on phones, so sections run edge to edge; keep text off the edge. */
+		@media (max-width: 600px) {
+			.greeting, .tiles, .sources { margin-left: .5em; margin-right: .5em; }
+		}
+	</style>
+
+	{{ .hooks.head }}
+</head>
+<body class="status-dashboard">
+	{{ .hooks.body }}
+
+	<header>
+		<a class="logo-and-title" href="./">
+			<img class="logo" src="favicon.png" alt="" />
+			<h1>{{ with $d.title }}{{ . | html }}{{ else }}My dashboard{{ end }}</h1>
+		</a>
+		{{- with $d.lastUpdated }}
+		<span class="updated">Updated {{ formatDateTime . | html }}</span>
+		{{- end }}
+	</header>
+
+	<main>
+		{{- with $d.greeting }}
+		<p class="greeting">{{ . | html }}</p>
+		{{- end }}
+
+		<div class="grid tiles" aria-label="Summary">
+			<div class="stat-display{{ if $open }} note{{ end }}"><span class="stat">{{ len $open }}</span><span class="subtle">Need attention</span></div>
+			<div class="stat-display{{ if $urgent }} bad{{ end }}"><span class="stat">{{ len $urgent }}</span><span class="subtle">Urgent</span></div>
+			<div class="stat-display{{ if $late }} warning{{ end }}"><span class="stat">{{ len $late }}</span><span class="subtle">Overdue</span></div>
+			<div class="stat-display{{ if $waiting }} info{{ end }}"><span class="stat">{{ len $waiting }}</span><span class="subtle">Waiting or blocked</span></div>
+		</div>
+
+		{{- with $d.sources }}
+		<nav class="sources" aria-label="Sources">
+			{{- range . }}
+			{{- $from := where $open "source" .id }}
+			{{- $health := printf "%v" .status }}
+			<a href="{{ .url | safeURL | html }}"{{ with .lastSynced }} title="Last synced {{ formatDateTime . | html }}"{{ end }}>
+				<span class="annotation{{ if eq $health "ok" }} good{{ else if eq $health "warning" }} warning{{ else if eq $health "error" }} bad{{ end }}">
+					<span class="annotation-key">{{ with .icon }}<span aria-hidden="true">{{ . | html }}</span>&nbsp;{{ end }}{{ .name | html }}</span>
+					<span class="annotation-val">{{ len $from }}</span>
+				</span>
+			</a>
+			{{- end }}
+		</nav>
+		{{- end }}
+
+		{{- if not $open }}
+		<section class="all-clear">Nothing needs your attention right now.</section>
+		{{- else }}
+		<div class="grid columns">
+			{{- range $d.categories }}
+			{{ template "column" (dict "name" .name "icon" .icon "items" (where $open "category" .id) "sources" $d.sources) }}
+			{{- end }}
+			{{- if $uncategorised }}
+			{{ template "column" (dict "name" "Other" "icon" "" "items" $uncategorised "sources" $d.sources) }}
+			{{- end }}
+		</div>
+		{{- end }}
+
+		{{- if $done }}
+		<section class="done">
+			<details>
+				<summary>Done ({{ len $done }})</summary>
+				<ul class="done">
+					{{- range $done }}
+					<li>
+						<span class="title">{{ if .url }}<a href="{{ .url | safeURL | html }}">{{ .title | html }}</a>{{ else }}{{ .title | html }}{{ end }}</span>
+						{{- template "sourceTag" (dict "id" (printf "%v" .source) "sources" $d.sources) }}
+						{{- with .completed }}<span class="subtle">{{ formatDateTime . | html }}</span>{{ end }}
+					</li>
+					{{- end }}
+				</ul>
+			</details>
+		</section>
+		{{- end }}
+	</main>
+
+	<footer>
+		<span>Built with StencilBox on {{ .buildDateFormatted | html }}</span>
+		<span>Due dates are relative to that time</span>
+	</footer>
+</body>
+</html>

@@ -1,0 +1,99 @@
+= API and MCP
+
+Everything the web UI does goes through an API, and AI assistants can use StencilBox through MCP. Both use API keys; see xref:config/authentication.adoc#_api_keys[API keys] to create one and limit what it can do.
+
+== Connect API
+
+The API is https://connectrpc.com[Connect RPC] at `/api`. Each call is a `POST` of JSON to `/api/StencilBox.clientapi.v1.StencilBoxApiService/<Method>`, with your key in the `Authorization` header. The methods and messages are defined in `protocol/StencilBox/clientapi/v1/clientapi.proto`.
+
+=== Read a data file
+
+[source,bash]
+----
+curl -X POST https://stencilbox.example.com/api/StencilBox.clientapi.v1.StencilBoxApiService/GetDataFile \
+  -H 'Authorization: Bearer sbk_...' \
+  -H 'Content-Type: application/json' \
+  -d '{"buildConfigName": "My links homepage", "datafileName": "links"}'
+----
+
+The response has the file's `content` and its `sha256`.
+
+=== Update a data file
+
+`UpdateDataFile` replaces a data file that a build config names, then rebuilds every build config that uses the file. It needs the `datafiles.edit` permission and, for a key limited to some build configs, one of those build configs.
+
+[source,bash]
+----
+curl -X POST https://stencilbox.example.com/api/StencilBox.clientapi.v1.StencilBoxApiService/UpdateDataFile \
+  -H 'Authorization: Bearer sbk_...' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "buildConfigName": "My links homepage",
+    "datafileName": "links",
+    "content": "links:\n  - title: GitHub\n    url: https://github.com\n",
+    "expectedSha256": "<sha256 from GetDataFile>"
+  }'
+----
+
+* The content must be valid YAML (JSON is valid YAML), and at most 5 MiB.
+* `expectedSha256` is optional. When it is set, the update is refused if the file has changed since you read it, so you do not overwrite someone else's edit.
+* The file is replaced in one step, so a build never reads a half-written file. Its permissions are kept.
+* Only files named by a build config can be changed; the API cannot write anywhere else.
+
+=== Create a build config and add data files
+
+`CreateBuildConfig` writes a new build config file into the build configs directory, and `CreateDataFile` adds a data file to a build config. Both need the `buildconfigs.manage` permission, which only superusers have by default.
+
+[source,bash]
+----
+curl -X POST https://stencilbox.example.com/api/StencilBox.clientapi.v1.StencilBoxApiService/CreateBuildConfig \
+  -H 'Authorization: Bearer sbk_...' -H 'Content-Type: application/json' \
+  -d '{"configName": "Team Links", "template": "links-homepage", "outputDir": "team-links", "buildOnStartup": true}'
+
+curl -X POST https://stencilbox.example.com/api/StencilBox.clientapi.v1.StencilBoxApiService/CreateDataFile \
+  -H 'Authorization: Bearer sbk_...' -H 'Content-Type: application/json' \
+  -d '{"buildConfigName": "Team Links", "datafileName": "links", "content": "links:\n  - title: GitHub\n    url: https://github.com\n"}'
+----
+
+* The build config file is named after the build config (`team-links.yaml`). It is an ordinary build config file, so you can edit it by hand afterwards.
+* The output directory must be a relative path (letters, digits, dots, dashes, underscores), must not overlap another build config's output directory, and cannot be `webui`, `api` or `mcp`. Each build replaces its whole output directory, so these rules stop one site from deleting another.
+* A data file is written to `data/<build config>-<name>.yaml` unless you give a `path`. To share a data file between build configs, give the `path` of an existing file and no `content`.
+* Data file paths must be inside the build configs directory. StencilBox will not write data files anywhere else, including with `UpdateDataFile`: a hand-written build config that names a file outside the directory can still read it, but it can only be changed on disk.
+
+== MCP
+
+StencilBox serves a https://modelcontextprotocol.io[Model Context Protocol] server at `/mcp`, using Streamable HTTP. Point your AI assistant at `https://stencilbox.example.com/mcp`, with the header `Authorization: Bearer sbk_...`. MCP accepts API keys only, not browser cookies.
+
+|===
+| Tool | What it does | Permission
+
+| `stencilbox_whoami` | The key's user and permissions | ---
+| `stencilbox_list_build_configs` | List build configs | `buildconfigs.view`
+| `stencilbox_get_build_config` | Get one build config | `buildconfigs.view`
+| `stencilbox_list_templates` | List templates | `buildconfigs.view`
+| `stencilbox_get_build_history` | Recent builds of a build config | `buildconfigs.view`
+| `stencilbox_list_data_files` | List data files | `buildconfigs.view`
+| `stencilbox_get_data_file` | Read a data file, with its `sha256` | `buildconfigs.view`
+| `stencilbox_update_data_file` | Replace a data file and rebuild | `datafiles.edit`
+| `stencilbox_create_build_config` | Create a build config | `buildconfigs.manage`
+| `stencilbox_create_data_file` | Add a data file to a build config | `buildconfigs.manage`
+| `stencilbox_start_build` | Build a site and wait for the result | `builds.run`
+| `stencilbox_clear_build_cache` | Clear a build config's cache | `builds.run`
+|===
+
+Each tool calls the API with your key, so a key's permission and build config limits apply to MCP exactly as they do to the API. To let an assistant edit one site and nothing else, give it a key limited to `buildconfigs.view` and `datafiles.edit` on that one build config.
+
+For example, in a Claude Code `.mcp.json`:
+
+[source,json]
+----
+{
+  "mcpServers": {
+    "stencilbox": {
+      "type": "http",
+      "url": "https://stencilbox.example.com/mcp",
+      "headers": { "Authorization": "Bearer sbk_..." }
+    }
+  }
+}
+----

@@ -13,9 +13,20 @@ import (
 
 func getNewTemplater(outputDir string) *template.Template {
 	funcMap := template.FuncMap{
-		"upper":       strings.ToUpper,
-		"lower":       strings.ToLower,
-		"replace":     strings.ReplaceAll,
+		"upper":          strings.ToUpper,
+		"lower":          strings.ToLower,
+		"replace":        strings.ReplaceAll,
+		"formatDateTime": formatDateTime,
+		"safeURL":        safeURL,
+		"list":           list,
+		"dict":           dict,
+		"where":          where,
+		"whereNot":       whereNot,
+		"whereIn":        whereIn,
+		"pluck":          pluck,
+		"overdue":        overdue,
+		"dueLabel":       dueLabel,
+		"isOverdue":      isOverdue,
 		"linkIconHTML": func(iconPath, cssClass, extraAttrs string) string {
 			return renderLinkIconHTML(outputDir, iconPath, cssClass, extraAttrs)
 		},

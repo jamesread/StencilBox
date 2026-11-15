@@ -1,0 +1,130 @@
+# A personal status dashboard: things that need your attention, from different sources,
+# sorted into categories. Edit it in StencilBox (Data Files), push it with the UpdateDataFile
+# API or MCP (eg from scripts that collect your GitHub reviews or email), or change it on disk.
+# Every save rebuilds the dashboard.
+
+title: My dashboard
+greeting: Good morning! Here is what needs you today.
+lastUpdated: 2026-11-16T08:00:00Z
+
+# Where items come from. id is what items refer to. status shows whether the source last
+# synced: ok (green), warning (amber) or error (red).
+sources:
+  - id: github
+    name: GitHub
+    icon: 🐙
+    url: https://github.com/notifications
+    status: ok
+    lastSynced: 2026-11-16T07:55:00Z
+
+  - id: email
+    name: Email
+    icon: ✉️
+    url: https://mail.example.com
+    status: ok
+
+  - id: ci
+    name: CI
+    icon: ⚙️
+    url: https://ci.example.com
+    status: warning
+    lastSynced: 2026-11-15T22:10:00Z
+
+  - id: calendar
+    name: Calendar
+    icon: 📅
+    url: https://calendar.example.com
+    status: ok
+
+  - id: home
+    name: Home Assistant
+    icon: 🏠
+    url: http://homeassistant.local:8123
+    status: ok
+
+# Columns on the dashboard. Items with a category not listed here appear under "Other".
+categories:
+  - id: work
+    name: Work
+    icon: 💼
+  - id: projects
+    name: Side projects
+    icon: 🛠️
+  - id: home
+    name: Home
+    icon: 🏡
+
+# priority: urgent, high, normal or low (default normal).
+# state: todo, waiting, blocked or done (default todo). Done items are folded away
+# under "Done" at the bottom of the page.
+# due: a date, or date and time. url, note and tags are optional.
+items:
+  - title: Production deploy failed on main
+    source: ci
+    category: work
+    priority: urgent
+    url: https://ci.example.com/pipelines/1234
+    note: The integration tests timed out twice in a row.
+    tags: [deploy]
+
+  - title: "Review PR #482: Add API key scopes"
+    source: github
+    category: work
+    priority: high
+    due: 2026-11-16
+    url: https://github.com/example/app/pull/482
+
+  - title: Reply to Sam about the Q4 roadmap
+    source: email
+    category: work
+    priority: high
+    due: 2026-11-14
+    note: Sam needs numbers for the planning meeting.
+
+  - title: Security review sign-off
+    source: email
+    category: work
+    state: waiting
+    note: Waiting on the security team.
+
+  - title: 1:1 with Alex at 14:00
+    source: calendar
+    category: work
+    due: 2026-11-16T14:00:00Z
+
+  - title: "Issue #77: Dark mode toggle is reversed"
+    source: github
+    category: projects
+    priority: normal
+    url: https://github.com/example/side-project/issues/77
+    tags: [bug]
+
+  - title: Release StencilBox 2.0
+    source: github
+    category: projects
+    priority: high
+    due: 2026-11-20
+    state: blocked
+    note: Blocked on the docs rewrite.
+
+  - title: Renew domain name
+    source: email
+    category: projects
+    priority: low
+    due: 2026-12-01
+
+  - title: Washing machine finished
+    source: home
+    category: home
+    priority: normal
+
+  - title: Front door battery at 10%
+    source: home
+    category: home
+    priority: high
+
+  - title: Book the boiler service
+    source: calendar
+    category: home
+    priority: low
+    due: 2026-11-30

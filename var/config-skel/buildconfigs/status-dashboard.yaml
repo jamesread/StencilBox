@@ -1,0 +1,8 @@
+name: My status dashboard
+
+outputdir: my-dashboard
+
+template: status-dashboard
+
+datafiles:
+  dashboard: data/status-dashboard.yaml

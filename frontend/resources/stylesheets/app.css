@@ -18,3 +18,59 @@ section > p:last-child {
 table th:first-child {
 	width: 25%;
 }
+
+/* IAM and account pages */
+.padded {
+	padding: 0 1em;
+}
+
+.inline-tags {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	margin-left: 0.35rem;
+}
+
+p.inline-tags {
+	margin-left: 0;
+}
+
+.meta-grid {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.35rem 1.5rem;
+}
+
+.perm-table {
+	width: 100%;
+}
+
+.perm-table th:first-child {
+	width: auto;
+}
+
+.perm-table .perm-check {
+	width: 2.5rem;
+	text-align: center;
+}
+
+.perm-table .perm-status {
+	width: 6.5rem;
+}
+
+dialog.iam-dialog {
+	width: min(32rem, calc(100vw - 2rem));
+}
+
+dialog.iam-dialog.wide {
+	width: min(48rem, calc(100vw - 2rem));
+}
+
+code.api-key {
+	word-break: break-all;
+}
+
+/* Long permission descriptions wrap instead of widening the dialog. */
+.api-key-dialog label {
+	white-space: normal;
+}

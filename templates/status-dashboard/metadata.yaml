@@ -1,0 +1,5 @@
+documentation_url: https://jamesread.github.io/StencilBox/builtin-templates/status-dashboard.html
+description: A personal dashboard of things that need your attention, from several sources, sorted into categories.
+# Copied next to index.html at build time: femtocrank.css and femtocrank-dark.css.
+layers:
+  - femtocrank

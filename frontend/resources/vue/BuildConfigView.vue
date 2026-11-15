@@ -10,6 +10,10 @@
 					<HugeiconsIcon :icon = "LinkSquare01Icon" width = "1em" height = "1em" :strokeWidth = "2.5" aria-hidden = "true" />
 					<span>Open docs</span>
 				</a>
+				<button v-if="config && canManage" type="button" class="inline-icon good" @click="addDataFileDialog.open()">
+					<HugeiconsIcon :icon="FileAddIcon" width="1em" height="1em" :strokeWidth="2.5" aria-hidden="true" />
+					<span>Add data file</span>
+				</button>
 			</template>
 
 		<dl v-if="config">
@@ -137,6 +141,13 @@
 		</div>
 	</Section>
 
+	<AddDataFileDialog
+		v-if="config"
+		ref="addDataFileDialog"
+		:build-config-name="config.name"
+		@created="onDataFileCreated"
+	/>
+
 	<BuildHistory
 		v-if="config"
 		:configName="config.name"
@@ -146,9 +157,12 @@
 </template>
 
 <script setup>
-	import { ref, onMounted, nextTick, watch } from 'vue';
+	import { ref, computed, onMounted, nextTick, watch } from 'vue';
 	import { HugeiconsIcon } from '@hugeicons/vue';
-	import { Configuration01Icon, Delete02Icon, LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
+	import { Configuration01Icon, Delete02Icon, FileAddIcon, LinkSquare01Icon, Rocket01Icon } from '@hugeicons/core-free-icons';
+	import { useRouter } from 'vue-router';
+	import AddDataFileDialog from './AddDataFileDialog.vue';
+	import { useAppStatus } from '../../scripts/appStatus.js';
 	import Section from 'picocrank/vue/components/Section.vue';
 	import ReadOnlyTextArea from 'picocrank/vue/components/ReadOnlyTextArea.vue';
 	import BuildHistory from './BuildHistory.vue';
@@ -159,6 +173,15 @@
 			required: true
 		}
 	});
+
+	const router = useRouter();
+	const { hasPermission } = useAppStatus();
+	const canManage = computed(() => hasPermission('buildconfigs.manage'));
+	const addDataFileDialog = ref(null);
+
+	function onDataFileCreated(datafileName) {
+		router.push({ name: 'dataFileView', params: { buildConfigName: config.value.name, datafileName } });
+	}
 
 	const MAX_BUILD_LOG_LINES = 2000;
 	const BUILD_LOG_STORAGE_PREFIX = 'StencilBox.buildLog.';

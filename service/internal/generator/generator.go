@@ -185,6 +185,10 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 	}
 
 	copyLayers(temporaryOutputDir)
+	if err := copyTemplateLayers(templateDir.Path, temporaryOutputDir); err != nil {
+		failBuild(buildStatus, updateChannel, "Failed to copy template layers: "+err.Error())
+		return
+	}
 
 	lnRepos(temporaryOutputDir, repoStorageDir)
 

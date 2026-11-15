@@ -14,7 +14,7 @@ To add your own template, create a directory for it in the custom templates dire
 /config/templates/
 └── my-template/
     ├── index.html       # required: a Go template
-    └── metadata.yaml    # optional: description and documentation_url
+    └── metadata.yaml    # optional: description, documentation_url and layers
 ----
 
 Then set `template: my-template` in a build config. New templates are picked up when the web UI is loaded; the *Add Template* page in the web UI shows the exact directory being used.
@@ -24,6 +24,25 @@ A custom template with the same name as a built-in template takes priority over 
 The custom templates directory can be changed with the `STENCILBOX_TEMPLATES_DIR` environment variable. When StencilBox is started with `-configdir`, `<configdir>/templates` is also searched.
 
 To share additional files such as stylesheets or scripts between sites, keep them in a Git repository and reference it from your build config. See xref:repos/index.adoc[Custom Repos] for more information.
+
+== metadata.yaml
+
+[source,yaml]
+----
+description: A one-line description, shown in the web UI.
+documentation_url: https://example.com/docs/my-template
+# Extra files copied next to index.html when the site is built.
+layers:
+  - femtocrank
+----
+
+`layers` adds shared files to the built site. `femtocrank` copies the https://github.com/jamesread/femtocrank[femtocrank] stylesheets (the ones the StencilBox web UI uses) as `femtocrank.css` and `femtocrank-dark.css`; link to both from your `index.html`. Any other name copies the files in that directory under `layers/`. The xref:builtin-templates/status-dashboard.adoc[Status Dashboard] is an example.
+
+== Escaping data
+
+Templates are Go `text/template`s, so values from data files are written into the page exactly as they are. Pass them through `html` (`{{ .title | html }}`), and links through `safeURL` as well (`{{ .url | safeURL | html }}`), so a data file cannot add HTML or scripts to the page. This matters most when other people can edit data files through the web UI, API or MCP.
+
+The template functions StencilBox adds (`where`, `dueLabel`, `formatDateTime`, `safeURL` and others) are listed on the xref:builtin-templates/status-dashboard.adoc#_template_functions[Status Dashboard] page.
 
 == Built-in template variables
 
