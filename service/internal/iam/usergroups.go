@@ -18,6 +18,16 @@ func SetUserGroups(ctx context.Context, db *sql.DB, userID int, groupIDs []int) 
 	}
 	defer func() { _ = tx.Rollback() }()
 
+	if err = replaceMemberships(ctx, tx, userID, groupIDs); err != nil {
+		return err
+	}
+	if err = requireSuperuser(ctx, tx); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func replaceMemberships(ctx context.Context, tx *sql.Tx, userID int, groupIDs []int) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM user_group_memberships WHERE user_account_id = ?`, userID); err != nil {
 		return fmt.Errorf("clear user groups: %w", err)
 	}
@@ -33,7 +43,11 @@ func SetUserGroups(ctx context.Context, db *sql.DB, userID int, groupIDs []int) 
 		 SELECT ?, id FROM user_groups WHERE name = ?`, userID, rbac.GroupEveryone); err != nil {
 		return fmt.Errorf("keep user in %s: %w", rbac.GroupEveryone, err)
 	}
+	return nil
+}
 
+// requireSuperuser refuses a change that would leave no user with the superuser role.
+func requireSuperuser(ctx context.Context, tx *sql.Tx) error {
 	var supers int
 	if err := tx.QueryRowContext(ctx,
 		`SELECT COUNT(DISTINCT ugm.user_account_id)
@@ -46,5 +60,5 @@ func SetUserGroups(ctx context.Context, db *sql.DB, userID int, groupIDs []int) 
 	if supers == 0 {
 		return store.ErrNoSuperuser
 	}
-	return tx.Commit()
+	return nil
 }

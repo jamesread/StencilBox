@@ -132,14 +132,14 @@ func TestSessionCookieSecure(t *testing.T) {
 	layer, err := NewAuthLayer(st, nil)
 	require.NoError(t, err)
 
-	plain := httptest.NewRequest("POST", "/", nil)
+	plain := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil)
 	assert.False(t, layer.SessionCookie("x", plain, plain.Header).Secure)
 
-	proxied := httptest.NewRequest("POST", "/", nil)
+	proxied := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil)
 	proxied.Header.Set("X-Forwarded-Proto", "https")
 	assert.True(t, layer.SessionCookie("x", proxied, proxied.Header).Secure)
 
-	direct := httptest.NewRequest("POST", "/", nil)
+	direct := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil)
 	direct.TLS = &tls.ConnectionState{}
 	assert.True(t, layer.SessionCookie("x", direct, direct.Header).Secure)
 
@@ -175,10 +175,10 @@ func TestAPIKeyScopeRoundTrip(t *testing.T) {
 	assert.False(t, scope.AllowsBuildConfig("sidebar"))
 	assert.False(t, scope.AllowsPermission(rbac.PermissionUsersCreate))
 
-	assert.ErrorIs(t, SetAPIKeyScope(ctx, st.DB(), keyID, admin.ID+1, want), ErrAPIKeyNotFound, "only the owner")
+	require.ErrorIs(t, SetAPIKeyScope(ctx, st.DB(), keyID, admin.ID+1, want), ErrAPIKeyNotFound, "only the owner")
 	bad := want
 	bad.Permissions = []string{"no.such.permission"}
-	assert.Error(t, SetAPIKeyScope(ctx, st.DB(), keyID, admin.ID, bad))
+	require.Error(t, SetAPIKeyScope(ctx, st.DB(), keyID, admin.ID, bad))
 
 	narrowed := NarrowRBAC(&rbac.EffectiveRBAC{IsSuperuser: true}, []string{PermissionBuildsRun, rbac.PermissionUsersCreate}, scope)
 	assert.False(t, narrowed.IsSuperuser)

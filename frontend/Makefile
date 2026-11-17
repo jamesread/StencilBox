@@ -10,6 +10,6 @@ test:
 	@echo "No frontend unit tests yet"
 
 lint:
-	@echo "No frontend linter configured yet"
+	npm run lint
 
 .PHONY: default build ci test lint

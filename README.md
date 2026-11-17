@@ -47,19 +47,33 @@ Many other tools are focussed on text content (typically via Markdown) - which i
 
 ## Screenshots
 
-<p align = "center" style = "text-align: center;">
-The admin interface, showing the build configs:<br />
-<img src = "var/screenshots/mainpage-laptop_framed.png" />
+### Build configurations
 
-<strong>Example 1:</strong> A sidebar of links, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/iframe-sidebar.html">iframe-sidebar</strong></a><br />
-<img src = "var/marketing/iframe-sidebar.png" />
+![Build configurations](var/marketing/screenshots/build-configs.png)
 
-<strong>Example 2:</strong> A homepage of links, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/links-homepage.html">links-homepage</strong></a><br />
-<img src = "var/marketing/homepage-built.png" />
+The admin UI lists every build config, with its template and status, so you can open one and rebuild a site from the browser.
 
-<strong>Example 3:</strong> status page, generated from template: <strong><a href = "https://jamesread.github.io/StencilBox/builtin-templates/status-page.html">status-page</strong></a><br />
-<img src = "var/marketing/status-page.png" />
-</p>
+### Links homepage
+
+![Links homepage](var/marketing/screenshots/homepage.png)
+
+A links homepage built from YAML data with the links-homepage template, organised into categories for quick navigation.
+
+### Iframe sidebar
+
+![Iframe sidebar](var/marketing/screenshots/iframe-sidebar.png)
+
+An iframe sidebar built from YAML, so a strip of app icons can open each destination in place without leaving the page.
+
+### Status page
+
+![Status page](var/marketing/screenshots/status-page.png)
+
+A status page generated from YAML service entries, so uptime can be published as a static site.
+
+Screenshots use fictional test data and are regenerated with `make screenshots`
+(see [`var/marketing/screenshots`](var/marketing/screenshots/README.md)).
+
 
 
 ## Installation Guide & Documentation

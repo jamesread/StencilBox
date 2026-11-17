@@ -3,17 +3,17 @@
 		<p v-if="history.length === 0" class="subtle padding">No build history available yet.</p>
 
 		<Table v-else :headers="headers" :data="history">
-			<template #cell-timestamp="{ row, value }">
+			<template #cell-timestamp="{ row }">
 				{{ formatTimestamp(row.timestamp) }}
 			</template>
 
-			<template #cell-status="{ row, value }">
+			<template #cell-status="{ row }">
 				<span class="tag" :class="row.isError ? 'bad' : 'good'" :title="row.status">
 					{{ row.isError ? 'Error' : 'OK' }}
 				</span>
 			</template>
 
-			<template #cell-type="{ row, value }">
+			<template #cell-type="{ row }">
 				<span v-if="row.isAutoRebuild" class="tag">Auto-rebuild</span>
 				<span v-else class="tag">Manual</span>
 			</template>
@@ -24,12 +24,12 @@
 				</span>
 			</template>
 
-			<template #cell-outputSize="{ row, value }">
+			<template #cell-outputSize="{ row }">
 				<span v-if="row.outputSizeHumanReadable">{{ row.outputSizeHumanReadable }}</span>
 				<span v-else class="subtle">N/A</span>
 			</template>
 
-			<template #cell-buildUrl="{ row, value }">
+			<template #cell-buildUrl="{ row }">
 				<span v-if="row.buildUrl">
 					<a :href="row.buildUrl" target="_blank">View</a>
 				</span>

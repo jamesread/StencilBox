@@ -2,12 +2,13 @@ package reqctx
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestHttpRequestRoundTrip(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 
 	if got := HttpRequest(WithHttpRequest(context.Background(), r)); got != r {
 		t.Fatalf("expected stored request back, got %v", got)

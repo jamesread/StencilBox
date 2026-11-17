@@ -1,0 +1,31 @@
+title: Example Org links
+
+categories:
+  - title: Docs and code
+    links:
+      - url: https://example.com/docs
+        title: Product docs
+        description: How to install and configure Example Org tools
+
+      - url: https://example.com/api
+        title: API reference
+
+      - url: https://example.org/handbook
+        title: Team handbook
+
+  - title: Status
+    links:
+      - url: https://status.example.com
+        title: Status page
+        description: Public uptime for demo services
+
+      - url: https://example.com/support
+        title: Support portal
+
+  - title: Community
+    links:
+      - url: https://forum.example.org
+        title: Community forum
+
+      - url: https://chat.example.org
+        title: Team chat

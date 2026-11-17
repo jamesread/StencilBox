@@ -41,51 +41,64 @@ func renderLinkIconHTML(outputDir, iconPath, cssClass, extraAttrs string) string
 	}
 
 	escapedPath := html.EscapeString(iconPath)
-	escapedClass := html.EscapeString(cssClass)
-	classAttr := ""
-	if cssClass != "" {
-		classAttr = fmt.Sprintf(` class="%s"`, escapedClass)
-	}
+	classAttr := iconClassAttr(cssClass)
 
 	if isRemoteIcon(iconPath) {
-		if isSVGIconPath(iconPath) {
-			return fmt.Sprintf(
-				`<object data="%s" type="image/svg+xml"%s %s></object>`,
-				escapedPath, classAttr, extraAttrs,
-			)
-		}
-		return fmt.Sprintf(
-			`<img src="%s" alt=""%s %s />`,
-			escapedPath, classAttr, extraAttrs,
-		)
+		return remoteIconHTML(iconPath, escapedPath, classAttr, extraAttrs)
 	}
 
 	localPath := filepath.Join(outputDir, iconPath)
 	if isSVGIconPath(iconPath) || scraper.IsSVGContent(localPath) {
-		data, err := os.ReadFile(localPath)
-		if err != nil {
-			return fmt.Sprintf(
-				`<object data="%s" type="image/svg+xml"%s %s></object>`,
-				escapedPath, classAttr, extraAttrs,
-			)
-		}
-
-		wrapperClass := cssClass
-		if wrapperClass == "" {
-			wrapperClass = "link-icon"
-		}
-		return fmt.Sprintf(
-			`<span class="%s link-icon-svg" %s>%s</span>`,
-			html.EscapeString(wrapperClass), extraAttrs, string(data),
-		)
+		return localSVGIconHTML(localPath, escapedPath, cssClass, classAttr, extraAttrs)
 	}
 
+	return imgIconHTML(escapedPath, classAttr, extraAttrs)
+}
+
+func iconClassAttr(cssClass string) string {
+	if cssClass == "" {
+		return ""
+	}
+	return fmt.Sprintf(` class="%s"`, html.EscapeString(cssClass))
+}
+
+func objectIconHTML(escapedPath, classAttr, extraAttrs string) string {
+	return fmt.Sprintf(
+		`<object data="%s" type="image/svg+xml"%s %s></object>`,
+		escapedPath, classAttr, extraAttrs,
+	)
+}
+
+func imgIconHTML(escapedPath, classAttr, extraAttrs string) string {
 	return fmt.Sprintf(
 		`<img src="%s" alt=""%s %s />`,
 		escapedPath, classAttr, extraAttrs,
 	)
 }
 
+func remoteIconHTML(iconPath, escapedPath, classAttr, extraAttrs string) string {
+	if isSVGIconPath(iconPath) {
+		return objectIconHTML(escapedPath, classAttr, extraAttrs)
+	}
+	return imgIconHTML(escapedPath, classAttr, extraAttrs)
+}
+
+// localSVGIconHTML inlines a local SVG file, or falls back to an object tag when it cannot be read.
+func localSVGIconHTML(localPath, escapedPath, cssClass, classAttr, extraAttrs string) string {
+	data, err := os.ReadFile(localPath)
+	if err != nil {
+		return objectIconHTML(escapedPath, classAttr, extraAttrs)
+	}
+
+	wrapperClass := cssClass
+	if wrapperClass == "" {
+		wrapperClass = "link-icon"
+	}
+	return fmt.Sprintf(
+		`<span class="%s link-icon-svg" %s>%s</span>`,
+		html.EscapeString(wrapperClass), extraAttrs, string(data),
+	)
+}
 func isRemoteIcon(iconPath string) bool {
 	return strings.HasPrefix(iconPath, "http://") || strings.HasPrefix(iconPath, "https://")
 }

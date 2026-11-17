@@ -10,12 +10,13 @@ import (
 )
 
 type Config struct {
-	ConfigVersion int `yaml:"configVersion"`
 	// Auth is the httpauthshim configuration (JWT, trusted headers, mTLS), passed to
 	// armature-iam as-is. See https://github.com/jamesread/httpauthshim
 	Auth map[string]any `yaml:"auth"`
 
 	Database DatabaseConfig `yaml:"database"`
+
+	ConfigVersion int `yaml:"configVersion"`
 }
 
 // DatabaseConfig controls the SQLite database that holds users, groups, roles and API keys.
@@ -57,26 +58,42 @@ func GetConfigPath() string {
 		os.Getenv("STENCILBOX_CONFIG_FILE"),
 	}
 
-	for _, path := range directoriesToSearch {
-		if path == "" {
-			continue
-		}
-		if _, err := os.Stat(path); err == nil {
+	if path := firstExistingFile(directoriesToSearch); path != "" {
+		return path
+	}
+
+	return configPathInConfigDir()
+}
+
+func firstExistingFile(paths []string) string {
+	for _, path := range paths {
+		if path != "" && fileExists(path) {
 			return path
 		}
 	}
 
-	// Try to find config.yaml in config directory
+	return ""
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// configPathInConfigDir tries to find config.yaml in the config directory.
+func configPathInConfigDir() string {
 	configDir, err := dirs.GetFirstExistingDirectory("config", []string{
 		"/config/",
 		"../var/config-skel/",
 		"./",
 	})
-	if err == nil {
-		configPath := filepath.Join(configDir, "config.yaml")
-		if _, err := os.Stat(configPath); err == nil {
-			return configPath
-		}
+	if err != nil {
+		return ""
+	}
+
+	configPath := filepath.Join(configDir, "config.yaml")
+	if fileExists(configPath) {
+		return configPath
 	}
 
 	return ""

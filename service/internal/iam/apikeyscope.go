@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -24,27 +25,30 @@ const (
 // APIKeyScope narrows what an API key can do. Its owner's current permissions are always the
 // ceiling: a scope can only take access away.
 type APIKeyScope struct {
+	// Permissions applies when RestrictPermissions is true.
+	Permissions []string
+
+	// BuildConfigs applies when RestrictBuildConfigs is true.
+	BuildConfigs []string
+
 	// When RestrictPermissions is false the key has every permission its owner has.
 	RestrictPermissions bool
-	Permissions         []string
 
 	// When RestrictBuildConfigs is false the key can use every build config.
 	RestrictBuildConfigs bool
-	BuildConfigs         []string
 }
 
 // AllowsPermission reports whether the scope lets the key use a permission its owner holds.
 // A nil scope (not an API key) allows everything.
 func (s *APIKeyScope) AllowsPermission(p string) bool {
-	if s == nil || !s.RestrictPermissions {
+	if !s.restrictsPermissions() {
 		return true
 	}
-	for _, have := range s.Permissions {
-		if have == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.Permissions, p)
+}
+
+func (s *APIKeyScope) restrictsPermissions() bool {
+	return s != nil && s.RestrictPermissions
 }
 
 // AllowsBuildConfig reports whether the scope lets the key use a build config.
@@ -52,12 +56,7 @@ func (s *APIKeyScope) AllowsBuildConfig(name string) bool {
 	if s == nil || !s.RestrictBuildConfigs {
 		return true
 	}
-	for _, have := range s.BuildConfigs {
-		if have == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.BuildConfigs, name)
 }
 
 // ErrAPIKeyNotFound is returned when a key does not exist or belongs to another user.
@@ -126,13 +125,17 @@ func SetAPIKeyScope(ctx context.Context, db *sql.DB, keyID, userID int, scope AP
 		return ErrAPIKeyNotFound
 	}
 
-	if err := replacePermissions(ctx, tx, keyID, scope); err != nil {
-		return err
-	}
-	if err := replaceBuildConfigs(ctx, tx, keyID, scope); err != nil {
+	if err = replaceScopeRows(ctx, tx, keyID, scope); err != nil {
 		return err
 	}
 	return tx.Commit()
+}
+
+func replaceScopeRows(ctx context.Context, tx *sql.Tx, keyID int, scope APIKeyScope) error {
+	if err := replacePermissions(ctx, tx, keyID, scope); err != nil {
+		return err
+	}
+	return replaceBuildConfigs(ctx, tx, keyID, scope)
 }
 
 func replacePermissions(ctx context.Context, tx *sql.Tx, keyID int, scope APIKeyScope) error {
@@ -143,19 +146,25 @@ func replacePermissions(ctx context.Context, tx *sql.Tx, keyID int, scope APIKey
 		return nil
 	}
 	for _, name := range uniqueSorted(scope.Permissions) {
-		res, err := tx.ExecContext(ctx,
-			`INSERT INTO api_key_permissions (api_key_id, permission_id)
-			 SELECT ?, id FROM rbac_permissions WHERE name = ?`, keyID, name)
-		if err != nil {
-			return fmt.Errorf("add api key permission %s: %w", name, err)
-		}
-		if n, _ := res.RowsAffected(); n == 0 {
-			return fmt.Errorf("unknown permission %q", name)
+		if err := addPermission(ctx, tx, keyID, name); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
+func addPermission(ctx context.Context, tx *sql.Tx, keyID int, name string) error {
+	res, err := tx.ExecContext(ctx,
+		`INSERT INTO api_key_permissions (api_key_id, permission_id)
+		 SELECT ?, id FROM rbac_permissions WHERE name = ?`, keyID, name)
+	if err != nil {
+		return fmt.Errorf("add api key permission %s: %w", name, err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("unknown permission %q", name)
+	}
+	return nil
+}
 func replaceBuildConfigs(ctx context.Context, tx *sql.Tx, keyID int, scope APIKeyScope) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM api_key_build_configs WHERE api_key_id = ?`, keyID); err != nil {
 		return fmt.Errorf("clear api key build configs: %w", err)
@@ -175,20 +184,11 @@ func replaceBuildConfigs(ctx context.Context, tx *sql.Tx, keyID int, scope APIKe
 // NarrowRBAC returns the permissions an API key request really has: the owner's effective
 // permissions limited by the key's scope. A restricted key never counts as superuser.
 func NarrowRBAC(owner *rbac.EffectiveRBAC, allPermissions []string, scope *APIKeyScope) *rbac.EffectiveRBAC {
-	if scope == nil || !scope.RestrictPermissions || owner == nil {
+	if !scope.restrictsPermissions() || owner == nil {
 		return owner
 	}
 	out := &rbac.EffectiveRBAC{Permissions: map[string]bool{}, RoleNames: owner.RoleNames}
-	candidates := allPermissions
-	if !owner.IsSuperuser {
-		candidates = candidates[:0:0]
-		for p, ok := range owner.Permissions {
-			if ok {
-				candidates = append(candidates, p)
-			}
-		}
-	}
-	for _, p := range candidates {
+	for _, p := range ownerPermissionCandidates(owner, allPermissions) {
 		if scope.AllowsPermission(p) {
 			out.Permissions[p] = true
 		}
@@ -196,6 +196,20 @@ func NarrowRBAC(owner *rbac.EffectiveRBAC, allPermissions []string, scope *APIKe
 	return out
 }
 
+// ownerPermissionCandidates returns the permissions a key could have: all of them for a
+// superuser, otherwise the ones the owner holds.
+func ownerPermissionCandidates(owner *rbac.EffectiveRBAC, allPermissions []string) []string {
+	if owner.IsSuperuser {
+		return allPermissions
+	}
+	candidates := []string{}
+	for p, ok := range owner.Permissions {
+		if ok {
+			candidates = append(candidates, p)
+		}
+	}
+	return candidates
+}
 func queryStrings(ctx context.Context, db *sql.DB, q string, args ...any) ([]string, error) {
 	rows, err := db.QueryContext(ctx, q, args...)
 	if err != nil {

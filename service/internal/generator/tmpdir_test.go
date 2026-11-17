@@ -48,10 +48,10 @@ func TestClearTemporaryOutputDirRemovesContents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Join(tmp, "icons"), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Join(tmp, "icons"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(tmp, "icons", "site.png"), []byte("png"), 0644); err != nil {
+	if err = os.WriteFile(filepath.Join(tmp, "icons", "site.png"), []byte("png"), 0644); err != nil {
 		t.Fatal(err)
 	}
 

@@ -3,6 +3,7 @@ package clientapi
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -29,28 +30,29 @@ import (
 
 type ClientApi struct {
 	buildConfigs  map[string]*buildconfigs.BuildConfig
-	BaseOutputDir string
 	templates     map[string]*Template
 	dataWatcher   *watcher.DataFileWatcher
-	watcherCtx    context.Context
 	watcherCancel context.CancelFunc
 	buildHistory  map[string][]*pb.BuildHistoryEntry // config name -> history entries
-	historyMu     sync.RWMutex                       // protects buildHistory
-	historyPath   string                             // where buildHistory is persisted
 	auth          *iam.AuthLayer                     // IAM store and auth middleware (nil in some tests)
 	iamDB         *sql.DB                            // database behind auth.Store
-
-	defaultAdminPassword atomic.Bool // the admin account still has the default password
-
-	dataFilesMu sync.Mutex // serialises UpdateDataFile, so expected_sha256 checks are reliable
-
-	builds       sync.WaitGroup     // builds in progress, waited for on shutdown
-	buildCtx     context.Context    // parent context for automatic builds
-	buildCancel  context.CancelFunc // aborts automatic builds when shutdown times out
-	shutdownMu   sync.Mutex         // protects shuttingDown and builds.Add
-	shuttingDown bool
+	buildCancel   context.CancelFunc                 // aborts automatic builds when shutdown times out
+	watcherCtx    context.Context
+	buildCtx      context.Context // parent context for automatic builds
 
 	client.StencilBoxApiServiceClient
+
+	BaseOutputDir string
+	historyPath   string // where buildHistory is persisted
+
+	builds sync.WaitGroup // builds in progress, waited for on shutdown
+
+	historyMu   sync.RWMutex // protects buildHistory
+	dataFilesMu sync.Mutex   // serialises UpdateDataFile, so expected_sha256 checks are reliable
+	shutdownMu  sync.Mutex   // protects shuttingDown and builds.Add
+
+	defaultAdminPassword atomic.Bool // the admin account still has the default password
+	shuttingDown         bool
 }
 
 type Template struct {
@@ -253,55 +255,26 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	}
 
 	buildConfig, found := c.buildConfigs[req.Msg.ConfigName]
-
-	updateChan := make(chan string)
-
 	if !found {
 		log.Errorf("Build config %s not found", req.Msg.ConfigName)
-		response.IsError = true
-		response.Status = "Build config not found"
-		if err := srv.Send(response); err != nil {
-			return err
-		}
-		return connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.ConfigName))
+		return rejectBuild(srv, response, "Build config not found",
+			connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.ConfigName)))
 	}
 
 	if !c.beginBuild() {
-		response.IsError = true
-		response.Status = "StencilBox is shutting down"
-		if err := srv.Send(response); err != nil {
-			return err
-		}
-		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("server is shutting down"))
+		return rejectBuild(srv, response, "StencilBox is shutting down",
+			connect.NewError(connect.CodeUnavailable, errors.New("server is shutting down")))
 	}
 	defer c.builds.Done()
 
 	buildStatus := &generator.BuildStatus{}
 	buildStarted := time.Now()
-	go generator.Generate(ctx, c.BaseOutputDir, buildConfig, buildStatus, updateChan)
-
-	for update := range updateChan {
-		log.Infof("Build update: %s", update)
-
-		response.Status = update
-		if err := srv.Send(response); err != nil {
-			return err
-		}
+	if err := c.streamBuild(ctx, buildConfig, buildStatus, response, srv); err != nil {
+		return err
 	}
 
 	log.Infof("Build completed for config %s", req.Msg.ConfigName)
-	response.IsError = buildStatus.IsError
-	if buildStatus.Message != "" {
-		response.Status = buildStatus.Message
-	}
-	response.BuildUrlBase = buildStatus.BuildUrlBase
-	response.OutputSizeHumanReadable = buildStatus.OutputSizeHumanReadable
-	response.BaseOutputDir = c.BaseOutputDir
-	response.InContainer = inContainer()
-	response.RelativePath = buildConfig.OutputDir
-	response.Found = found
-	response.IsComplete = true
-
+	c.completeBuildResponse(response, buildStatus, buildConfig)
 	if err := srv.Send(response); err != nil {
 		return err
 	}
@@ -312,6 +285,45 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	return nil
 }
 
+// rejectBuild tells the client why a build did not start, then returns the error for the RPC.
+func rejectBuild(srv *connect.ServerStream[pb.BuildUpdateResponse], response *pb.BuildUpdateResponse, status string, rpcErr error) error {
+	response.IsError = true
+	response.Status = status
+	if err := srv.Send(response); err != nil {
+		return err
+	}
+	return rpcErr
+}
+
+// streamBuild runs the build and forwards each progress update to the client.
+func (c *ClientApi) streamBuild(ctx context.Context, buildConfig *buildconfigs.BuildConfig, buildStatus *generator.BuildStatus, response *pb.BuildUpdateResponse, srv *connect.ServerStream[pb.BuildUpdateResponse]) error {
+	updateChan := make(chan string)
+	go generator.Generate(ctx, c.BaseOutputDir, buildConfig, buildStatus, updateChan)
+
+	for update := range updateChan {
+		log.Infof("Build update: %s", update)
+
+		response.Status = update
+		if err := srv.Send(response); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *ClientApi) completeBuildResponse(response *pb.BuildUpdateResponse, buildStatus *generator.BuildStatus, buildConfig *buildconfigs.BuildConfig) {
+	response.IsError = buildStatus.IsError
+	if buildStatus.Message != "" {
+		response.Status = buildStatus.Message
+	}
+	response.BuildUrlBase = buildStatus.BuildUrlBase
+	response.OutputSizeHumanReadable = buildStatus.OutputSizeHumanReadable
+	response.BaseOutputDir = c.BaseOutputDir
+	response.InContainer = inContainer()
+	response.RelativePath = buildConfig.OutputDir
+	response.Found = true
+	response.IsComplete = true
+}
 func (c *ClientApi) ClearBuildCache(ctx context.Context, req *connect.Request[pb.ClearBuildCacheRequest]) (*connect.Response[pb.ClearBuildCacheResponse], error) {
 	buildConfig, found := c.buildConfigs[req.Msg.ConfigName]
 	if !found {
@@ -700,14 +712,7 @@ func (c *ClientApi) Shutdown(ctx context.Context) {
 	c.shuttingDown = true
 	c.shutdownMu.Unlock()
 
-	if c.watcherCancel != nil {
-		log.Info("Stopping data file watcher...")
-		c.watcherCancel()
-	}
-
-	if c.dataWatcher != nil {
-		c.dataWatcher.Stop()
-	}
+	c.stopWatcher()
 
 	done := make(chan struct{})
 	go func() {
@@ -719,9 +724,24 @@ func (c *ClientApi) Shutdown(ctx context.Context) {
 	case <-done:
 		log.Info("All builds finished")
 	case <-ctx.Done():
-		log.Warn("Timed out waiting for builds to finish, cancelling them")
-		if c.buildCancel != nil {
-			c.buildCancel()
-		}
+		c.cancelBuilds()
+	}
+}
+
+func (c *ClientApi) stopWatcher() {
+	if c.watcherCancel != nil {
+		log.Info("Stopping data file watcher...")
+		c.watcherCancel()
+	}
+
+	if c.dataWatcher != nil {
+		c.dataWatcher.Stop()
+	}
+}
+
+func (c *ClientApi) cancelBuilds() {
+	log.Warn("Timed out waiting for builds to finish, cancelling them")
+	if c.buildCancel != nil {
+		c.buildCancel()
 	}
 }

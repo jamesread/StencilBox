@@ -1,0 +1,9 @@
+name: Example sidebar
+
+outputdir: sidebar
+
+template: iframe-sidebar
+
+# No git repos: icons are local files under buildconfigs/icons/.
+datafiles:
+  links: data/sidebar-links.yaml

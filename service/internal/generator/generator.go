@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
@@ -25,10 +26,10 @@ import (
 const totalBuildTimeout = 10 * time.Minute
 
 type BuildStatus struct {
-	IsError                 bool
 	Message                 string
 	BuildUrlBase            string
 	OutputSizeHumanReadable string
+	IsError                 bool
 }
 
 type BuildContext struct {
@@ -58,164 +59,230 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 
 	defer close(updateChannel)
 
-	finalOutputDir := filepath.Join(baseOutputDir, cfg.OutputDir)
-	temporaryOutputDir, err := TemporaryOutputDir(baseOutputDir, cfg.OutputDir)
-	if err != nil {
-		failBuild(buildStatus, updateChannel, "Invalid output directory: "+err.Error())
-		return
+	run := &buildRun{BuildContext: bctx, baseOutputDir: baseOutputDir}
+	run.execute()
+}
+
+// buildRun holds the state shared between the steps of a single build.
+type buildRun struct {
+	*BuildContext
+
+	tmpl           *template.Template
+	outfile        *os.File
+	templateDir    TemplateDir
+	baseOutputDir  string
+	finalOutputDir string
+	tempOutputDir  string
+	repoStorageDir string
+}
+
+// execute runs each build step in order. A step returns false when the build must stop, after
+// recording why in the build status.
+func (r *buildRun) execute() {
+	defer r.closeOutput()
+
+	steps := []func() bool{
+		r.prepareDirs,
+		r.loadTemplate,
+		r.loadDatafiles,
+		r.processLinks,
+		r.openOutputFile,
+		r.cloneRepositories,
+		r.renderTemplate,
+		r.copyLayerFiles,
+		r.runViteBuild,
 	}
+
+	for _, step := range steps {
+		if !step() {
+			return
+		}
+	}
+
+	r.finish()
+}
+
+func (r *buildRun) fail(message string) bool {
+	failBuild(r.BuildStatus, r.UpdateChannel, message)
+	return false
+}
+
+// running reports whether the build may continue (it has not been cancelled or timed out).
+func (r *buildRun) running() bool {
+	return !abortBuild(r.Ctx, r.BuildStatus, r.UpdateChannel)
+}
+
+func (r *buildRun) closeOutput() {
+	if r.outfile != nil {
+		_ = r.outfile.Close()
+	}
+}
+
+func (r *buildRun) prepareDirs() bool {
+	cfg := r.BuildConfig
+	r.finalOutputDir = filepath.Join(r.baseOutputDir, cfg.OutputDir)
+
+	tempDir, err := TemporaryOutputDir(r.baseOutputDir, cfg.OutputDir)
+	if err != nil {
+		return r.fail("Invalid output directory: " + err.Error())
+	}
+	r.tempOutputDir = tempDir
 
 	log.WithFields(log.Fields{
 		"name":           cfg.Name,
 		"outputDir":      cfg.OutputDir,
-		"finalOutputDir": finalOutputDir,
+		"finalOutputDir": r.finalOutputDir,
 	}).Infof("Starting build for project")
 
-	if err := os.MkdirAll(finalOutputDir, 0755); err != nil {
-		failBuild(buildStatus, updateChannel, "Failed to create output directory: "+err.Error())
-		return
+	if err = os.MkdirAll(r.finalOutputDir, 0o755); err != nil {
+		return r.fail("Failed to create output directory: " + err.Error())
 	}
-	if err := os.MkdirAll(temporaryOutputDir, 0755); err != nil {
-		failBuild(buildStatus, updateChannel, "Failed to create temporary output directory: "+err.Error())
-		return
+	if err = os.MkdirAll(r.tempOutputDir, 0o755); err != nil {
+		return r.fail("Failed to create temporary output directory: " + err.Error())
 	}
 
-	templateDir, err := FindTemplate(cfg.Template)
+	return true
+}
+
+func (r *buildRun) loadTemplate() bool {
+	templateDir, err := FindTemplate(r.BuildConfig.Template)
 	if err != nil {
-		failBuild(buildStatus, updateChannel, "Failed to find template: "+err.Error())
-		return
+		return r.fail("Failed to find template: " + err.Error())
 	}
+	r.templateDir = templateDir
 
-	updateChannel <- fmt.Sprintf("Using %s template from %s", templateDir.Source, templateDir.Path)
+	r.UpdateChannel <- fmt.Sprintf("Using %s template from %s", templateDir.Source, templateDir.Path)
 
 	indexPath := filepath.Join(templateDir.Path, "index.html")
 
-	tmpl, err := getNewTemplater(temporaryOutputDir).ParseFiles(indexPath)
-
+	r.tmpl, err = getNewTemplater(r.tempOutputDir).ParseFiles(indexPath)
 	if err != nil {
-		failBuild(buildStatus, updateChannel, "Failed to parse template: "+err.Error())
-		return
+		return r.fail("Failed to parse template: " + err.Error())
 	}
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
-		return
-	}
+	return r.running()
+}
 
-	templateData := make(map[string]any)
-
-	for name, path := range cfg.Datafiles {
+func (r *buildRun) loadDatafiles() bool {
+	for name, path := range r.BuildConfig.Datafiles {
 		log.Infof("Adding datafile %v with path %v", name, path)
 
-		dat, err := readDatafile(path, filepath.Dir(cfg.Path))
-
+		dat, err := readDatafile(path, filepath.Dir(r.BuildConfig.Path))
 		if err != nil {
-			failBuild(buildStatus, updateChannel, "Error reading datafile "+name+": "+err.Error())
-			return
+			return r.fail("Error reading datafile " + name + ": " + err.Error())
 		}
 
 		if dat == nil {
 			continue
 		}
 
-		templateData[name] = dat
+		r.TemplateData[name] = dat
 	}
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
-		return
+	log.Infof("Datafiles loaded: %+v", r.TemplateData)
+
+	return r.running()
+}
+
+// processLinks adds favicons to links data.
+func (r *buildRun) processLinks() bool {
+	linksData, ok := r.TemplateData["links"]
+	if !ok {
+		return r.running()
 	}
 
-	log.Infof("Datafiles loaded: %+v", templateData)
-
-	// Process links data to add favicons
-	if linksData, ok := templateData["links"]; ok {
-		updateChannel <- "Fetching favicons for links..."
-		processedLinks, err := processLinksWithFavicons(deadlineCtx, linksData, temporaryOutputDir, updateChannel)
-		if err != nil {
-			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-				abortBuild(deadlineCtx, buildStatus, updateChannel)
-				return
-			}
-			log.Warnf("Failed to process links with favicons: %v", err)
-			// Continue with original data if favicon processing fails
-		} else {
-			templateData["links"] = processedLinks
-		}
+	r.UpdateChannel <- "Fetching favicons for links..."
+	processedLinks, err := processLinksWithFavicons(r.Ctx, linksData, r.tempOutputDir, r.UpdateChannel)
+	if err == nil {
+		r.TemplateData["links"] = processedLinks
+		return r.running()
 	}
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
-		return
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		abortBuild(r.Ctx, r.BuildStatus, r.UpdateChannel)
+		return false
 	}
 
-	outfile, err := os.Create(temporaryOutputDir + "/index.html")
+	// Continue with original data if favicon processing fails
+	log.Warnf("Failed to process links with favicons: %v", err)
 
+	return r.running()
+}
+
+func (r *buildRun) openOutputFile() bool {
+	outfile, err := os.Create(r.tempOutputDir + "/index.html")
 	if err != nil {
 		log.Errorf("Error creating output file: %v", err)
-		failBuild(buildStatus, updateChannel, "Error creating output file: "+err.Error())
-		return
+		return r.fail("Error creating output file: " + err.Error())
 	}
-	defer func() { _ = outfile.Close() }()
+	r.outfile = outfile
 
-	repoStorageDir := getRepoStorageDir(cfg)
-	cloneRepos(bctx, repoStorageDir)
+	return true
+}
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
-		return
-	}
+func (r *buildRun) cloneRepositories() bool {
+	r.repoStorageDir = getRepoStorageDir(r.BuildConfig)
+	cloneRepos(r.BuildContext, r.repoStorageDir)
 
-	templateData["hooks"] = buildRepoHooks(cfg, updateChannel)
-	templateData["buildconfig"] = cfg
+	return r.running()
+}
 
-	// Add build date/time and StencilBox version to templateData
+func (r *buildRun) addTemplateGlobals() {
+	cfg := r.BuildConfig
+
+	r.TemplateData["hooks"] = buildRepoHooks(cfg, r.UpdateChannel)
+	r.TemplateData["buildconfig"] = cfg
+
+	// Add build date/time and StencilBox version to template data
 	buildTime := time.Now()
-	templateData["buildDate"] = buildTime.Format(time.RFC3339)
-	templateData["buildDateFormatted"] = buildTime.Format("January 2, 2006 at 3:04 PM MST")
-	templateData["version"] = buildinfo.Version
-	templateData["webuiUrl"] = webuiBuildConfigURL(getWebuiUrlBase(), cfg.Name)
+	r.TemplateData["buildDate"] = buildTime.Format(time.RFC3339)
+	r.TemplateData["buildDateFormatted"] = buildTime.Format("January 2, 2006 at 3:04 PM MST")
+	r.TemplateData["version"] = buildinfo.Version
+	r.TemplateData["webuiUrl"] = webuiBuildConfigURL(getWebuiUrlBase(), cfg.Name)
+}
 
-	log.Infof("Template data: %+v", templateData)
+func (r *buildRun) renderTemplate() bool {
+	r.addTemplateGlobals()
 
-	err = tmpl.Execute(outfile, templateData)
+	log.Infof("Template data: %+v", r.TemplateData)
 
-	if err != nil {
-		failBuild(buildStatus, updateChannel, "Error executing template: "+err.Error())
-		return
+	if err := r.tmpl.Execute(r.outfile, r.TemplateData); err != nil {
+		return r.fail("Error executing template: " + err.Error())
 	}
 
-	if err := outfile.Close(); err != nil {
-		failBuild(buildStatus, updateChannel, "Error writing output file: "+err.Error())
-		return
+	if err := r.outfile.Close(); err != nil {
+		return r.fail("Error writing output file: " + err.Error())
 	}
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
-		return
+	return r.running()
+}
+
+func (r *buildRun) copyLayerFiles() bool {
+	copyLayers(r.tempOutputDir)
+	if err := copyTemplateLayers(r.templateDir.Path, r.tempOutputDir); err != nil {
+		return r.fail("Failed to copy template layers: " + err.Error())
 	}
 
-	copyLayers(temporaryOutputDir)
-	if err := copyTemplateLayers(templateDir.Path, temporaryOutputDir); err != nil {
-		failBuild(buildStatus, updateChannel, "Failed to copy template layers: "+err.Error())
-		return
-	}
+	lnRepos(r.tempOutputDir, r.repoStorageDir)
 
-	lnRepos(temporaryOutputDir, repoStorageDir)
+	return r.running()
+}
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) {
-		return
-	}
+func (r *buildRun) runViteBuild() bool {
+	r.UpdateChannel <- "Running Vite build..."
 
-	updateChannel <- "Running Vite build..."
+	runVite(r.BuildContext, r.tempOutputDir, r.finalOutputDir)
 
-	runVite(bctx, temporaryOutputDir, finalOutputDir)
+	return r.running() && !r.BuildStatus.IsError
+}
 
-	if abortBuild(deadlineCtx, buildStatus, updateChannel) || buildStatus.IsError {
-		return
-	}
+func (r *buildRun) finish() {
+	r.UpdateChannel <- "Build completed!"
 
-	updateChannel <- "Build completed!"
-
-	buildStatus.Message = "Build completed successfully"
-	buildStatus.IsError = false
-	buildStatus.BuildUrlBase = getBuildUrlBase()
-	buildStatus.OutputSizeHumanReadable = getDirectorySizeHumanReadable(finalOutputDir)
+	r.BuildStatus.Message = "Build completed successfully"
+	r.BuildStatus.IsError = false
+	r.BuildStatus.BuildUrlBase = getBuildUrlBase()
+	r.BuildStatus.OutputSizeHumanReadable = getDirectorySizeHumanReadable(r.finalOutputDir)
 }
 
 func buildRepoHooks(cfg *buildconfigs.BuildConfig, updateChannel chan string) *map[string]string {
@@ -251,7 +318,7 @@ func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.
 
 	log.Infof("Getting hook data for %v, repo: %s filename: %v", hookName, repo.URL, htmlFilename)
 
-	if _, err := os.Stat(htmlFilename); errors.Is(err, os.ErrNotExist) {
+	if _, statErr := os.Stat(htmlFilename); errors.Is(statErr, os.ErrNotExist) {
 		log.Infof("No %s hook file found for repo %s", hookName, repo.URL)
 		return ""
 	}
@@ -340,17 +407,17 @@ func getDirectorySizeHumanReadable(dir string) string {
 }
 
 func formatSize(size int64) string {
-	if size < 1024 {
+	switch {
+	case size < 1024:
 		return fmt.Sprintf("%d B", size)
-	} else if size < 1024*1024 {
+	case size < 1024*1024:
 		return fmt.Sprintf("%.2f KB", float64(size)/1024)
-	} else if size < 1024*1024*1024 {
+	case size < 1024*1024*1024:
 		return fmt.Sprintf("%.2f MB", float64(size)/(1024*1024))
-	} else {
+	default:
 		return fmt.Sprintf("%.2f GB", float64(size)/(1024*1024*1024))
 	}
 }
-
 func getBuildUrlBase() string {
 	if os.Getenv("STENCILBOX_BUILD_URL_BASE") != "" {
 		return os.Getenv("STENCILBOX_BUILD_URL_BASE")
@@ -505,61 +572,57 @@ func linkFaviconBaseURL(linkMap map[string]any) string {
 // countFaviconFetchJobs returns how many links will run a remote favicon fetch (same preconditions as the fetch loop).
 func countFaviconFetchJobs(dataMap map[string]any, iconsDir string) int {
 	n := 0
-	categories, ok := dataMap["categories"].([]any)
-	if !ok {
-		return 0
-	}
-	for _, category := range categories {
-		catMap, ok := category.(map[string]any)
-		if !ok {
-			continue
-		}
-		links, ok := catMap["links"].([]any)
-		if !ok {
-			continue
-		}
-		for _, link := range links {
-			linkMap, ok := link.(map[string]any)
-			if !ok {
-				continue
-			}
-			linkURL, ok := linkMap["url"].(string)
-			if !ok || linkURL == "" {
-				continue
-			}
-			if existingIcon, hasIcon := linkMap["icon"]; hasIcon {
-				if iconStr, ok := existingIcon.(string); ok && iconStr != "" {
-					continue
-				}
-			}
-			safeFilename := sanitizeFilename(linkURL)
-			if findExistingIconFile(iconsDir, safeFilename) != "" {
-				continue
-			}
+	for _, linkMap := range categoryLinkMaps(dataMap) {
+		if needsFaviconFetch(linkMap, iconsDir) {
 			n++
 		}
 	}
 	return n
 }
 
+// needsFaviconFetch reports whether a link will run a remote favicon fetch.
+func needsFaviconFetch(linkMap map[string]any, iconsDir string) bool {
+	linkURL, ok := linkMap["url"].(string)
+	if !ok || linkURL == "" || hasExplicitIcon(linkMap) {
+		return false
+	}
+	return findExistingIconFile(iconsDir, sanitizeFilename(linkURL)) == ""
+}
+
+// mapsIn returns the map items of a YAML list, skipping any other items.
+func mapsIn(v any) []map[string]any {
+	items, _ := v.([]any)
+	out := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		if m, ok := item.(map[string]any); ok {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+// categoryLinkMaps returns every link of every category in links data.
+func categoryLinkMaps(dataMap map[string]any) []map[string]any {
+	var out []map[string]any
+	for _, category := range mapsIn(dataMap["categories"]) {
+		out = append(out, mapsIn(category["links"])...)
+	}
+	return out
+}
 func processLinksWithFavicons(ctx context.Context, linksData any, outputDir string, updateChannel chan string) (any, error) {
 	// Create icons directory
 	iconsDir := filepath.Join(outputDir, "icons")
-	err := os.MkdirAll(iconsDir, 0755)
-	if err != nil {
+	if err := os.MkdirAll(iconsDir, 0o755); err != nil {
 		return linksData, fmt.Errorf("failed to create icons directory: %w", err)
 	}
 
 	// Copy placeholder icon once
-	placeholderIconPath := ensurePlaceholderIcon(iconsDir)
-	if placeholderIconPath == "" {
-		log.Warnf("Failed to copy placeholder icon, links without favicons will not have icons")
-	}
+	placeholderIconPath := ensurePlaceholderIconOrWarn(iconsDir)
 
 	// Convert to map for processing
 	dataMap, ok := linksData.(map[string]any)
 	if !ok {
-		return linksData, fmt.Errorf("links data is not a map")
+		return linksData, errors.New("links data is not a map")
 	}
 
 	normalizeLinksDataURLs(dataMap)
@@ -567,40 +630,24 @@ func processLinksWithFavicons(ctx context.Context, linksData any, outputDir stri
 	totalFaviconJobs := countFaviconFetchJobs(dataMap, iconsDir)
 	faviconJob := 0
 
-	// Process categories
-	if categories, ok := dataMap["categories"].([]any); ok {
-		for catIdx, category := range categories {
-			if err := ctx.Err(); err != nil {
-				return linksData, err
-			}
-			catMap, ok := category.(map[string]any)
-			if !ok {
-				continue
-			}
-
-			if links, ok := catMap["links"].([]any); ok {
-				for linkIdx, link := range links {
-					if err := ctx.Err(); err != nil {
-						return linksData, err
-					}
-					linkMap, ok := link.(map[string]any)
-					if !ok {
-						continue
-					}
-
-					applyFaviconToLink(linkMap, iconsDir, placeholderIconPath, updateChannel, &faviconJob, totalFaviconJobs)
-					links[linkIdx] = linkMap
-				}
-				catMap["links"] = links
-				categories[catIdx] = catMap
-			}
+	for _, linkMap := range categoryLinkMaps(dataMap) {
+		if err := ctx.Err(); err != nil {
+			return linksData, err
 		}
-		dataMap["categories"] = categories
+
+		applyFaviconToLink(linkMap, iconsDir, placeholderIconPath, updateChannel, &faviconJob, totalFaviconJobs)
 	}
 
 	return dataMap, nil
 }
 
+func ensurePlaceholderIconOrWarn(iconsDir string) string {
+	placeholderIconPath := ensurePlaceholderIcon(iconsDir)
+	if placeholderIconPath == "" {
+		log.Warnf("Failed to copy placeholder icon, links without favicons will not have icons")
+	}
+	return placeholderIconPath
+}
 func hasExplicitIcon(linkMap map[string]any) bool {
 	existingIcon, hasIcon := linkMap["icon"]
 	if !hasIcon {
@@ -661,37 +708,22 @@ func faviconFoundMessage(got scraper.DownloadedFavicon) string {
 
 // normalizeLinksDataURLs ensures scheme-less link URLs become absolute https:// hrefs.
 func normalizeLinksDataURLs(dataMap map[string]any) {
-	normalizeLinkSlice := func(links []any) {
-		for _, link := range links {
-			linkMap, ok := link.(map[string]any)
-			if !ok {
-				continue
-			}
-			linkURL, ok := linkMap["url"].(string)
-			if !ok || linkURL == "" {
-				continue
-			}
-			linkMap["url"] = scraper.NormalizeURL(linkURL)
-		}
+	for _, linkMap := range categoryLinkMaps(dataMap) {
+		normalizeLinkURL(linkMap)
 	}
 
-	if categories, ok := dataMap["categories"].([]any); ok {
-		for _, category := range categories {
-			catMap, ok := category.(map[string]any)
-			if !ok {
-				continue
-			}
-			if links, ok := catMap["links"].([]any); ok {
-				normalizeLinkSlice(links)
-			}
-		}
-	}
-
-	if links, ok := dataMap["links"].([]any); ok {
-		normalizeLinkSlice(links)
+	for _, linkMap := range mapsIn(dataMap["links"]) {
+		normalizeLinkURL(linkMap)
 	}
 }
 
+func normalizeLinkURL(linkMap map[string]any) {
+	linkURL, ok := linkMap["url"].(string)
+	if !ok || linkURL == "" {
+		return
+	}
+	linkMap["url"] = scraper.NormalizeURL(linkURL)
+}
 func ensurePlaceholderIcon(iconsDir string) string {
 	placeholderFilename := "placeholder.png"
 	placeholderPath := filepath.Join(iconsDir, placeholderFilename)

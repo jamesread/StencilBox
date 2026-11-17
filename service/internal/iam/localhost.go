@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"slices"
 
 	"connectrpc.com/authn"
 	armlayer "github.com/jamesread/armature-iam/layer"
@@ -74,18 +75,10 @@ var errLocalOnly = "StencilBox is running without a database, so it only accepts
 // Handle is the Connect authn function.
 func (LocalhostAuth) Handle(_ context.Context, req *http.Request) (any, error) {
 	procedure, _ := authn.InferProcedure(req.URL)
-	allowed := false
-	for _, p := range AllowUnauthenticated {
-		if p == procedure {
-			allowed = true
-		}
-	}
+	allowed := slices.Contains(AllowUnauthenticated, procedure)
 
 	if !IsLocalRequest(req) {
-		if allowed {
-			return nil, nil // a guest: GetStatus tells the web UI why it cannot log in
-		}
-		return nil, authn.Errorf("%s", errLocalOnly)
+		return remoteGuest(allowed)
 	}
 
 	au := localhostUser()
@@ -96,6 +89,13 @@ func (LocalhostAuth) Handle(_ context.Context, req *http.Request) (any, error) {
 	return au, nil
 }
 
+// remoteGuest lets a request that is not from localhost call the allow-listed procedures only.
+func remoteGuest(allowed bool) (any, error) {
+	if allowed {
+		return nil, nil // a guest: GetStatus tells the web UI why it cannot log in
+	}
+	return nil, authn.Errorf("%s", errLocalOnly)
+}
 func (l LocalhostAuth) WrapHandler(in http.Handler) http.Handler {
 	return authn.NewMiddleware(l.Handle).Wrap(in)
 }

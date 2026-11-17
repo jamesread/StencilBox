@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -39,34 +41,47 @@ func NormalizeURL(rawURL string) string {
 }
 
 func fetchPageContent(pageURL string) (string, error) {
+	body, _, err := fetchBody(pageURL, "fetch page", "read response")
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
+}
+
+// fetchBody GETs a URL, bounded by faviconFetchTimeout, and returns the body and its
+// Content-Type. fetchLabel and readLabel say what was being done when a step fails.
+func fetchBody(rawURL, fetchLabel, readLabel string) ([]byte, string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), faviconFetchTimeout)
+	defer cancel()
+
 	client := &http.Client{
 		Timeout: faviconFetchTimeout,
 	}
-	req, err := http.NewRequest("GET", pageURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, "", fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; StencilBox/1.0)")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch page: %w", err)
+		return nil, "", fmt.Errorf("failed to %s: %w", fetchLabel, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	bodyText, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response: %w", err)
+		return nil, "", fmt.Errorf("failed to %s: %w", readLabel, err)
 	}
 
-	return string(bodyText), nil
+	return body, resp.Header.Get("Content-Type"), nil
 }
-
 func resolveFaviconURL(faviconURL, pageURL string) string {
 	if faviconURL == "" || strings.HasPrefix(faviconURL, "data:") {
 		return faviconURL
@@ -187,98 +202,68 @@ func downloadFirstImageFavicon(candidates []string, saveDir, filename string) (D
 	return DownloadedFavicon{}, fmt.Errorf("no favicon found")
 }
 
-// decodeDataURL decodes a base64 data URL and returns the MIME type and decoded data
+// decodeDataURL decodes a data URL and returns the MIME type and decoded data
 func decodeDataURL(dataURL string) (mimeType string, data []byte, err error) {
 	// Data URLs have the format: data:[<mediatype>][;base64],<data>
-	if !strings.HasPrefix(dataURL, "data:") {
-		return "", nil, fmt.Errorf("not a data URL")
+	rest, ok := strings.CutPrefix(dataURL, "data:")
+	if !ok {
+		return "", nil, errors.New("not a data URL")
 	}
 
-	// Remove "data:" prefix
-	dataURL = dataURL[5:]
-
-	// Find the comma that separates metadata from data
-	commaIdx := strings.Index(dataURL, ",")
-	if commaIdx == -1 {
-		return "", nil, fmt.Errorf("invalid data URL format: missing comma")
+	// The comma separates metadata from data
+	metadata, dataPart, found := strings.Cut(rest, ",")
+	if !found {
+		return "", nil, errors.New("invalid data URL format: missing comma")
 	}
 
-	// Extract metadata and data parts
-	metadata := dataURL[:commaIdx]
-	dataPart := dataURL[commaIdx+1:]
+	data, err = decodeDataPayload(metadata, dataPart)
+	if err != nil {
+		return "", nil, err
+	}
 
-	// Parse MIME type (may include parameters like charset)
-	mimeType = "image/png" // default
+	return dataURLMimeType(metadata), data, nil
+}
+
+// dataURLMimeType returns the MIME type in a data URL's metadata (it may include parameters
+// like charset), defaulting to image/png.
+func dataURLMimeType(metadata string) string {
 	if strings.HasPrefix(metadata, "image/") {
 		// Extract MIME type (before any semicolon)
-		mimeParts := strings.Split(metadata, ";")
-		if len(mimeParts) > 0 {
-			mimeType = strings.TrimSpace(mimeParts[0])
-		}
+		mimeType, _, _ := strings.Cut(metadata, ";")
+		return strings.TrimSpace(mimeType)
 	}
 
-	// Check if it's base64 encoded
+	return "image/png"
+}
+
+func decodeDataPayload(metadata, payload string) ([]byte, error) {
 	if strings.Contains(metadata, "base64") {
-		// Decode base64 data
-		decoded, err := base64.StdEncoding.DecodeString(dataPart)
+		decoded, err := base64.StdEncoding.DecodeString(payload)
 		if err != nil {
-			return "", nil, fmt.Errorf("failed to decode base64 data: %w", err)
+			return nil, fmt.Errorf("failed to decode base64 data: %w", err)
 		}
-		return mimeType, decoded, nil
+		return decoded, nil
 	}
 
 	// URL-encoded data (less common for images, but handle it)
-	decoded, err := url.QueryUnescape(dataPart)
+	decoded, err := url.QueryUnescape(payload)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to decode URL-encoded data: %w", err)
+		return nil, fmt.Errorf("failed to decode URL-encoded data: %w", err)
 	}
-	return mimeType, []byte(decoded), nil
+	return []byte(decoded), nil
 }
 
 // DownloadFavicon downloads a favicon and saves it to the specified directory
 // It supports both regular HTTP URLs and base64 data URLs
 func DownloadFavicon(faviconURL, saveDir, filename string) (DownloadedFavicon, error) {
 	empty := DownloadedFavicon{}
-	err := os.MkdirAll(saveDir, 0755)
-	if err != nil {
+	if err := os.MkdirAll(saveDir, 0o755); err != nil {
 		return empty, fmt.Errorf("failed to create icons directory: %w", err)
 	}
 
-	var faviconData []byte
-	var mimeType string
-
-	if strings.HasPrefix(faviconURL, "data:") {
-		mimeType, faviconData, err = decodeDataURL(faviconURL)
-		if err != nil {
-			return empty, fmt.Errorf("failed to decode data URL: %w", err)
-		}
-	} else {
-		client := &http.Client{
-			Timeout: faviconFetchTimeout,
-		}
-		req, err := http.NewRequest("GET", faviconURL, nil)
-		if err != nil {
-			return empty, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; StencilBox/1.0)")
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return empty, fmt.Errorf("failed to download favicon: %w", err)
-		}
-		defer func() { _ = resp.Body.Close() }()
-
-		if resp.StatusCode != http.StatusOK {
-			return empty, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-		}
-
-		faviconData, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return empty, fmt.Errorf("failed to read favicon data: %w", err)
-		}
-
-		mimeType = resp.Header.Get("Content-Type")
+	mimeType, faviconData, err := loadFaviconData(faviconURL)
+	if err != nil {
+		return empty, err
 	}
 
 	log.WithFields(log.Fields{
@@ -293,12 +278,25 @@ func DownloadFavicon(faviconURL, saveDir, filename string) (DownloadedFavicon, e
 	filename = filenameWithImageExt(filename, faviconURL, mimeType)
 	savePath := filepath.Join(saveDir, filename)
 
-	err = os.WriteFile(savePath, faviconData, 0644)
-	if err != nil {
+	if err = os.WriteFile(savePath, faviconData, 0o644); err != nil {
 		return empty, fmt.Errorf("failed to save favicon: %w", err)
 	}
 
 	return DownloadedFavicon{Filename: filename, SourceURL: faviconURL, MimeType: mimeType}, nil
+}
+
+// loadFaviconData returns the favicon's MIME type and bytes, from a data URL or over HTTP.
+func loadFaviconData(faviconURL string) (string, []byte, error) {
+	if strings.HasPrefix(faviconURL, "data:") {
+		mimeType, data, err := decodeDataURL(faviconURL)
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to decode data URL: %w", err)
+		}
+		return mimeType, data, nil
+	}
+
+	data, mimeType, err := fetchBody(faviconURL, "download favicon", "read favicon data")
+	return mimeType, data, err
 }
 
 func filenameWithImageExt(filename, faviconURL, mimeType string) string {
@@ -313,14 +311,25 @@ func filenameWithImageExt(filename, faviconURL, mimeType string) string {
 }
 
 func mimeTypeFileExt(mimeType string) string {
-	if mimeType != "" {
-		mediaType, _, _ := strings.Cut(mimeType, ";")
-		mediaType = strings.TrimSpace(mediaType)
-		exts, err := mime.ExtensionsByType(mediaType)
-		if err == nil && len(exts) > 0 {
-			return exts[0]
-		}
+	if ext := registeredMimeExt(mimeType); ext != "" {
+		return ext
 	}
+	return guessedMimeExt(mimeType)
+}
+
+func registeredMimeExt(mimeType string) string {
+	if mimeType == "" {
+		return ""
+	}
+	mediaType, _, _ := strings.Cut(mimeType, ";")
+	exts, err := mime.ExtensionsByType(strings.TrimSpace(mediaType))
+	if err == nil && len(exts) > 0 {
+		return exts[0]
+	}
+	return ""
+}
+
+func guessedMimeExt(mimeType string) string {
 	switch {
 	case strings.Contains(mimeType, "png"):
 		return ".png"
@@ -344,28 +353,35 @@ func ProcessUrl(url string) {
 }
 
 func getFavicon(node *html.Node) string {
+	relValues, href := linkAttributes(node)
+
+	// Check if this link has icon-related rel values
+	if href != "" && slices.ContainsFunc(relValues, isIconRel) {
+		return href
+	}
+
+	return ""
+}
+
+// linkAttributes returns the rel values and the href of a link element.
+func linkAttributes(node *html.Node) ([]string, string) {
 	var relValues []string
 	href := ""
 
 	for _, attr := range node.Attr {
-		if attr.Key == "rel" {
+		switch attr.Key {
+		case "rel":
 			relValues = strings.Fields(attr.Val)
-		}
-		if attr.Key == "href" {
+		case "href":
 			href = attr.Val
 		}
 	}
 
-	// Check if this link has icon-related rel values
-	for _, rel := range relValues {
-		if rel == "icon" || rel == "shortcut" || rel == "apple-touch-icon" {
-			if href != "" {
-				return href
-			}
-		}
-	}
+	return relValues, href
+}
 
-	return ""
+func isIconRel(rel string) bool {
+	return rel == "icon" || rel == "shortcut" || rel == "apple-touch-icon"
 }
 
 var knownImageExtensions = map[string]bool{

@@ -1,5 +1,6 @@
 **/*.swp
 **/*.swo
+**/__pycache__/
 links.yaml
 data/*
 /sb-output

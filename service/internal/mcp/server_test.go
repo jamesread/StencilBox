@@ -81,8 +81,8 @@ func TestMCPToolsUseAPIAuth(t *testing.T) {
 		if key != "" {
 			headers["Authorization"] = "Bearer " + key
 		}
-		c, err := mcpclient.NewStreamableHttpClient(srv.URL+Path, transport.WithHTTPHeaders(headers))
-		require.NoError(t, err)
+		c, connErr := mcpclient.NewStreamableHttpClient(srv.URL+Path, transport.WithHTTPHeaders(headers))
+		require.NoError(t, connErr)
 		t.Cleanup(func() { _ = c.Close() })
 		require.NoError(t, c.Start(ctx))
 		return c
@@ -91,8 +91,8 @@ func TestMCPToolsUseAPIAuth(t *testing.T) {
 		req := mcp.CallToolRequest{}
 		req.Params.Name = tool
 		req.Params.Arguments = args
-		res, err := c.CallTool(ctx, req)
-		require.NoError(t, err)
+		res, callErr := c.CallTool(ctx, req)
+		require.NoError(t, callErr)
 		return res
 	}
 	text := func(res *mcp.CallToolResult) string {
@@ -111,7 +111,7 @@ func TestMCPToolsUseAPIAuth(t *testing.T) {
 	t.Cleanup(func() { _ = anon.Close() })
 	require.NoError(t, anon.Start(ctx))
 	_, err = anon.Initialize(ctx, mcp.InitializeRequest{})
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	full := connectWith(fullKey)
 	_, err = full.Initialize(ctx, mcp.InitializeRequest{})
@@ -147,9 +147,10 @@ func TestMCPToolsUseAPIAuth(t *testing.T) {
 func TestInProcessTransportKeepsPath(t *testing.T) {
 	var seen string
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { seen = r.URL.Path })
-	req := httptest.NewRequest("POST", inProcessBaseURL+"/StencilBox.clientapi.v1.StencilBoxApiService/GetStatus", nil)
-	_, err := inProcessTransport{handler: h}.RoundTrip(req)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, inProcessBaseURL+"/StencilBox.clientapi.v1.StencilBoxApiService/GetStatus", nil)
+	res, err := inProcessTransport{handler: h}.RoundTrip(req)
 	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
 	assert.Equal(t, "/api/StencilBox.clientapi.v1.StencilBoxApiService/GetStatus", seen)
 }
 

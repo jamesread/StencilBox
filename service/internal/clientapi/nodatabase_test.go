@@ -43,7 +43,7 @@ func TestNoDatabaseLocalhostOnly(t *testing.T) {
 	_, err = c.ListApiKeys(ctx, connect.NewRequest(&pb.ListApiKeysRequest{}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	_, err = c.GetUser(ctx, connect.NewRequest(&pb.GetUserRequest{UserId: 1}))
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// Through a proxy on the same host the request is not trusted as local.
 	proxied := connect.NewRequest(&pb.GetBuildConfigsRequest{})

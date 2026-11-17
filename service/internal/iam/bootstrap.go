@@ -26,20 +26,58 @@ func Bootstrap(ctx context.Context, st store.Store) error {
 	if err != nil {
 		return err
 	}
-	if os.Getenv("STENCILBOX_RESET_ADMIN_PASSWORD") != "" {
-		if err := resetAdminPassword(ctx, st); err != nil {
-			return err
-		}
+	if err = resetAdminPasswordIfRequested(ctx, st); err != nil {
+		return err
 	}
 	// Puts the first user in Administrators, and users with no groups in Everyone.
-	if err := st.EnsureRBACBootstrap(ctx); err != nil {
+	if err = st.EnsureRBACBootstrap(ctx); err != nil {
 		return fmt.Errorf("rbac bootstrap: %w", err)
 	}
-	if adminID > 0 {
-		// The admin is in Administrators by now, so the bootstrap skipped Everyone.
-		if err := st.EnsureUserInEveryoneGroup(ctx, adminID); err != nil {
-			return fmt.Errorf("add default admin to Everyone: %w", err)
-		}
+	return ensureAdminInEveryone(ctx, st, adminID)
+}
+
+func resetAdminPasswordIfRequested(ctx context.Context, st store.Store) error {
+	if os.Getenv("STENCILBOX_RESET_ADMIN_PASSWORD") == "" {
+		return nil
+	}
+	return resetAdminPassword(ctx, st)
+}
+
+func resetAdminPassword(ctx context.Context, st store.Store) error {
+	user, err := st.GetUserByUsername(ctx, DefaultAdminUsername)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		log.Warnf("STENCILBOX_RESET_ADMIN_PASSWORD is set, but there is no %q user", DefaultAdminUsername)
+		return nil
+	}
+	if err = setDefaultAdminPassword(ctx, st, user.ID); err != nil {
+		return err
+	}
+	log.Warnf("STENCILBOX_RESET_ADMIN_PASSWORD is set: %q password reset to %q and added to Administrators. Unset it and restart.", DefaultAdminUsername, DefaultAdminPassword)
+	return nil
+}
+
+func setDefaultAdminPassword(ctx context.Context, st store.Store, userID int) error {
+	hash, err := armpassword.Hash(DefaultAdminPassword)
+	if err != nil {
+		return err
+	}
+	if err = st.UpdateUserPassword(ctx, userID, hash); err != nil {
+		return fmt.Errorf("reset admin password: %w", err)
+	}
+	return st.EnsureUserInGroup(ctx, userID, "Administrators")
+}
+
+// ensureAdminInEveryone adds a newly created default admin to Everyone: it is in Administrators
+// by now, so the bootstrap skipped Everyone. An adminID of 0 means no admin was created.
+func ensureAdminInEveryone(ctx context.Context, st store.Store, adminID int) error {
+	if adminID <= 0 {
+		return nil
+	}
+	if err := st.EnsureUserInEveryoneGroup(ctx, adminID); err != nil {
+		return fmt.Errorf("add default admin to Everyone: %w", err)
 	}
 	return nil
 }
@@ -64,29 +102,6 @@ func ensureDefaultAdmin(ctx context.Context, st store.Store) (int, error) {
 	}
 	log.Warnf("No users found: created %q with password %q. Log in and change it now.", DefaultAdminUsername, DefaultAdminPassword)
 	return id, nil
-}
-
-func resetAdminPassword(ctx context.Context, st store.Store) error {
-	user, err := st.GetUserByUsername(ctx, DefaultAdminUsername)
-	if err != nil {
-		return err
-	}
-	if user == nil {
-		log.Warnf("STENCILBOX_RESET_ADMIN_PASSWORD is set, but there is no %q user", DefaultAdminUsername)
-		return nil
-	}
-	hash, err := armpassword.Hash(DefaultAdminPassword)
-	if err != nil {
-		return err
-	}
-	if err := st.UpdateUserPassword(ctx, user.ID, hash); err != nil {
-		return fmt.Errorf("reset admin password: %w", err)
-	}
-	if err := st.EnsureUserInGroup(ctx, user.ID, "Administrators"); err != nil {
-		return err
-	}
-	log.Warnf("STENCILBOX_RESET_ADMIN_PASSWORD is set: %q password reset to %q and added to Administrators. Unset it and restart.", DefaultAdminUsername, DefaultAdminPassword)
-	return nil
 }
 
 // UsesDefaultAdminPassword reports whether the default admin still has the default password.

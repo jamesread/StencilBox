@@ -30,17 +30,22 @@ func writeErr(op string, err error) error {
 // file watcher for any new data files.
 func (c *ClientApi) reloadBuildConfigs() {
 	c.buildConfigs = buildconfigs.ReadConfigFiles()
-	if c.dataWatcher != nil {
-		if err := c.dataWatcher.UpdateBuildConfigs(c.buildConfigs); err != nil {
-			log.WithError(err).Warn("Re-arming the data file watcher")
-		}
-	}
+	c.rearmWatcher()
 }
 
+// rearmWatcher points the data file watcher at the current build configs.
+func (c *ClientApi) rearmWatcher() {
+	if c.dataWatcher == nil {
+		return
+	}
+	if err := c.dataWatcher.UpdateBuildConfigs(c.buildConfigs); err != nil {
+		log.WithError(err).Warn("Re-arming the data file watcher")
+	}
+}
 func (c *ClientApi) CreateBuildConfig(ctx context.Context, req *connect.Request[pb.CreateBuildConfigRequest]) (*connect.Response[pb.CreateBuildConfigResponse], error) {
 	template := req.Msg.GetTemplate()
-	if _, ok := readTemplates()[template]; !ok || template == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("template %q not found", template))
+	if err := validateTemplateName(template); err != nil {
+		return nil, err
 	}
 
 	dir, err := buildconfigs.GetConfigDir()
@@ -71,54 +76,75 @@ func (c *ClientApi) CreateBuildConfig(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&pb.CreateBuildConfigResponse{BuildConfig: created.Msg.GetBuildConfig()}), nil
 }
 
+func validateTemplateName(template string) error {
+	if _, ok := readTemplates()[template]; !ok || template == "" {
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("template %q not found", template))
+	}
+	return nil
+}
 func (c *ClientApi) CreateDataFile(ctx context.Context, req *connect.Request[pb.CreateDataFileRequest]) (*connect.Response[pb.CreateDataFileResponse], error) {
 	name := req.Msg.GetDatafileName()
 	if err := buildconfigs.ValidateDatafileName(name); err != nil {
 		return nil, writeErr("create data file", err)
 	}
-	content := []byte(req.Msg.GetContent())
-	if len(content) > maxDataFileSize {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("data file is larger than %d bytes", maxDataFileSize))
-	}
-	var parsed any
-	if err := yaml.Unmarshal(content, &parsed); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("content is not valid YAML: %w", err))
+	content, err := parseDataFileContent(req.Msg.GetContent())
+	if err != nil {
+		return nil, err
 	}
 
 	c.dataFilesMu.Lock()
 	defer c.dataFilesMu.Unlock()
 
-	bc, found := c.buildConfigs[req.Msg.GetBuildConfigName()]
-	if !found {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.GetBuildConfigName()))
-	}
-	if _, taken := bc.Datafiles[name]; taken {
-		return nil, connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("build config %s already has a data file called %s", bc.Name, name))
-	}
-
-	rel := req.Msg.GetPath()
-	if rel == "" {
-		rel = "data/" + buildconfigs.Slug(bc.Name) + "-" + buildconfigs.Slug(name) + ".yaml"
-	}
-	dir := filepath.Dir(bc.Path)
-	rel, abs, err := buildconfigs.ResolveDatafilePath(dir, rel)
-	if err != nil {
-		return nil, writeErr("create data file", err)
-	}
-
-	created, err := writeNewDataFile(abs, rel, content)
+	bc, rel, abs, err := c.planDataFile(req.Msg, name)
 	if err != nil {
 		return nil, err
 	}
-	if err := buildconfigs.AddDatafile(bc.Path, name, rel); err != nil {
-		if created {
-			_ = os.Remove(abs)
-		}
-		return nil, writeErr("add data file to build config", err)
+	if err = writeAndRegisterDataFile(bc, name, rel, abs, content); err != nil {
+		return nil, err
 	}
 	log.WithFields(log.Fields{"buildConfig": bc.Name, "datafile": name, "path": abs, "user": actorName(ctx)}).Info("Data file added")
 
 	c.reloadBuildConfigs()
+	return c.createDataFileResponse(abs)
+}
+
+// planDataFile checks the build config can take the data file, and resolves where it goes.
+func (c *ClientApi) planDataFile(msg *pb.CreateDataFileRequest, name string) (*buildconfigs.BuildConfig, string, string, error) {
+	bc, found := c.buildConfigs[msg.GetBuildConfigName()]
+	if !found {
+		return nil, "", "", connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", msg.GetBuildConfigName()))
+	}
+	if _, taken := bc.Datafiles[name]; taken {
+		return nil, "", "", connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("build config %s already has a data file called %s", bc.Name, name))
+	}
+	rel := msg.GetPath()
+	if rel == "" {
+		rel = "data/" + buildconfigs.Slug(bc.Name) + "-" + buildconfigs.Slug(name) + ".yaml"
+	}
+	rel, abs, err := buildconfigs.ResolveDatafilePath(filepath.Dir(bc.Path), rel)
+	if err != nil {
+		return nil, "", "", writeErr("create data file", err)
+	}
+	return bc, rel, abs, nil
+}
+
+// writeAndRegisterDataFile writes the data file and names it in the build config, removing a
+// file it created if the build config could not be updated.
+func writeAndRegisterDataFile(bc *buildconfigs.BuildConfig, name, rel, abs string, content []byte) error {
+	created, err := writeNewDataFile(abs, rel, content)
+	if err != nil {
+		return err
+	}
+	if err = buildconfigs.AddDatafile(bc.Path, name, rel); err != nil {
+		if created {
+			_ = os.Remove(abs)
+		}
+		return writeErr("add data file to build config", err)
+	}
+	return nil
+}
+
+func (c *ClientApi) createDataFileResponse(abs string) (*connect.Response[pb.CreateDataFileResponse], error) {
 	onDisk, err := os.ReadFile(abs)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to read the data file back"))
@@ -130,28 +156,50 @@ func (c *ClientApi) CreateDataFile(ctx context.Context, req *connect.Request[pb.
 	}), nil
 }
 
+// parseDataFileContent checks data file content is small enough and valid YAML.
+func parseDataFileContent(text string) ([]byte, error) {
+	content := []byte(text)
+	if len(content) > maxDataFileSize {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("data file is larger than %d bytes", maxDataFileSize))
+	}
+	var parsed any
+	if err := yaml.Unmarshal(content, &parsed); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("content is not valid YAML: %w", err))
+	}
+	return content, nil
+}
+
 // writeNewDataFile writes content to a new data file, or, when content is empty, checks an
 // existing file can be reused. It reports whether it created the file.
 func writeNewDataFile(abs, rel string, content []byte) (bool, error) {
 	_, statErr := os.Stat(abs)
-	exists := statErr == nil
-	switch {
-	case exists && len(content) > 0:
-		return false, connect.NewError(connect.CodeAlreadyExists,
-			fmt.Errorf("%s already exists; leave the content empty to use it, or choose another path", rel))
-	case exists:
-		return false, nil
-	case len(content) == 0:
-		return false, connect.NewError(connect.CodeInvalidArgument,
-			fmt.Errorf("%s does not exist yet, so give it some content", rel))
+	reuse, err := checkDataFileTarget(statErr == nil, len(content) > 0, rel)
+	if err != nil || reuse {
+		return false, err
 	}
-	if err := os.MkdirAll(filepath.Dir(abs), 0o750); err != nil {
+	if err = os.MkdirAll(filepath.Dir(abs), 0o750); err != nil {
 		return false, writeErr("create data directory", err)
 	}
-	if err := buildconfigs.WriteFileAtomic(abs, content); err != nil {
+	if err = buildconfigs.WriteFileAtomic(abs, content); err != nil {
 		return false, writeErr("write data file", err)
 	}
 	return true, nil
+}
+
+// checkDataFileTarget decides whether an existing file is reused, refused, or (when it does not
+// exist) may be created.
+func checkDataFileTarget(exists, hasContent bool, rel string) (bool, error) {
+	switch {
+	case exists && hasContent:
+		return false, connect.NewError(connect.CodeAlreadyExists,
+			fmt.Errorf("%s already exists; leave the content empty to use it, or choose another path", rel))
+	case exists:
+		return true, nil
+	case !hasContent:
+		return false, connect.NewError(connect.CodeInvalidArgument,
+			fmt.Errorf("%s does not exist yet, so give it some content", rel))
+	}
+	return false, nil
 }
 
 func actorName(ctx context.Context) string {

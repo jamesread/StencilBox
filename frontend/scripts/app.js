@@ -30,24 +30,3 @@ function createApiClient() {
 
 	window.client = createClient(StencilBoxApiService, window.transport)
 }
-
-
-function onBuildStarted(response) {
-}
-
-function showBigError(message) {
-  console.error('Big error:', message);
-
-  let el = document.createElement('dialog');
-  el.classList.add('critical')
-  el.innerHTML = `
-    <h2>Critical Error</h2>
-    <p>${message}</p>
-    <form method="dialog">
-    <button type = "close">Close</button>
-    </form>
-  `;
-
-  document.body.appendChild(el);
-  el.showModal()
-}

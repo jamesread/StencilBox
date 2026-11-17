@@ -57,8 +57,8 @@ func TestCreateBuildConfigAndDataFile(t *testing.T) {
 	assert.Equal(t, "team-links.yaml", got.Msg.GetBuildConfig().GetFilename())
 
 	addData := func(m *pb.CreateDataFileRequest) error {
-		_, err := admin.CreateDataFile(ctx, connect.NewRequest(m))
-		return err
+		_, addErr := admin.CreateDataFile(ctx, connect.NewRequest(m))
+		return addErr
 	}
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(addData(&pb.CreateDataFileRequest{
 		BuildConfigName: "Team Links", DatafileName: "links", Path: "../../evil.yaml", Content: "a: 1",

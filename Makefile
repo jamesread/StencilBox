@@ -23,6 +23,9 @@ lint:
 integration-test:
 	$(MAKE) -wC integration-tests
 
+screenshots:
+	$(MAKE) -wC var/marketing/screenshots
+
 docs:
 	$(MAKE) -wC docs
 	./docs/node_modules/.bin/antora antora-playbook.yml
@@ -39,4 +42,4 @@ gomplate:
 sbom:
 	syft . -o spdx-json=sbom.spdx.json
 
-.PHONY: default service frontend docs gomplate protocol test lint integration-test sbom
+.PHONY: default service frontend docs gomplate protocol test lint integration-test screenshots sbom

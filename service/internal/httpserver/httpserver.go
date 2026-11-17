@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"database/sql"
+	"fmt"
 
 	clientapiconnect "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1/clientapi_pbconnect"
 	"github.com/jamesread/StencilBox/internal/clientapi"
@@ -218,6 +219,14 @@ func setupAuth(db *sql.DB, appConfig *config.Config) (iam.Authenticator, *iam.Au
 }
 
 func Start() {
+	if err := run(); err != nil {
+		log.Fatalf("%v", err)
+	}
+}
+
+// run serves until a termination signal arrives, or returns the error that stopped the server.
+// It returns rather than exiting, so its deferred cleanup runs.
+func run() error {
 	appConfig := config.LoadConfig()
 	db := openDatabase(context.Background(), appConfig)
 	if db != nil {
@@ -262,12 +271,14 @@ func Start() {
 
 	select {
 	case err := <-serveErr:
-		log.Fatalf("HTTP server failed: %v", err)
+		return fmt.Errorf("HTTP server failed: %w", err)
 	case <-ctx.Done():
 	}
 
 	stop()
 	shutdown(srv, apiServer)
+
+	return nil
 }
 
 // shutdownGracePeriod is how long in-progress builds get to finish after SIGTERM. It is below

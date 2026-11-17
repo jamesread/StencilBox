@@ -20,16 +20,16 @@ type BuildConfig struct {
 	ErrorMessage string
 	Template     string
 
+	//  Internal
+	Path string
+
 	Datafiles map[string]string
+
+	OnStartup *bool
 
 	Repos []GitRepo
 
 	PostProcessors []string
-
-	OnStartup *bool
-
-	//  Internal
-	Path string
 }
 
 // BuildOnStartup reports whether this config should be built when StencilBox starts.
@@ -86,35 +86,9 @@ func GitPull() error {
 		return os.ErrNotExist
 	}
 
-	// Get the remote URL from git config
-	gitConfigPath := filepath.Join(dir, ".git", "config")
-	configData, err := os.ReadFile(gitConfigPath)
+	remoteURL, err := readOriginURL(dir)
 	if err != nil {
 		return err
-	}
-
-	// Parse the config to find the remote URL
-	remoteURL := ""
-	lines := strings.Split(string(configData), "\n")
-	for i, line := range lines {
-		if strings.HasPrefix(line, "[remote \"origin\"]") {
-			// Look for the url line in the next few lines
-			for j := i + 1; j < len(lines) && j < i+10; j++ {
-				if strings.HasPrefix(lines[j], "\turl = ") {
-					remoteURL = strings.TrimPrefix(lines[j], "\turl = ")
-					break
-				}
-				if strings.HasPrefix(lines[j], "[") {
-					// We've hit the next section
-					break
-				}
-			}
-			break
-		}
-	}
-
-	if remoteURL == "" {
-		return os.ErrNotExist
 	}
 
 	// Use git.CloneOrPull to pull the latest changes
@@ -125,14 +99,61 @@ func GitPull() error {
 		Log:      true,
 	}
 
-	res := git.CloneOrPull(req)
-	if res.WasCloned {
-		log.Infof("Cloned repo %s to %s", remoteURL, dir)
-	} else {
-		log.Infof("Pulled repo %s in %s", remoteURL, dir)
-	}
+	logPullResult(git.CloneOrPull(req), remoteURL, dir)
 
 	return nil
+}
+
+func logPullResult(res *git.CloneOrPullResult, remoteURL, dir string) {
+	if res.WasCloned {
+		log.Infof("Cloned repo %s to %s", remoteURL, dir)
+		return
+	}
+
+	log.Infof("Pulled repo %s in %s", remoteURL, dir)
+}
+
+// readOriginURL reads the origin remote URL from the git config in dir.
+// It returns os.ErrNotExist when there is no origin URL.
+func readOriginURL(dir string) (string, error) {
+	configData, err := os.ReadFile(filepath.Join(dir, ".git", "config"))
+	if err != nil {
+		return "", err
+	}
+
+	remoteURL := parseOriginURL(string(configData))
+	if remoteURL == "" {
+		return "", os.ErrNotExist
+	}
+
+	return remoteURL, nil
+}
+
+func parseOriginURL(gitConfig string) string {
+	lines := strings.Split(gitConfig, "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(line, "[remote \"origin\"]") {
+			// Look for the url line in the next few lines
+			return findURLInSection(lines[i+1 : min(len(lines), i+10)])
+		}
+	}
+
+	return ""
+}
+
+func findURLInSection(lines []string) string {
+	for _, line := range lines {
+		if url, ok := strings.CutPrefix(line, "\turl = "); ok {
+			return url
+		}
+
+		if strings.HasPrefix(line, "[") {
+			// We've hit the next section
+			return ""
+		}
+	}
+
+	return ""
 }
 
 func ReadConfigFiles() map[string]*BuildConfig {
@@ -152,30 +173,41 @@ func ReadConfigFiles() map[string]*BuildConfig {
 	}
 
 	for _, file := range files {
-		bc := readBuildConfig(file)
-
-		if bc == nil {
-			log.Warnf("Failed to read build config from file: %s", file)
-			continue
+		if bc := loadBuildConfig(file); bc != nil {
+			addUniqueConfig(ret, bc)
 		}
-
-		bc.Filename = filepath.Base(file)
-		bc.Path = file
-
-		if strings.TrimSpace(bc.Name) == "" {
-			bc.Name = strings.TrimSuffix(bc.Filename, filepath.Ext(bc.Filename))
-			log.Warnf("Build config %s has no name, using %q", file, bc.Name)
-		}
-
-		if existing, dup := ret[bc.Name]; dup {
-			log.Warnf("Build config name %q in %s duplicates %s, renaming to %q", bc.Name, bc.Filename, existing.Filename, bc.Filename)
-			bc.Name = bc.Filename
-		}
-
-		ret[bc.Name] = bc
 	}
 
 	return ret
+}
+
+// loadBuildConfig reads a build config file and fills in its internal fields.
+func loadBuildConfig(file string) *BuildConfig {
+	bc := readBuildConfig(file)
+
+	if bc == nil {
+		log.Warnf("Failed to read build config from file: %s", file)
+		return nil
+	}
+
+	bc.Filename = filepath.Base(file)
+	bc.Path = file
+
+	if strings.TrimSpace(bc.Name) == "" {
+		bc.Name = strings.TrimSuffix(bc.Filename, filepath.Ext(bc.Filename))
+		log.Warnf("Build config %s has no name, using %q", file, bc.Name)
+	}
+
+	return bc
+}
+
+func addUniqueConfig(configs map[string]*BuildConfig, bc *BuildConfig) {
+	if existing, dup := configs[bc.Name]; dup {
+		log.Warnf("Build config name %q in %s duplicates %s, renaming to %q", bc.Name, bc.Filename, existing.Filename, bc.Filename)
+		bc.Name = bc.Filename
+	}
+
+	configs[bc.Name] = bc
 }
 
 func readBuildConfig(file string) *BuildConfig {

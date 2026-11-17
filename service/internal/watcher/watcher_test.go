@@ -1,7 +1,6 @@
 package watcher
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -43,17 +42,17 @@ func TestWatcherWithDataFiles(t *testing.T) {
 
 	// Create test data files
 	dataDir := filepath.Join(tmpDir, "data")
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err = os.MkdirAll(dataDir, 0755); err != nil {
 		t.Fatalf("Failed to create data dir: %v", err)
 	}
 
 	dataFile1 := filepath.Join(dataDir, "test1.yml")
 	dataFile2 := filepath.Join(dataDir, "test2.yml")
 
-	if err := os.WriteFile(dataFile1, []byte("key: value1\n"), 0644); err != nil {
+	if err = os.WriteFile(dataFile1, []byte("key: value1\n"), 0644); err != nil {
 		t.Fatalf("Failed to write data file: %v", err)
 	}
-	if err := os.WriteFile(dataFile2, []byte("key: value2\n"), 0644); err != nil {
+	if err = os.WriteFile(dataFile2, []byte("key: value2\n"), 0644); err != nil {
 		t.Fatalf("Failed to write data file: %v", err)
 	}
 
@@ -84,8 +83,7 @@ func TestWatcherWithDataFiles(t *testing.T) {
 	}
 	defer watcher.Stop()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	err = watcher.Start(ctx)
 	if err != nil {
@@ -127,7 +125,7 @@ func TestWatcherDebounce(t *testing.T) {
 
 	// Create test data file
 	dataFile := filepath.Join(tmpDir, "test.yml")
-	if err := os.WriteFile(dataFile, []byte("key: value\n"), 0644); err != nil {
+	if err = os.WriteFile(dataFile, []byte("key: value\n"), 0644); err != nil {
 		t.Fatalf("Failed to write data file: %v", err)
 	}
 
@@ -159,8 +157,7 @@ func TestWatcherDebounce(t *testing.T) {
 	}
 	defer watcher.Stop()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	err = watcher.Start(ctx)
 	if err != nil {
@@ -171,7 +168,7 @@ func TestWatcherDebounce(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Modify file multiple times rapidly
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		if err := os.WriteFile(dataFile, []byte("key: value"+string(rune(i))+"\n"), 0644); err != nil {
 			t.Fatalf("Failed to write data file: %v", err)
 		}
@@ -218,7 +215,7 @@ func TestUpdateBuildConfigs(t *testing.T) {
 
 	// Create initial data file
 	dataFile1 := filepath.Join(tmpDir, "test1.yml")
-	if err := os.WriteFile(dataFile1, []byte("key: value1\n"), 0644); err != nil {
+	if err = os.WriteFile(dataFile1, []byte("key: value1\n"), 0644); err != nil {
 		t.Fatalf("Failed to write data file: %v", err)
 	}
 
@@ -242,8 +239,7 @@ func TestUpdateBuildConfigs(t *testing.T) {
 	}
 	defer watcher.Stop()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	err = watcher.Start(ctx)
 	if err != nil {
@@ -258,7 +254,7 @@ func TestUpdateBuildConfigs(t *testing.T) {
 
 	// Create new data file and update configs
 	dataFile2 := filepath.Join(tmpDir, "test2.yml")
-	if err := os.WriteFile(dataFile2, []byte("key: value2\n"), 0644); err != nil {
+	if err = os.WriteFile(dataFile2, []byte("key: value2\n"), 0644); err != nil {
 		t.Fatalf("Failed to write data file: %v", err)
 	}
 
@@ -296,7 +292,7 @@ func TestMultipleConfigsSameFile(t *testing.T) {
 
 	// Create shared data file
 	dataFile := filepath.Join(tmpDir, "shared.yml")
-	if err := os.WriteFile(dataFile, []byte("key: value\n"), 0644); err != nil {
+	if err = os.WriteFile(dataFile, []byte("key: value\n"), 0644); err != nil {
 		t.Fatalf("Failed to write data file: %v", err)
 	}
 
@@ -340,8 +336,7 @@ func TestMultipleConfigsSameFile(t *testing.T) {
 	}
 	defer watcher.Stop()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	err = watcher.Start(ctx)
 	if err != nil {

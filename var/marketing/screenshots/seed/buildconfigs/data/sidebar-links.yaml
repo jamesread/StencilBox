@@ -1,0 +1,16 @@
+title: Example apps
+
+links:
+  # Paths under buildconfigs/repos/ are symlinked into the Vite build tree.
+  - icon: repos/demo-icons/forge.png
+    title: Code forge
+    url: https://forge.example.com
+  - icon: repos/demo-icons/docs.png
+    title: Docs
+    url: https://docs.example.com
+  - icon: repos/demo-icons/status.png
+    title: Status
+    url: https://status.example.com
+  - icon: repos/demo-icons/chat.png
+    title: Chat
+    url: https://chat.example.org

@@ -105,31 +105,107 @@ func passwordProblem(password string) string {
 	return ""
 }
 
+func invalidArg(msg string) error {
+	return connect.NewError(connect.CodeInvalidArgument, errors.New(msg))
+}
+
+func notFoundErr(msg string) error {
+	return connect.NewError(connect.CodeNotFound, errors.New(msg))
+}
+
+// requireName trims a required name field.
+func requireName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", invalidArg("name is required")
+	}
+	return name, nil
+}
+
+// orInternal turns a failed or empty lookup into an internal error for op.
+func orInternal[T any](v *T, err error, op string) (*T, error) {
+	if err != nil || v == nil {
+		return nil, internalErr(op, err)
+	}
+	return v, nil
+}
+
+// iamAuthed returns the IAM store and the signed-in user.
+func (c *ClientApi) iamAuthed(ctx context.Context) (store.Store, *armlayer.AuthenticatedUser, error) {
+	st, err := c.iamStore()
+	if err != nil {
+		return nil, nil, err
+	}
+	au := authUser(ctx)
+	if au == nil || au.User.ID <= 0 {
+		return nil, nil, errAuthRequired
+	}
+	return st, au, nil
+}
+
+// iamWithID returns the IAM store and a validated identifier.
+func (c *ClientApi) iamWithID(field string, id int32) (store.Store, int, error) {
+	st, err := c.iamStore()
+	if err != nil {
+		return nil, 0, err
+	}
+	n, err := requireID(field, id)
+	if err != nil {
+		return nil, 0, err
+	}
+	return st, n, nil
+}
+
+// iamWithGroup returns the IAM store and the id of an existing group.
+func (c *ClientApi) iamWithGroup(ctx context.Context, id int32) (store.Store, int, error) {
+	st, err := c.iamStore()
+	if err != nil {
+		return nil, 0, err
+	}
+	gid, err := c.requireGroup(ctx, st, id)
+	if err != nil {
+		return nil, 0, err
+	}
+	return st, gid, nil
+}
+
 // rbacPermissionNames returns the user's effective permissions, sorted. A superuser gets the
 // whole catalog.
 func (c *ClientApi) rbacPermissionNames(ctx context.Context, au *armlayer.AuthenticatedUser) []string {
-	names := []string{}
 	if au == nil || au.RBAC == nil {
-		return names
+		return []string{}
 	}
+	var names []string
 	if au.RBAC.IsSuperuser && c.auth != nil {
-		perms, err := c.auth.Store.ListRBACPermissions(ctx)
-		if err == nil {
-			for _, p := range perms {
-				names = append(names, p.Name)
-			}
-		}
+		names = c.catalogPermissionNames(ctx)
 	} else {
-		for name, ok := range au.RBAC.Permissions {
-			if ok {
-				names = append(names, name)
-			}
-		}
+		names = grantedPermissionNames(au.RBAC.Permissions)
 	}
 	sort.Strings(names)
 	return names
 }
 
+func (c *ClientApi) catalogPermissionNames(ctx context.Context) []string {
+	names := []string{}
+	perms, err := c.auth.Store.ListRBACPermissions(ctx)
+	if err != nil {
+		return names
+	}
+	for _, p := range perms {
+		names = append(names, p.Name)
+	}
+	return names
+}
+
+func grantedPermissionNames(permissions map[string]bool) []string {
+	names := []string{}
+	for name, ok := range permissions {
+		if ok {
+			names = append(names, name)
+		}
+	}
+	return names
+}
 func (c *ClientApi) refreshDefaultAdminPassword(ctx context.Context) {
 	if c.auth == nil {
 		return
@@ -152,29 +228,16 @@ func (c *ClientApi) LoginWithUsernameAndPassword(ctx context.Context, req *conne
 	if err != nil {
 		return nil, err
 	}
-	username := strings.TrimSpace(req.Msg.GetUsername())
-	password := req.Msg.GetPassword()
-	fail := connect.NewResponse(&pb.LoginWithUsernameAndPasswordResponse{Success: false, Message: loginFailedMessage})
-	if username == "" || password == "" {
-		return fail, nil
-	}
-
-	user, err := st.GetUserByUsername(ctx, username)
+	user, err := authenticate(ctx, st, strings.TrimSpace(req.Msg.GetUsername()), req.Msg.GetPassword())
 	if err != nil {
-		return nil, internalErr("login", err)
+		return nil, err
 	}
-	hash := dummyHash()
-	if user != nil && user.PasswordHash != "" {
-		hash = user.PasswordHash
-	}
-	ok, err := armpassword.Verify(hash, password)
-	if err != nil || !ok || user == nil || user.PasswordHash == "" {
-		log.WithField("username", username).Info("Login failed")
-		return fail, nil
+	if user == nil {
+		return connect.NewResponse(&pb.LoginWithUsernameAndPasswordResponse{Success: false, Message: loginFailedMessage}), nil
 	}
 
 	sid := uuid.NewString()
-	if err := st.CreateSession(ctx, sid, user.ID, nil); err != nil {
+	if err = st.CreateSession(ctx, sid, user.ID, nil); err != nil {
 		return nil, internalErr("create session", err)
 	}
 	log.WithField("username", user.Username).Info("Login succeeded")
@@ -185,6 +248,40 @@ func (c *ClientApi) LoginWithUsernameAndPassword(ctx context.Context, req *conne
 	return res, nil
 }
 
+// authenticate returns the user when the credentials are right, and nil when they are not.
+func authenticate(ctx context.Context, st store.Store, username, password string) (*store.UserAccountRow, error) {
+	if username == "" || password == "" {
+		return nil, nil
+	}
+	user, err := st.GetUserByUsername(ctx, username)
+	if err != nil {
+		return nil, internalErr("login", err)
+	}
+	if !credentialsValid(user, password) {
+		log.WithField("username", username).Info("Login failed")
+		return nil, nil
+	}
+	return user, nil
+}
+
+// credentialsValid always verifies a hash (a dummy one for unknown users), so timing does not
+// reveal which usernames exist.
+func credentialsValid(user *store.UserAccountRow, password string) bool {
+	matches := passwordMatches(loginHash(user), password)
+	return matches && user != nil && user.PasswordHash != ""
+}
+
+func loginHash(user *store.UserAccountRow) string {
+	if user != nil && user.PasswordHash != "" {
+		return user.PasswordHash
+	}
+	return dummyHash()
+}
+
+func passwordMatches(hash, password string) bool {
+	ok, err := armpassword.Verify(hash, password)
+	return err == nil && ok
+}
 func (c *ClientApi) Logout(ctx context.Context, req *connect.Request[pb.LogoutRequest]) (*connect.Response[pb.LogoutResponse], error) {
 	st, err := c.iamStore()
 	if err != nil {
@@ -202,40 +299,50 @@ func (c *ClientApi) Logout(ctx context.Context, req *connect.Request[pb.LogoutRe
 }
 
 func (c *ClientApi) ChangePassword(ctx context.Context, req *connect.Request[pb.ChangePasswordRequest]) (*connect.Response[pb.ChangePasswordResponse], error) {
-	st, err := c.iamStore()
+	st, au, err := c.iamAuthed(ctx)
 	if err != nil {
 		return nil, err
 	}
-	au := authUser(ctx)
-	if au == nil || au.User.ID <= 0 {
-		return nil, errAuthRequired
-	}
-	reply := func(success bool, msg string) (*connect.Response[pb.ChangePasswordResponse], error) {
-		return connect.NewResponse(&pb.ChangePasswordResponse{Success: success, Message: msg}), nil
-	}
-	if problem := passwordProblem(req.Msg.GetNewPassword()); problem != "" {
-		return reply(false, problem)
-	}
-	user, err := st.GetUserByID(ctx, au.User.ID)
-	if err != nil || user == nil {
-		return nil, internalErr("load user", err)
-	}
-	// Accounts without a password (SSO, API key only) may set a first one.
-	if user.PasswordHash != "" {
-		ok, err := armpassword.Verify(user.PasswordHash, req.Msg.GetCurrentPassword())
-		if err != nil || !ok {
-			return reply(false, "current password is incorrect")
-		}
-	}
-	hash, err := armpassword.Hash(req.Msg.GetNewPassword())
+	problem, err := changePassword(ctx, st, au.User.ID, req.Msg.GetCurrentPassword(), req.Msg.GetNewPassword())
 	if err != nil {
-		return nil, internalErr("hash password", err)
+		return nil, err
 	}
-	if err := st.UpdateUserPassword(ctx, user.ID, hash); err != nil {
-		return nil, internalErr("update password", err)
+	if problem != "" {
+		return changePasswordReply(false, problem), nil
 	}
 	c.refreshDefaultAdminPassword(ctx)
-	return reply(true, "Password changed")
+	return changePasswordReply(true, "Password changed"), nil
+}
+
+func changePasswordReply(success bool, msg string) *connect.Response[pb.ChangePasswordResponse] {
+	return connect.NewResponse(&pb.ChangePasswordResponse{Success: success, Message: msg})
+}
+
+// changePassword returns a message for the user when the change is refused, and an error when it fails.
+func changePassword(ctx context.Context, st store.Store, userID int, current, newPassword string) (string, error) {
+	if problem := passwordProblem(newPassword); problem != "" {
+		return problem, nil
+	}
+	user, err := st.GetUserByID(ctx, userID)
+	if user, err = orInternal(user, err, "load user"); err != nil {
+		return "", err
+	}
+	// Accounts without a password (SSO, API key only) may set a first one.
+	if user.PasswordHash != "" && !passwordMatches(user.PasswordHash, current) {
+		return "current password is incorrect", nil
+	}
+	return "", setPassword(ctx, st, user.ID, newPassword)
+}
+
+func setPassword(ctx context.Context, st store.Store, userID int, newPassword string) error {
+	hash, err := armpassword.Hash(newPassword)
+	if err != nil {
+		return internalErr("hash password", err)
+	}
+	if err = st.UpdateUserPassword(ctx, userID, hash); err != nil {
+		return internalErr("update password", err)
+	}
+	return nil
 }
 
 // ---- Users ----
@@ -267,84 +374,113 @@ func (c *ClientApi) GetUsers(ctx context.Context, _ *connect.Request[pb.GetUsers
 }
 
 func (c *ClientApi) GetUser(ctx context.Context, req *connect.Request[pb.GetUserRequest]) (*connect.Response[pb.GetUserResponse], error) {
-	st, err := c.iamStore()
+	st, id, err := c.iamWithID("user_id", req.Msg.GetUserId())
 	if err != nil {
 		return nil, err
 	}
-	id, err := requireID("user_id", req.Msg.GetUserId())
+	user, err := loadUser(ctx, st, id)
 	if err != nil {
 		return nil, err
 	}
+	return connect.NewResponse(&pb.GetUserResponse{User: iamUserToProto(user)}), nil
+}
+
+func loadUser(ctx context.Context, st store.Store, id int) (*store.UserAccountRow, error) {
 	user, err := st.GetUserByID(ctx, id)
 	if err != nil {
 		return nil, internalErr("get user", err)
 	}
 	if user == nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+		return nil, notFoundErr("user not found")
 	}
-	return connect.NewResponse(&pb.GetUserResponse{User: iamUserToProto(user)}), nil
+	return user, nil
 }
-
 func (c *ClientApi) CreateUser(ctx context.Context, req *connect.Request[pb.CreateUserRequest]) (*connect.Response[pb.CreateUserResponse], error) {
 	st, err := c.iamStore()
 	if err != nil {
 		return nil, err
 	}
-	username := strings.TrimSpace(req.Msg.GetUsername())
-	password := req.Msg.GetPassword()
-	if username == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("username is required"))
-	}
-	if password != "" {
-		if problem := passwordProblem(password); problem != "" {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(problem))
-		}
-	}
-	if existing, _ := st.GetUserByUsername(ctx, username); existing != nil {
-		return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("username already taken"))
-	}
-	hash := ""
-	if password != "" {
-		if hash, err = armpassword.Hash(password); err != nil {
-			return nil, internalErr("hash password", err)
-		}
-	}
-	id, err := st.CreateUserAccount(ctx, username, hash, store.UserCreatedByAdmin)
+	username, hash, err := prepareNewUser(ctx, st, req.Msg)
 	if err != nil {
-		return nil, internalErr("create user", err)
+		return nil, err
 	}
-	if err := st.EnsureUserInEveryoneGroup(ctx, id); err != nil {
-		return nil, internalErr("add user to Everyone", err)
-	}
-	user, err := st.GetUserByID(ctx, id)
-	if err != nil || user == nil {
-		return nil, internalErr("load created user", err)
+	user, err := createUserAccount(ctx, st, username, hash)
+	if err != nil {
+		return nil, err
 	}
 	return connect.NewResponse(&pb.CreateUserResponse{User: iamUserToProto(user)}), nil
 }
 
+// prepareNewUser validates a new user and returns the username and password hash (empty when
+// the user has no password yet).
+func prepareNewUser(ctx context.Context, st store.Store, msg *pb.CreateUserRequest) (string, string, error) {
+	username, err := requireName(msg.GetUsername())
+	if err != nil {
+		return "", "", invalidArg("username is required")
+	}
+	if err = checkNewUserPassword(msg.GetPassword()); err != nil {
+		return "", "", err
+	}
+	if existing, _ := st.GetUserByUsername(ctx, username); existing != nil {
+		return "", "", connect.NewError(connect.CodeAlreadyExists, errors.New("username already taken"))
+	}
+	hash, err := hashOptionalPassword(msg.GetPassword())
+	return username, hash, err
+}
+
+func checkNewUserPassword(password string) error {
+	if password == "" {
+		return nil
+	}
+	if problem := passwordProblem(password); problem != "" {
+		return invalidArg(problem)
+	}
+	return nil
+}
+
+func hashOptionalPassword(password string) (string, error) {
+	if password == "" {
+		return "", nil
+	}
+	hash, err := armpassword.Hash(password)
+	if err != nil {
+		return "", internalErr("hash password", err)
+	}
+	return hash, nil
+}
+
+func createUserAccount(ctx context.Context, st store.Store, username, hash string) (*store.UserAccountRow, error) {
+	id, err := st.CreateUserAccount(ctx, username, hash, store.UserCreatedByAdmin)
+	if err != nil {
+		return nil, internalErr("create user", err)
+	}
+	if err = st.EnsureUserInEveryoneGroup(ctx, id); err != nil {
+		return nil, internalErr("add user to Everyone", err)
+	}
+	user, err := st.GetUserByID(ctx, id)
+	return orInternal(user, err, "load created user")
+}
 func (c *ClientApi) DeleteUser(ctx context.Context, req *connect.Request[pb.DeleteUserRequest]) (*connect.Response[pb.DeleteUserResponse], error) {
-	st, err := c.iamStore()
+	st, id, err := c.iamWithID("user_id", req.Msg.GetUserId())
 	if err != nil {
 		return nil, err
 	}
-	id, err := requireID("user_id", req.Msg.GetUserId())
-	if err != nil {
+	if err = c.checkUserDeletable(ctx, st, id); err != nil {
 		return nil, err
 	}
-	if au := authUser(ctx); au != nil && au.User.ID == id {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("you cannot delete your own account"))
-	}
-	if err := c.refuseRemovingLastSuperuser(ctx, st, id); err != nil {
-		return nil, err
-	}
-	if err := st.DeleteUserAccount(ctx, id); err != nil {
+	if err = st.DeleteUserAccount(ctx, id); err != nil {
 		return nil, internalErr("delete user", err)
 	}
 	c.refreshDefaultAdminPassword(ctx)
 	return connect.NewResponse(&pb.DeleteUserResponse{Success: true}), nil
 }
 
+func (c *ClientApi) checkUserDeletable(ctx context.Context, st store.Store, id int) error {
+	if au := authUser(ctx); au != nil && au.User.ID == id {
+		return invalidArg("you cannot delete your own account")
+	}
+	return c.refuseRemovingLastSuperuser(ctx, st, id)
+}
 func (c *ClientApi) refuseRemovingLastSuperuser(ctx context.Context, st store.Store, userID int) error {
 	rb, err := st.LoadEffectiveRBAC(ctx, userID)
 	if err != nil {
@@ -364,41 +500,40 @@ func (c *ClientApi) refuseRemovingLastSuperuser(ctx context.Context, st store.St
 }
 
 func (c *ClientApi) ResetUserPassword(ctx context.Context, req *connect.Request[pb.ResetUserPasswordRequest]) (*connect.Response[pb.ResetUserPasswordResponse], error) {
-	st, err := c.iamStore()
-	if err != nil {
-		return nil, err
-	}
-	id, err := requireID("user_id", req.Msg.GetUserId())
+	st, id, err := c.iamWithID("user_id", req.Msg.GetUserId())
 	if err != nil {
 		return nil, err
 	}
 	if problem := passwordProblem(req.Msg.GetNewPassword()); problem != "" {
 		return connect.NewResponse(&pb.ResetUserPasswordResponse{Success: false, Message: problem}), nil
 	}
-	user, err := st.GetUserByID(ctx, id)
-	if err != nil {
-		return nil, internalErr("get user", err)
-	}
-	if user == nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
-	}
-	hash, err := armpassword.Hash(req.Msg.GetNewPassword())
-	if err != nil {
-		return nil, internalErr("hash password", err)
-	}
-	if err := st.UpdateUserPassword(ctx, id, hash); err != nil {
-		return nil, internalErr("update password", err)
-	}
-	// Sign the user out everywhere, unless the admin is resetting their own password.
-	if au := authUser(ctx); au == nil || au.User.ID != id {
-		if err := st.DeleteSessionsForUser(ctx, id); err != nil {
-			return nil, internalErr("delete sessions", err)
-		}
+	if err = resetPassword(ctx, st, id, req.Msg.GetNewPassword()); err != nil {
+		return nil, err
 	}
 	c.refreshDefaultAdminPassword(ctx)
 	return connect.NewResponse(&pb.ResetUserPasswordResponse{Success: true, Message: "Password reset"}), nil
 }
 
+func resetPassword(ctx context.Context, st store.Store, id int, newPassword string) error {
+	if _, err := loadUser(ctx, st, id); err != nil {
+		return err
+	}
+	if err := setPassword(ctx, st, id, newPassword); err != nil {
+		return err
+	}
+	return signOutEverywhere(ctx, st, id)
+}
+
+// signOutEverywhere ends the user's sessions, unless the admin is resetting their own password.
+func signOutEverywhere(ctx context.Context, st store.Store, id int) error {
+	if au := authUser(ctx); au != nil && au.User.ID == id {
+		return nil
+	}
+	if err := st.DeleteSessionsForUser(ctx, id); err != nil {
+		return internalErr("delete sessions", err)
+	}
+	return nil
+}
 func auditRowsToProto(rows []store.MyPermissionAuditRow) []*pb.PermissionAuditRow {
 	out := make([]*pb.PermissionAuditRow, 0, len(rows))
 	for _, r := range rows {
@@ -412,16 +547,12 @@ func auditRowsToProto(rows []store.MyPermissionAuditRow) []*pb.PermissionAuditRo
 }
 
 func (c *ClientApi) GetUserAccess(ctx context.Context, req *connect.Request[pb.GetUserAccessRequest]) (*connect.Response[pb.GetUserAccessResponse], error) {
-	st, err := c.iamStore()
-	if err != nil {
-		return nil, err
-	}
-	id, err := requireID("user_id", req.Msg.GetUserId())
+	st, id, err := c.iamWithID("user_id", req.Msg.GetUserId())
 	if err != nil {
 		return nil, err
 	}
 	if user, _ := st.GetUserByID(ctx, id); user == nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+		return nil, notFoundErr("user not found")
 	}
 	groupIDs, err := st.ListUserGroupIDsForUser(ctx, id)
 	if err != nil {
@@ -439,24 +570,29 @@ func (c *ClientApi) GetUserAccess(ctx context.Context, req *connect.Request[pb.G
 		Permissions: auditRowsToProto(rows),
 	}), nil
 }
-
 func (c *ClientApi) SetUserGroups(ctx context.Context, req *connect.Request[pb.SetUserGroupsRequest]) (*connect.Response[pb.SetUserGroupsResponse], error) {
-	if c.auth == nil || c.iamDB == nil {
-		return nil, errIamDisabled
+	if err := c.requireIamDB(); err != nil {
+		return nil, err
 	}
 	id, err := requireID("user_id", req.Msg.GetUserId())
 	if err != nil {
 		return nil, err
 	}
 	if user, _ := c.auth.Store.GetUserByID(ctx, id); user == nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+		return nil, notFoundErr("user not found")
 	}
-	if err := iam.SetUserGroups(ctx, c.iamDB, id, int32sToInt(req.Msg.GetGroupIds())); err != nil {
+	if err = iam.SetUserGroups(ctx, c.iamDB, id, int32sToInt(req.Msg.GetGroupIds())); err != nil {
 		return nil, storeErr("set user groups", err)
 	}
 	return connect.NewResponse(&pb.SetUserGroupsResponse{Success: true}), nil
 }
 
+func (c *ClientApi) requireIamDB() error {
+	if c.auth == nil || c.iamDB == nil {
+		return errIamDisabled
+	}
+	return nil
+}
 func (c *ClientApi) GetMyPermissionsAudit(ctx context.Context, _ *connect.Request[pb.GetMyPermissionsAuditRequest]) (*connect.Response[pb.GetMyPermissionsAuditResponse], error) {
 	st, err := c.iamStore()
 	if err != nil {
@@ -505,24 +641,28 @@ func (c *ClientApi) CreateUserGroup(ctx context.Context, req *connect.Request[pb
 	if err != nil {
 		return nil, err
 	}
-	name := strings.TrimSpace(req.Msg.GetName())
-	if name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
+	name, err := requireName(req.Msg.GetName())
+	if err != nil {
+		return nil, err
 	}
 	if existing, _ := st.GetUserGroupByName(ctx, name); existing != nil {
 		return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("a group with that name already exists"))
 	}
+	g, err := createGroup(ctx, st, name)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&pb.CreateUserGroupResponse{Group: userGroupToProto(g)}), nil
+}
+
+func createGroup(ctx context.Context, st store.Store, name string) (*store.UserGroupRow, error) {
 	id, err := st.CreateUserGroup(ctx, name)
 	if err != nil {
 		return nil, internalErr("create group", err)
 	}
 	g, err := st.GetUserGroupByID(ctx, id)
-	if err != nil || g == nil {
-		return nil, internalErr("load created group", err)
-	}
-	return connect.NewResponse(&pb.CreateUserGroupResponse{Group: userGroupToProto(g)}), nil
+	return orInternal(g, err, "load created group")
 }
-
 func (c *ClientApi) DeleteUserGroup(ctx context.Context, req *connect.Request[pb.DeleteUserGroupRequest]) (*connect.Response[pb.DeleteUserGroupResponse], error) {
 	st, err := c.iamStore()
 	if err != nil {
@@ -550,11 +690,7 @@ func (c *ClientApi) requireGroup(ctx context.Context, st store.Store, id int32) 
 }
 
 func (c *ClientApi) GetUserGroupMembers(ctx context.Context, req *connect.Request[pb.GetUserGroupMembersRequest]) (*connect.Response[pb.GetUserGroupMembersResponse], error) {
-	st, err := c.iamStore()
-	if err != nil {
-		return nil, err
-	}
-	gid, err := c.requireGroup(ctx, st, req.Msg.GetGroupId())
+	st, gid, err := c.iamWithGroup(ctx, req.Msg.GetGroupId())
 	if err != nil {
 		return nil, err
 	}
@@ -566,11 +702,7 @@ func (c *ClientApi) GetUserGroupMembers(ctx context.Context, req *connect.Reques
 }
 
 func (c *ClientApi) SetUserGroupMembers(ctx context.Context, req *connect.Request[pb.SetUserGroupMembersRequest]) (*connect.Response[pb.SetUserGroupMembersResponse], error) {
-	st, err := c.iamStore()
-	if err != nil {
-		return nil, err
-	}
-	gid, err := c.requireGroup(ctx, st, req.Msg.GetGroupId())
+	st, gid, err := c.iamWithGroup(ctx, req.Msg.GetGroupId())
 	if err != nil {
 		return nil, err
 	}
@@ -630,60 +762,79 @@ func (c *ClientApi) CreateRbacRole(ctx context.Context, req *connect.Request[pb.
 	if err != nil {
 		return nil, err
 	}
-	name := strings.TrimSpace(req.Msg.GetName())
-	if name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
+	name, err := requireName(req.Msg.GetName())
+	if err != nil {
+		return nil, err
 	}
 	if rbac.IsSystemRole(name) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("that role name is reserved"))
+		return nil, invalidArg("that role name is reserved")
 	}
-	id, err := st.CreateRBACRole(ctx, name, strings.TrimSpace(req.Msg.GetDescription()), int32sToInt(req.Msg.GetPermissionIds()))
+	role, err := createRole(ctx, st, name, req.Msg)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("create role: %w", err))
-	}
-	role, err := st.GetRBACRole(ctx, id)
-	if err != nil || role == nil {
-		return nil, internalErr("load created role", err)
+		return nil, err
 	}
 	return connect.NewResponse(&pb.CreateRbacRoleResponse{Role: rbacRoleToProto(role)}), nil
 }
 
-func (c *ClientApi) UpdateRbacRole(ctx context.Context, req *connect.Request[pb.UpdateRbacRoleRequest]) (*connect.Response[pb.UpdateRbacRoleResponse], error) {
-	st, err := c.iamStore()
+func createRole(ctx context.Context, st store.Store, name string, msg *pb.CreateRbacRoleRequest) (*store.RBACRoleRow, error) {
+	id, err := st.CreateRBACRole(ctx, name, strings.TrimSpace(msg.GetDescription()), int32sToInt(msg.GetPermissionIds()))
 	if err != nil {
-		return nil, err
-	}
-	id, err := requireID("role_id", req.Msg.GetRoleId())
-	if err != nil {
-		return nil, err
-	}
-	name := strings.TrimSpace(req.Msg.GetName())
-	if name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
-	}
-	existing, err := st.GetRBACRole(ctx, id)
-	if err != nil {
-		return nil, internalErr("get role", err)
-	}
-	if existing == nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("role not found"))
-	}
-	if existing.Name == rbac.RoleSuperuser {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("the superuser role grants every permission and cannot be edited"))
-	}
-	if rbac.IsSystemRole(name) && name != existing.Name {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("that role name is reserved"))
-	}
-	if err := st.UpdateRBACRole(ctx, id, name, strings.TrimSpace(req.Msg.GetDescription()), int32sToInt(req.Msg.GetPermissionIds())); err != nil {
-		return nil, storeErr("update role", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("create role: %w", err))
 	}
 	role, err := st.GetRBACRole(ctx, id)
-	if err != nil || role == nil {
-		return nil, internalErr("load updated role", err)
+	return orInternal(role, err, "load created role")
+}
+func (c *ClientApi) UpdateRbacRole(ctx context.Context, req *connect.Request[pb.UpdateRbacRoleRequest]) (*connect.Response[pb.UpdateRbacRoleResponse], error) {
+	st, id, err := c.iamWithID("role_id", req.Msg.GetRoleId())
+	if err != nil {
+		return nil, err
+	}
+	name, err := requireName(req.Msg.GetName())
+	if err != nil {
+		return nil, err
+	}
+	role, err := updateRole(ctx, st, id, name, req.Msg)
+	if err != nil {
+		return nil, err
 	}
 	return connect.NewResponse(&pb.UpdateRbacRoleResponse{Role: rbacRoleToProto(role)}), nil
 }
 
+func updateRole(ctx context.Context, st store.Store, id int, name string, msg *pb.UpdateRbacRoleRequest) (*store.RBACRoleRow, error) {
+	existing, err := loadRole(ctx, st, id)
+	if err != nil {
+		return nil, err
+	}
+	if err = checkRoleEditable(existing, name); err != nil {
+		return nil, err
+	}
+	if err = st.UpdateRBACRole(ctx, id, name, strings.TrimSpace(msg.GetDescription()), int32sToInt(msg.GetPermissionIds())); err != nil {
+		return nil, storeErr("update role", err)
+	}
+	role, err := st.GetRBACRole(ctx, id)
+	return orInternal(role, err, "load updated role")
+}
+
+func loadRole(ctx context.Context, st store.Store, id int) (*store.RBACRoleRow, error) {
+	role, err := st.GetRBACRole(ctx, id)
+	if err != nil {
+		return nil, internalErr("get role", err)
+	}
+	if role == nil {
+		return nil, notFoundErr("role not found")
+	}
+	return role, nil
+}
+
+func checkRoleEditable(existing *store.RBACRoleRow, newName string) error {
+	if existing.Name == rbac.RoleSuperuser {
+		return invalidArg("the superuser role grants every permission and cannot be edited")
+	}
+	if rbac.IsSystemRole(newName) && newName != existing.Name {
+		return invalidArg("that role name is reserved")
+	}
+	return nil
+}
 func (c *ClientApi) DeleteRbacRole(ctx context.Context, req *connect.Request[pb.DeleteRbacRoleRequest]) (*connect.Response[pb.DeleteRbacRoleResponse], error) {
 	st, err := c.iamStore()
 	if err != nil {
@@ -700,11 +851,7 @@ func (c *ClientApi) DeleteRbacRole(ctx context.Context, req *connect.Request[pb.
 }
 
 func (c *ClientApi) GetUserGroupRbacRoles(ctx context.Context, req *connect.Request[pb.GetUserGroupRbacRolesRequest]) (*connect.Response[pb.GetUserGroupRbacRolesResponse], error) {
-	st, err := c.iamStore()
-	if err != nil {
-		return nil, err
-	}
-	gid, err := c.requireGroup(ctx, st, req.Msg.GetGroupId())
+	st, gid, err := c.iamWithGroup(ctx, req.Msg.GetGroupId())
 	if err != nil {
 		return nil, err
 	}
@@ -716,11 +863,7 @@ func (c *ClientApi) GetUserGroupRbacRoles(ctx context.Context, req *connect.Requ
 }
 
 func (c *ClientApi) SetUserGroupRbacRoles(ctx context.Context, req *connect.Request[pb.SetUserGroupRbacRolesRequest]) (*connect.Response[pb.SetUserGroupRbacRolesResponse], error) {
-	st, err := c.iamStore()
-	if err != nil {
-		return nil, err
-	}
-	gid, err := c.requireGroup(ctx, st, req.Msg.GetGroupId())
+	st, gid, err := c.iamWithGroup(ctx, req.Msg.GetGroupId())
 	if err != nil {
 		return nil, err
 	}
@@ -756,13 +899,9 @@ func keyHint(key string) string {
 }
 
 func (c *ClientApi) ListApiKeys(ctx context.Context, _ *connect.Request[pb.ListApiKeysRequest]) (*connect.Response[pb.ListApiKeysResponse], error) {
-	st, err := c.iamStore()
+	st, au, err := c.iamAuthed(ctx)
 	if err != nil {
 		return nil, err
-	}
-	au := authUser(ctx)
-	if au == nil || au.User.ID <= 0 {
-		return nil, errAuthRequired
 	}
 	rows, err := st.ListAPIKeysForUser(ctx, au.User.ID)
 	if err != nil {
@@ -770,51 +909,45 @@ func (c *ClientApi) ListApiKeys(ctx context.Context, _ *connect.Request[pb.ListA
 	}
 	keys := make([]*pb.ApiKey, 0, len(rows))
 	for _, k := range rows {
-		scope, err := iam.LoadAPIKeyScope(ctx, c.iamDB, k.ID)
-		if err != nil {
-			return nil, internalErr("load api key scope", err)
+		key, keyErr := c.apiKeyToProto(ctx, k)
+		if keyErr != nil {
+			return nil, keyErr
 		}
-		keys = append(keys, &pb.ApiKey{
-			Id:         toInt32(k.ID),
-			Name:       k.Name,
-			CreatedAt:  k.CreatedAt,
-			LastUsedAt: k.LastUsedAt,
-			KeyHint:    keyHint(k.KeyValue),
-			Scope:      scopeToProto(scope),
-		})
+		keys = append(keys, key)
 	}
 	return connect.NewResponse(&pb.ListApiKeysResponse{ApiKeys: keys}), nil
 }
 
+func (c *ClientApi) apiKeyToProto(ctx context.Context, k store.APIKeyRow) (*pb.ApiKey, error) {
+	scope, err := iam.LoadAPIKeyScope(ctx, c.iamDB, k.ID)
+	if err != nil {
+		return nil, internalErr("load api key scope", err)
+	}
+	return &pb.ApiKey{
+		Id:         toInt32(k.ID),
+		Name:       k.Name,
+		CreatedAt:  k.CreatedAt,
+		LastUsedAt: k.LastUsedAt,
+		KeyHint:    keyHint(k.KeyValue),
+		Scope:      scopeToProto(scope),
+	}, nil
+}
 func (c *ClientApi) CreateApiKey(ctx context.Context, req *connect.Request[pb.CreateApiKeyRequest]) (*connect.Response[pb.CreateApiKeyResponse], error) {
-	st, err := c.iamStore()
+	st, au, err := c.iamAuthed(ctx)
 	if err != nil {
 		return nil, err
 	}
-	au := authUser(ctx)
-	if au == nil || au.User.ID <= 0 {
-		return nil, errAuthRequired
-	}
-	name := strings.TrimSpace(req.Msg.GetName())
-	if name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
-	}
-	key, err := armpassword.GenerateAPIKey(iam.APIKeyPrefix)
+	name, err := requireName(req.Msg.GetName())
 	if err != nil {
-		return nil, internalErr("generate api key", err)
+		return nil, err
 	}
 	scope := scopeFromProto(req.Msg.GetScope())
-	if err := validateScope(scope); err != nil {
+	if err = validateScope(scope); err != nil {
 		return nil, err
 	}
-	id, err := st.CreateAPIKey(ctx, au.User.ID, name, key, false)
+	id, key, err := c.createKeyWithScope(ctx, st, au.User.ID, name, scope)
 	if err != nil {
-		return nil, internalErr("create api key", err)
-	}
-	if err := iam.SetAPIKeyScope(ctx, c.iamDB, id, au.User.ID, scope); err != nil {
-		// Never leave behind a key with more access than was asked for.
-		_ = st.DeleteAPIKey(ctx, id, au.User.ID)
-		return nil, scopeErr(err)
+		return nil, err
 	}
 	return connect.NewResponse(&pb.CreateApiKeyResponse{
 		ApiKey: &pb.ApiKey{Id: toInt32(id), Name: name, KeyHint: keyHint(key), Scope: scopeToProto(&scope)},
@@ -822,31 +955,43 @@ func (c *ClientApi) CreateApiKey(ctx context.Context, req *connect.Request[pb.Cr
 	}), nil
 }
 
-func (c *ClientApi) UpdateApiKey(ctx context.Context, req *connect.Request[pb.UpdateApiKeyRequest]) (*connect.Response[pb.UpdateApiKeyResponse], error) {
-	if _, err := c.iamStore(); err != nil {
-		return nil, err
+func (c *ClientApi) createKeyWithScope(ctx context.Context, st store.Store, userID int, name string, scope iam.APIKeyScope) (int, string, error) {
+	key, err := armpassword.GenerateAPIKey(iam.APIKeyPrefix)
+	if err != nil {
+		return 0, "", internalErr("generate api key", err)
 	}
-	au := authUser(ctx)
-	if au == nil || au.User.ID <= 0 {
-		return nil, errAuthRequired
+	id, err := st.CreateAPIKey(ctx, userID, name, key, false)
+	if err != nil {
+		return 0, "", internalErr("create api key", err)
+	}
+	if err = iam.SetAPIKeyScope(ctx, c.iamDB, id, userID, scope); err != nil {
+		// Never leave behind a key with more access than was asked for.
+		_ = st.DeleteAPIKey(ctx, id, userID)
+		return 0, "", scopeErr(err)
+	}
+	return id, key, nil
+}
+func (c *ClientApi) UpdateApiKey(ctx context.Context, req *connect.Request[pb.UpdateApiKeyRequest]) (*connect.Response[pb.UpdateApiKeyResponse], error) {
+	_, au, err := c.iamAuthed(ctx)
+	if err != nil {
+		return nil, err
 	}
 	id, err := requireID("api_key_id", req.Msg.GetApiKeyId())
 	if err != nil {
 		return nil, err
 	}
 	scope := scopeFromProto(req.Msg.GetScope())
-	if err := validateScope(scope); err != nil {
+	if err = validateScope(scope); err != nil {
 		return nil, err
 	}
 	// Scoped to the caller, so users can only change their own keys.
-	if err := iam.SetAPIKeyScope(ctx, c.iamDB, id, au.User.ID, scope); err != nil {
+	if err = iam.SetAPIKeyScope(ctx, c.iamDB, id, au.User.ID, scope); err != nil {
 		return nil, scopeErr(err)
 	}
 	return connect.NewResponse(&pb.UpdateApiKeyResponse{
 		ApiKey: &pb.ApiKey{Id: toInt32(id), Scope: scopeToProto(&scope)},
 	}), nil
 }
-
 func scopeFromProto(p *pb.ApiKeyScope) iam.APIKeyScope {
 	return iam.APIKeyScope{
 		RestrictPermissions:  p.GetRestrictPermissions(),
@@ -888,20 +1033,16 @@ func scopeErr(err error) error {
 }
 
 func (c *ClientApi) DeleteApiKey(ctx context.Context, req *connect.Request[pb.DeleteApiKeyRequest]) (*connect.Response[pb.DeleteApiKeyResponse], error) {
-	st, err := c.iamStore()
+	st, au, err := c.iamAuthed(ctx)
 	if err != nil {
 		return nil, err
-	}
-	au := authUser(ctx)
-	if au == nil || au.User.ID <= 0 {
-		return nil, errAuthRequired
 	}
 	id, err := requireID("api_key_id", req.Msg.GetApiKeyId())
 	if err != nil {
 		return nil, err
 	}
 	// Scoped to the caller, so users can only delete their own keys.
-	if err := st.DeleteAPIKey(ctx, id, au.User.ID); err != nil {
+	if err = st.DeleteAPIKey(ctx, id, au.User.ID); err != nil {
 		return nil, internalErr("delete api key", err)
 	}
 	return connect.NewResponse(&pb.DeleteApiKeyResponse{Success: true}), nil

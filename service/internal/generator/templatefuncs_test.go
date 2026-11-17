@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormatDateTime(t *testing.T) {
@@ -13,7 +14,7 @@ func TestFormatDateTime(t *testing.T) {
 	assert.Equal(t, "15 Nov 2026, 09:30 UTC", formatDateTime("2026-11-15T09:30:00Z"))
 	assert.Equal(t, "15 Nov 2026", formatDateTime("2026-11-15"))
 	assert.Equal(t, "Tuesday morning", formatDateTime("Tuesday morning"), "free text is kept")
-	assert.Equal(t, "", formatDateTime(nil))
+	assert.Empty(t, formatDateTime(nil))
 }
 
 func TestSafeURL(t *testing.T) {
@@ -41,7 +42,7 @@ func TestListHelpers(t *testing.T) {
 	assert.Empty(t, where(nil, "x", "y"))
 
 	m, err := dict("a", 1, "b", "two")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"a": 1, "b": "two"}, m)
 	_, err = dict("odd")
 	assert.Error(t, err)
@@ -59,7 +60,7 @@ func TestDueDates(t *testing.T) {
 	assert.Equal(t, "Due in 6 days", dueLabel("2026-11-22"))
 	assert.Equal(t, "Due 30 Nov", dueLabel("2026-11-30"))
 	assert.Equal(t, "Due next week", dueLabel("next week"), "free text is kept")
-	assert.Equal(t, "", dueLabel(nil))
+	assert.Empty(t, dueLabel(nil))
 
 	assert.True(t, isOverdue("2026-11-15"))
 	assert.False(t, isOverdue("2026-11-16"))

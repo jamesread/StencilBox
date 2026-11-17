@@ -2,8 +2,10 @@
   "name": "frontend",
   "version": "1.0.0",
   "source": "index.html",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --max-warnings 9999"
   },
   "author": "",
   "license": "ISC",
@@ -19,5 +21,11 @@
     "vite": "^8.3.8",
     "vue-router": "^5.5.1",
     "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-vue": "^10.5.1",
+    "globals": "^16.5.0"
   }
 }

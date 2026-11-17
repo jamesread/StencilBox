@@ -70,7 +70,7 @@ func dict(pairs ...any) (map[string]any, error) {
 		return nil, fmt.Errorf("dict needs key/value pairs, got %d arguments", len(pairs))
 	}
 	out := make(map[string]any, len(pairs)/2)
-	for i := 0; i < len(pairs); i += 2 {
+	for i := 0; i+1 < len(pairs); i += 2 {
 		out[fmt.Sprint(pairs[i])] = pairs[i+1]
 	}
 	return out, nil
@@ -167,16 +167,22 @@ func overdue(items any) []any {
 func dueLabel(v any) string {
 	due, ok := parseDate(v)
 	if !ok {
-		if v == nil {
-			return ""
-		}
-		return "Due " + fmt.Sprint(v)
+		return unparsedDueLabel(v)
 	}
-	switch d := daysUntil(due); {
-	case d < -1:
-		return fmt.Sprintf("Overdue by %d days", -d)
-	case d == -1:
-		return "Overdue by 1 day"
+	return dueLabelForDays(daysUntil(due), due)
+}
+
+func unparsedDueLabel(v any) string {
+	if v == nil {
+		return ""
+	}
+	return "Due " + fmt.Sprint(v)
+}
+
+func dueLabelForDays(d int, due time.Time) string {
+	switch {
+	case d < 0:
+		return overdueLabel(d)
 	case d == 0:
 		return "Due today"
 	case d == 1:
@@ -186,6 +192,13 @@ func dueLabel(v any) string {
 	default:
 		return "Due " + due.Format("2 Jan")
 	}
+}
+
+func overdueLabel(d int) string {
+	if d == -1 {
+		return "Overdue by 1 day"
+	}
+	return fmt.Sprintf("Overdue by %d days", -d)
 }
 
 // isOverdue reports whether a due date is before the build day.

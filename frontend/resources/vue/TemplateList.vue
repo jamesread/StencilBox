@@ -12,16 +12,16 @@
 			</template>
 
 		<Table :headers = "headers" :data = "templates">
-			<template #cell-name="{ row, value }">
+			<template #cell-name="{ row }">
 				<span v-if="!row.name" class="subtle">N/A</span>
 				<router-link v-else :to="{ name: 'templateView', params: { name: row.name } }">
 					{{ row.name }}
 				</router-link>
 			</template>
-			<template #cell-buildConfigs="{ row, value }">
+			<template #cell-buildConfigs="{ value }">
 				{{ value.length }}
 			</template>
-			<template #cell-status="{ row, value }">
+			<template #cell-status="{ row }">
 				<span class="tag" :class="row.statusClass">{{ row.status }}</span>
 			</template>
 		</Table>
@@ -49,10 +49,6 @@
 	onMounted(() => {
 		getTemplates();
 	});
-
-	function openTemplate(template) {
-		router.push({ name: 'templateView', params: { name: template.name } });
-	}
 
 	function addTemplate() {
 		router.push({ name: 'templateAdd' });

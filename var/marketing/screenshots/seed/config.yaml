@@ -1,0 +1,5 @@
+configVersion: 1
+
+# Throwaway marketing stack only. Users live in stencilbox.db next to this file;
+# the default admin/admin account is created on first start.
+auth: {}

@@ -33,7 +33,7 @@
 			:data = "buildConfigs"
 			>
 
-			<template #cell-name="{ row, value }">
+			<template #cell-name="{ row }">
 					<span v-if="!row.name" class = "subtle">
 						N/A
 					</span>
@@ -42,7 +42,7 @@
 					</router-link>
 			</template>
 
-			<template #cell-template="{ row, value }">
+			<template #cell-template="{ row }">
 					<span v-if="!row.template" class = "subtle">N/A</span>
 
 					<router-link v-else :to="{ name: 'templateView', params: { name: row.template } }">
@@ -50,7 +50,7 @@
 					</router-link>
 			</template>
 
-			<template #cell-status="{ row, value }">
+			<template #cell-status="{ row }">
 					<button v-if="row.errorMessage" type = "button" class = "tag bad" @click="showErrorMessage(row)">Error</button>
 					<span v-else class = "tag good">OK</span>
 			</template>

@@ -28,19 +28,19 @@
 			:data="dataFiles"
 		>
 
-			<template #cell-name="{ row, value }">
+			<template #cell-name="{ row }">
 				<router-link :to="{ name: 'dataFileView', params: { buildConfigName: row.buildConfigName, datafileName: row.name } }">
 					{{ row.name }}
 				</router-link>
 			</template>
 
-			<template #cell-buildConfig="{ row, value }">
+			<template #cell-buildConfig="{ row }">
 				<router-link :to="{ name: 'buildConfig', params: { name: row.buildConfigName } }">
 					{{ row.buildConfigName }}
 				</router-link>
 			</template>
 
-			<template #cell-path="{ row, value }">
+			<template #cell-path="{ row }">
 				<code>{{ row.path }}</code>
 			</template>
 		</Table>

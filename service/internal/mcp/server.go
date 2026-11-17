@@ -126,14 +126,41 @@ func protoResult(m proto.Message) (*mcp.CallToolResult, error) {
 }
 
 func errorResult(err error) (*mcp.CallToolResult, error) {
-	var ce *connect.Error
-	if errors.As(err, &ce) {
+	if ce, ok := errors.AsType[*connect.Error](err); ok {
 		return mcp.NewToolResultError(fmt.Sprintf("%s: %s", ce.Code(), ce.Message())), nil
 	}
 	return mcp.NewToolResultError(err.Error()), nil
 }
 
-func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceClient) {
+// result turns the response of an API call into a tool result: the message as JSON, or the error.
+func result[T any, PT interface {
+	*T
+	proto.Message
+}](res *connect.Response[T], err error) (*mcp.CallToolResult, error) {
+	if err != nil {
+		return errorResult(err)
+	}
+	return protoResult(PT(res.Msg))
+}
+
+type apiClient = clientapiconnect.StencilBoxApiServiceClient
+
+func registerTools(s *server.MCPServer, c apiClient) {
+	registerWhoami(s, c)
+	registerListBuildConfigs(s, c)
+	registerGetBuildConfig(s, c)
+	registerListTemplates(s, c)
+	registerStartBuild(s, c)
+	registerGetBuildHistory(s, c)
+	registerClearBuildCache(s, c)
+	registerListDataFiles(s, c)
+	registerGetDataFile(s, c)
+	registerCreateBuildConfig(s, c)
+	registerCreateDataFile(s, c)
+	registerUpdateDataFile(s, c)
+}
+
+func registerWhoami(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_whoami",
 		mcp.WithDescription("Show the user this API key belongs to and the permissions it has."),
 		mcp.WithReadOnlyHintAnnotation(true),
@@ -152,18 +179,18 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		}
 		return mcp.NewToolResultText(string(b)), nil
 	})
+}
 
+func registerListBuildConfigs(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_list_build_configs",
 		mcp.WithDescription("List build configs: each names a template, an output directory and the data files it reads."),
 		mcp.WithReadOnlyHintAnnotation(true),
 	), func(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		res, err := c.GetBuildConfigs(ctx, connect.NewRequest(&pb.GetBuildConfigsRequest{}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		return result(c.GetBuildConfigs(ctx, connect.NewRequest(&pb.GetBuildConfigsRequest{})))
 	})
+}
 
+func registerGetBuildConfig(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_get_build_config",
 		mcp.WithDescription("Get one build config by name."),
 		mcp.WithString("build_config", mcp.Required(), mcp.Description("Build config name")),
@@ -173,24 +200,20 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		res, err := c.GetBuildConfig(ctx, connect.NewRequest(&pb.GetBuildConfigRequest{ConfigName: name}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		return result(c.GetBuildConfig(ctx, connect.NewRequest(&pb.GetBuildConfigRequest{ConfigName: name})))
 	})
+}
 
+func registerListTemplates(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_list_templates",
 		mcp.WithDescription("List the site templates available to build configs."),
 		mcp.WithReadOnlyHintAnnotation(true),
 	), func(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		res, err := c.GetTemplates(ctx, connect.NewRequest(&pb.GetTemplatesRequest{}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		return result(c.GetTemplates(ctx, connect.NewRequest(&pb.GetTemplatesRequest{})))
 	})
+}
 
+func registerStartBuild(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_start_build",
 		mcp.WithDescription("Build a site from its build config and wait for the build to finish. Returns the final status and the build's progress messages."),
 		mcp.WithString("build_config", mcp.Required(), mcp.Description("Build config name")),
@@ -203,7 +226,9 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		}
 		return startBuild(ctx, c, name)
 	})
+}
 
+func registerGetBuildHistory(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_get_build_history",
 		mcp.WithDescription("Recent builds of a build config: when, how long, whether they failed, and the output size."),
 		mcp.WithString("build_config", mcp.Required(), mcp.Description("Build config name")),
@@ -213,13 +238,11 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		res, err := c.GetBuildHistory(ctx, connect.NewRequest(&pb.GetBuildHistoryRequest{ConfigName: name}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		return result(c.GetBuildHistory(ctx, connect.NewRequest(&pb.GetBuildHistoryRequest{ConfigName: name})))
 	})
+}
 
+func registerClearBuildCache(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_clear_build_cache",
 		mcp.WithDescription("Clear a build config's cache (downloaded repos and icons), so the next build fetches them again."),
 		mcp.WithString("build_config", mcp.Required(), mcp.Description("Build config name")),
@@ -229,24 +252,20 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		res, err := c.ClearBuildCache(ctx, connect.NewRequest(&pb.ClearBuildCacheRequest{ConfigName: name}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		return result(c.ClearBuildCache(ctx, connect.NewRequest(&pb.ClearBuildCacheRequest{ConfigName: name})))
 	})
+}
 
+func registerListDataFiles(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_list_data_files",
 		mcp.WithDescription("List the YAML data files that build configs read."),
 		mcp.WithReadOnlyHintAnnotation(true),
 	), func(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		res, err := c.ListDataFiles(ctx, connect.NewRequest(&pb.ListDataFilesRequest{}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		return result(c.ListDataFiles(ctx, connect.NewRequest(&pb.ListDataFilesRequest{})))
 	})
+}
 
+func registerGetDataFile(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_get_data_file",
 		mcp.WithDescription("Read a data file. The result includes sha256: pass it to stencilbox_update_data_file as expected_sha256."),
 		mcp.WithString("build_config", mcp.Required(), mcp.Description("Build config name")),
@@ -257,13 +276,11 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		if errResult != nil {
 			return errResult, nil
 		}
-		res, err := c.GetDataFile(ctx, connect.NewRequest(&pb.GetDataFileRequest{BuildConfigName: bc, DatafileName: df}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		return result(c.GetDataFile(ctx, connect.NewRequest(&pb.GetDataFileRequest{BuildConfigName: bc, DatafileName: df})))
 	})
+}
 
+func registerCreateBuildConfig(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_create_build_config",
 		mcp.WithDescription("Create a build config: a site built from a template into an output directory. "+
 			"Then add data files with stencilbox_create_data_file and build it with stencilbox_start_build."),
@@ -285,15 +302,13 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		res, err := c.CreateBuildConfig(ctx, connect.NewRequest(&pb.CreateBuildConfigRequest{
+		return result(c.CreateBuildConfig(ctx, connect.NewRequest(&pb.CreateBuildConfigRequest{
 			ConfigName: name, Template: template, OutputDir: out, BuildOnStartup: req.GetBool("build_on_startup", false),
-		}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		})))
 	})
+}
 
+func registerCreateDataFile(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_create_data_file",
 		mcp.WithDescription("Add a data file to a build config. Templates read it by its name. "+
 			"Give content to create a new YAML file, or a path to an existing file (and no content) to share it."),
@@ -307,16 +322,14 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		if errResult != nil {
 			return errResult, nil
 		}
-		res, err := c.CreateDataFile(ctx, connect.NewRequest(&pb.CreateDataFileRequest{
+		return result(c.CreateDataFile(ctx, connect.NewRequest(&pb.CreateDataFileRequest{
 			BuildConfigName: bc, DatafileName: df,
 			Content: req.GetString("content", ""), Path: req.GetString("path", ""),
-		}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		})))
 	})
+}
 
+func registerUpdateDataFile(s *server.MCPServer, c apiClient) {
 	s.AddTool(mcp.NewTool("stencilbox_update_data_file",
 		mcp.WithDescription("Replace a data file with new YAML content. Every build config that uses the file is rebuilt. "+
 			"Read the file first and pass its sha256 as expected_sha256, so a change made in the meantime is not overwritten."),
@@ -334,16 +347,12 @@ func registerTools(s *server.MCPServer, c clientapiconnect.StencilBoxApiServiceC
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-		res, err := c.UpdateDataFile(ctx, connect.NewRequest(&pb.UpdateDataFileRequest{
+		return result(c.UpdateDataFile(ctx, connect.NewRequest(&pb.UpdateDataFileRequest{
 			BuildConfigName: bc,
 			DatafileName:    df,
 			Content:         content,
 			ExpectedSha256:  req.GetString("expected_sha256", ""),
-		}))
-		if err != nil {
-			return errorResult(err)
-		}
-		return protoResult(res.Msg)
+		})))
 	})
 }
 
@@ -359,26 +368,36 @@ func buildConfigAndDataFile(req mcp.CallToolRequest) (string, string, *mcp.CallT
 	return bc, df, nil
 }
 
-func startBuild(ctx context.Context, c clientapiconnect.StencilBoxApiServiceClient, name string) (*mcp.CallToolResult, error) {
+func startBuild(ctx context.Context, c apiClient, name string) (*mcp.CallToolResult, error) {
 	stream, err := c.StartBuild(ctx, connect.NewRequest(&pb.BuildRequest{ConfigName: name}))
 	if err != nil {
 		return errorResult(err)
 	}
 	defer func() { _ = stream.Close() }()
 
-	var last *pb.BuildUpdateResponse
-	progress := []string{}
-	for stream.Receive() {
-		last = stream.Msg()
-		progress = append(progress, last.GetStatus())
-	}
-	if err := stream.Err(); err != nil {
+	last, progress, err := collectBuild(stream)
+	if err != nil {
 		return errorResult(err)
 	}
 	if last == nil {
 		return mcp.NewToolResultError("the build returned no status"), nil
 	}
 
+	return buildResult(last, progress)
+}
+
+// collectBuild reads a build's updates until it ends, returning the last one and every status.
+func collectBuild(stream *connect.ServerStreamForClient[pb.BuildUpdateResponse]) (*pb.BuildUpdateResponse, []string, error) {
+	var last *pb.BuildUpdateResponse
+	progress := []string{}
+	for stream.Receive() {
+		last = stream.Msg()
+		progress = append(progress, last.GetStatus())
+	}
+	return last, progress, stream.Err()
+}
+
+func buildResult(last *pb.BuildUpdateResponse, progress []string) (*mcp.CallToolResult, error) {
 	b, err := jsonOut.Marshal(last)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil

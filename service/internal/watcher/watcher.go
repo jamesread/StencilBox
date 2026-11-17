@@ -14,10 +14,10 @@ import (
 type DataFileWatcher struct {
 	watcher       *fsnotify.Watcher
 	buildConfigs  map[string]*buildconfigs.BuildConfig
-	fileToConfigs map[string][]string // Maps absolute file paths to config names
-	mu            sync.RWMutex
-	onRebuild     func(configName string)
+	fileToConfigs map[string][]string    // Maps absolute file paths to config names
 	debounceTimer map[string]*time.Timer // Debounce timer per config
+	onRebuild     func(configName string)
+	mu            sync.RWMutex
 	debounceMu    sync.Mutex
 }
 
@@ -45,29 +45,7 @@ func (dfw *DataFileWatcher) Start(ctx context.Context) error {
 	defer dfw.mu.Unlock()
 
 	// Add all data files to the watcher
-	for configName, config := range dfw.buildConfigs {
-		configDir := filepath.Dir(config.Path)
-
-		for datafileName, datafilePath := range config.Datafiles {
-			// Construct absolute path
-			absPath := filepath.Join(configDir, datafilePath)
-
-			// Add the file to the watcher
-			err := dfw.watcher.Add(absPath)
-			if err != nil {
-				log.Warnf("Failed to watch datafile %s for config %s: %v", absPath, configName, err)
-				continue
-			}
-
-			log.Infof("Watching datafile: %s (name: %s) for config: %s", absPath, datafileName, configName)
-
-			// Track which configs use this file
-			if dfw.fileToConfigs[absPath] == nil {
-				dfw.fileToConfigs[absPath] = make([]string, 0)
-			}
-			dfw.fileToConfigs[absPath] = append(dfw.fileToConfigs[absPath], configName)
-		}
-	}
+	dfw.watchDatafiles(dfw.buildConfigs, "Watching datafile")
 
 	// Start the event loop
 	go dfw.watchLoop(ctx)
@@ -76,33 +54,77 @@ func (dfw *DataFileWatcher) Start(ctx context.Context) error {
 	return nil
 }
 
+// watchDatafiles adds the data files of every build config to the watcher. The caller holds dfw.mu.
+func (dfw *DataFileWatcher) watchDatafiles(buildConfigs map[string]*buildconfigs.BuildConfig, logPrefix string) {
+	for configName, config := range buildConfigs {
+		dfw.watchConfigDatafiles(configName, config, logPrefix)
+	}
+}
+
+func (dfw *DataFileWatcher) watchConfigDatafiles(configName string, config *buildconfigs.BuildConfig, logPrefix string) {
+	configDir := filepath.Dir(config.Path)
+
+	for datafileName, datafilePath := range config.Datafiles {
+		// Construct absolute path
+		absPath := filepath.Join(configDir, datafilePath)
+
+		// Add the file to the watcher
+		if err := dfw.watcher.Add(absPath); err != nil {
+			log.Warnf("Failed to watch datafile %s for config %s: %v", absPath, configName, err)
+			continue
+		}
+
+		log.Infof("%s: %s (name: %s) for config: %s", logPrefix, absPath, datafileName, configName)
+
+		// Track which configs use this file
+		dfw.fileToConfigs[absPath] = append(dfw.fileToConfigs[absPath], configName)
+	}
+}
+
 // watchLoop processes file system events
 func (dfw *DataFileWatcher) watchLoop(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("Data file watcher stopping...")
-			_ = dfw.watcher.Close()
-			return
-
-		case event, ok := <-dfw.watcher.Events:
-			if !ok {
-				return
-			}
-
-			// We're interested in Write and Create events
-			if event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create {
-				log.Infof("Data file modified: %s (operation: %s)", event.Name, event.Op)
-				dfw.handleFileChange(event.Name)
-			}
-
-		case err, ok := <-dfw.watcher.Errors:
-			if !ok {
-				return
-			}
-			log.Errorf("Watcher error: %v", err)
-		}
+	for dfw.processNext(ctx) {
 	}
+}
+
+// processNext handles the next watcher event, and reports whether to keep watching.
+func (dfw *DataFileWatcher) processNext(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		log.Info("Data file watcher stopping...")
+		_ = dfw.watcher.Close()
+		return false
+
+	case event, ok := <-dfw.watcher.Events:
+		return dfw.onEvent(event, ok)
+
+	case err, ok := <-dfw.watcher.Errors:
+		return onWatcherError(err, ok)
+	}
+}
+
+func (dfw *DataFileWatcher) onEvent(event fsnotify.Event, ok bool) bool {
+	if !ok {
+		return false
+	}
+
+	// We're interested in Write and Create events
+	if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) {
+		log.Infof("Data file modified: %s (operation: %s)", event.Name, event.Op)
+		dfw.handleFileChange(event.Name)
+	}
+
+	return true
+}
+
+func onWatcherError(err error, ok bool) bool {
+	if !ok {
+		return false
+	}
+
+	log.Errorf("Watcher error: %v", err)
+
+	return true
 }
 
 // handleFileChange processes a file change event with debouncing
@@ -156,26 +178,7 @@ func (dfw *DataFileWatcher) UpdateBuildConfigs(buildConfigs map[string]*buildcon
 	dfw.buildConfigs = buildConfigs
 
 	// Re-add all data files
-	for configName, config := range buildConfigs {
-		configDir := filepath.Dir(config.Path)
-
-		for datafileName, datafilePath := range config.Datafiles {
-			absPath := filepath.Join(configDir, datafilePath)
-
-			err := dfw.watcher.Add(absPath)
-			if err != nil {
-				log.Warnf("Failed to watch datafile %s for config %s: %v", absPath, configName, err)
-				continue
-			}
-
-			log.Infof("Updated watch for datafile: %s (name: %s) for config: %s", absPath, datafileName, configName)
-
-			if dfw.fileToConfigs[absPath] == nil {
-				dfw.fileToConfigs[absPath] = make([]string, 0)
-			}
-			dfw.fileToConfigs[absPath] = append(dfw.fileToConfigs[absPath], configName)
-		}
-	}
+	dfw.watchDatafiles(buildConfigs, "Updated watch for datafile")
 
 	return nil
 }

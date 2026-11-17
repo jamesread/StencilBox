@@ -14,7 +14,6 @@ import (
 	pb "github.com/jamesread/StencilBox/gen/StencilBox/clientapi/v1"
 	"github.com/jamesread/StencilBox/internal/buildconfigs"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 )
 
 // maxDataFileSize bounds UpdateDataFile, so one request cannot fill the disk.
@@ -64,80 +63,93 @@ func (c *ClientApi) GetDataFile(ctx context.Context, req *connect.Request[pb.Get
 }
 
 func (c *ClientApi) UpdateDataFile(ctx context.Context, req *connect.Request[pb.UpdateDataFileRequest]) (*connect.Response[pb.UpdateDataFileResponse], error) {
-	content := []byte(req.Msg.GetContent())
-	if len(content) > maxDataFileSize {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("data file is larger than %d bytes", maxDataFileSize))
-	}
-	var parsed any
-	if err := yaml.Unmarshal(content, &parsed); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("content is not valid YAML: %w", err))
-	}
-
-	absPath, err := c.lookupDataFile(req.Msg.GetBuildConfigName(), req.Msg.GetDatafileName())
+	content, err := parseDataFileContent(req.Msg.GetContent())
 	if err != nil {
 		return nil, err
 	}
-	// Hand-written build configs may name files anywhere; StencilBox only writes inside the
-	// build configs directory.
-	configDir := filepath.Dir(c.buildConfigs[req.Msg.GetBuildConfigName()].Path)
-	if !buildconfigs.InsideDir(configDir, absPath) {
-		return nil, connect.NewError(connect.CodePermissionDenied,
-			errors.New("this data file is outside the build configs directory, so it can only be changed on disk"))
+	absPath, err := c.writableDataFilePath(req.Msg.GetBuildConfigName(), req.Msg.GetDatafileName())
+	if err != nil {
+		return nil, err
 	}
 
 	c.dataFilesMu.Lock()
 	defer c.dataFilesMu.Unlock()
 
-	if expected := req.Msg.GetExpectedSha256(); expected != "" {
-		current, err := os.ReadFile(absPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to read data file: %w", err))
-		}
-		if sha256Hex(current) != expected {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("the data file has changed since it was read; get it again and reapply your change"))
-		}
+	if err = checkExpectedSHA(absPath, req.Msg.GetExpectedSha256()); err != nil {
+		return nil, err
 	}
-
-	if err := buildconfigs.WriteFileAtomic(absPath, content); err != nil {
+	if err = buildconfigs.WriteFileAtomic(absPath, content); err != nil {
 		log.WithError(err).WithField("path", absPath).Error("Writing data file")
 		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to write data file"))
 	}
+	log.WithFields(log.Fields{"path": absPath, "user": actorName(ctx), "bytes": len(content)}).Info("Data file updated")
 
-	actor := "unknown"
-	if au := authUser(ctx); au != nil {
-		actor = au.User.Username
-	}
-	log.WithFields(log.Fields{"path": absPath, "user": actor, "bytes": len(content)}).Info("Data file updated")
-
-	rebuilding := c.rebuildUsersOf(absPath)
 	return connect.NewResponse(&pb.UpdateDataFileResponse{
 		Sha256:                 sha256Hex(content),
 		Path:                   absPath,
-		RebuildingBuildConfigs: rebuilding,
+		RebuildingBuildConfigs: c.rebuildUsersOf(absPath),
 	}), nil
+}
+
+// writableDataFilePath resolves a data file, and refuses files StencilBox may not write.
+// Hand-written build configs may name files anywhere; StencilBox only writes inside the
+// build configs directory.
+func (c *ClientApi) writableDataFilePath(buildConfigName, datafileName string) (string, error) {
+	absPath, err := c.lookupDataFile(buildConfigName, datafileName)
+	if err != nil {
+		return "", err
+	}
+	if !buildconfigs.InsideDir(filepath.Dir(c.buildConfigs[buildConfigName].Path), absPath) {
+		return "", connect.NewError(connect.CodePermissionDenied,
+			errors.New("this data file is outside the build configs directory, so it can only be changed on disk"))
+	}
+	return absPath, nil
+}
+
+// checkExpectedSHA refuses a write when the file changed since the caller read it.
+func checkExpectedSHA(absPath, expected string) error {
+	if expected == "" {
+		return nil
+	}
+	current, err := os.ReadFile(absPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to read data file: %w", err))
+	}
+	if sha256Hex(current) != expected {
+		return connect.NewError(connect.CodeFailedPrecondition, errors.New("the data file has changed since it was read; get it again and reapply your change"))
+	}
+	return nil
 }
 
 // rebuildUsersOf re-arms the file watcher (the atomic rename replaced the watched file) and
 // rebuilds every build config that uses the file, as an edit on disk would.
 func (c *ClientApi) rebuildUsersOf(absPath string) []string {
-	if c.dataWatcher != nil {
-		if err := c.dataWatcher.UpdateBuildConfigs(c.buildConfigs); err != nil {
-			log.WithError(err).Warn("Re-arming the data file watcher")
-		}
-	}
+	c.rearmWatcher()
 
-	names := []string{}
-	for name, bc := range c.buildConfigs {
-		for _, datafile := range bc.Datafiles {
-			if dataFilePath(bc, datafile) == absPath {
-				names = append(names, name)
-				break
-			}
-		}
-	}
-	sort.Strings(names)
+	names := c.configsUsingFile(absPath)
 	for _, name := range names {
 		c.autoRebuild(name)
 	}
 	return names
+}
+
+// configsUsingFile returns the sorted names of the build configs that name the file.
+func (c *ClientApi) configsUsingFile(absPath string) []string {
+	names := []string{}
+	for name, bc := range c.buildConfigs {
+		if usesDataFile(bc, absPath) {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	return names
+}
+
+func usesDataFile(bc *buildconfigs.BuildConfig, absPath string) bool {
+	for _, datafile := range bc.Datafiles {
+		if dataFilePath(bc, datafile) == absPath {
+			return true
+		}
+	}
+	return false
 }

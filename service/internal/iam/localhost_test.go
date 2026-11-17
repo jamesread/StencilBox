@@ -13,7 +13,7 @@ import (
 
 func TestIsLocalRequest(t *testing.T) {
 	req := func(addr string, headers ...string) bool {
-		r := httptest.NewRequest("POST", "/", nil)
+		r := httptest.NewRequestWithContext(t.Context(), "POST", "/", nil)
 		r.RemoteAddr = addr
 		for i := 0; i+1 < len(headers); i += 2 {
 			r.Header.Set(headers[i], headers[i+1])
@@ -46,10 +46,10 @@ func TestLocalhostAuth(t *testing.T) {
 	assert.False(t, au.RBAC.IsSuperuser)
 
 	_, err = call(clientapiconnect.StencilBoxApiServiceGetUserProcedure, "127.0.0.1:1")
-	assert.Error(t, err, "IAM needs a database")
+	require.Error(t, err, "IAM needs a database")
 
 	_, err = call(clientapiconnect.StencilBoxApiServiceStartBuildProcedure, "10.0.0.5:1")
-	assert.Error(t, err, "remote clients are refused")
+	require.Error(t, err, "remote clients are refused")
 
 	info, err = call(clientapiconnect.StencilBoxApiServiceGetStatusProcedure, "10.0.0.5:1")
 	require.NoError(t, err, "GetStatus stays open so the web UI can explain")

@@ -20,13 +20,15 @@ type templateMetadata struct {
 
 var layerNamePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)
 
+type npmLayer struct {
+	files map[string]string
+	pkg   string
+}
+
 // npmLayers are layers that come from an npm package installed with the build tools
 // (var/tools, /app/tools in the container), so Renovate keeps them up to date. Each maps the
 // package's files to the names they get in the output.
-var npmLayers = map[string]struct {
-	pkg   string
-	files map[string]string
-}{
+var npmLayers = map[string]npmLayer{
 	"femtocrank": {
 		pkg:   "femtocrank",
 		files: map[string]string{"style.css": "femtocrank.css", "dark.css": "femtocrank-dark.css"},
@@ -43,15 +45,22 @@ func readTemplateLayers(templateDir string) ([]string, error) {
 		return nil, err
 	}
 	var md templateMetadata
-	if err := yaml.Unmarshal(raw, &md); err != nil {
+	if err = yaml.Unmarshal(raw, &md); err != nil {
 		return nil, fmt.Errorf("parse metadata.yaml: %w", err)
 	}
-	for _, name := range md.Layers {
-		if !layerNamePattern.MatchString(name) {
-			return nil, fmt.Errorf("layer name %q in metadata.yaml is not valid", name)
-		}
+	if err = validateLayerNames(md.Layers); err != nil {
+		return nil, err
 	}
 	return md.Layers, nil
+}
+
+func validateLayerNames(layers []string) error {
+	for _, name := range layers {
+		if !layerNamePattern.MatchString(name) {
+			return fmt.Errorf("layer name %q in metadata.yaml is not valid", name)
+		}
+	}
+	return nil
 }
 
 // copyTemplateLayers copies the layers a template asks for into the output directory.
@@ -71,19 +80,27 @@ func copyTemplateLayers(templateDir, outputDir string) error {
 
 func copyLayer(name, outputDir string) error {
 	if npm, ok := npmLayers[name]; ok {
-		pkgDir := findToolsPackage(npm.pkg)
-		if pkgDir == "" {
-			return fmt.Errorf("npm package %s is not installed with the build tools (run make -C var/tools)", npm.pkg)
-		}
-		for from, to := range npm.files {
-			if err := copyRegularFile(filepath.Join(pkgDir, from), filepath.Join(outputDir, to)); err != nil {
-				return err
-			}
-		}
-		return nil
+		return copyNpmLayer(npm, outputDir)
 	}
 
-	// Otherwise a directory under layers/, copied flat (no subdirectories).
+	return copyDirLayer(name, outputDir)
+}
+
+func copyNpmLayer(npm npmLayer, outputDir string) error {
+	pkgDir := findToolsPackage(npm.pkg)
+	if pkgDir == "" {
+		return fmt.Errorf("npm package %s is not installed with the build tools (run make -C var/tools)", npm.pkg)
+	}
+	for from, to := range npm.files {
+		if err := copyRegularFile(filepath.Join(pkgDir, from), filepath.Join(outputDir, to)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// copyDirLayer copies a directory under layers/ flat (no subdirectories).
+func copyDirLayer(name, outputDir string) error {
 	dir := filepath.Join(findLayersDir(), name)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -91,7 +108,7 @@ func copyLayer(name, outputDir string) error {
 	}
 	for _, e := range entries {
 		if e.Type().IsRegular() {
-			if err := copyRegularFile(filepath.Join(dir, e.Name()), filepath.Join(outputDir, e.Name())); err != nil {
+			if err = copyRegularFile(filepath.Join(dir, e.Name()), filepath.Join(outputDir, e.Name())); err != nil {
 				return err
 			}
 		}

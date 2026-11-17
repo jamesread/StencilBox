@@ -1,0 +1,83 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - durationcheck
+    - errcheck
+    - errorlint
+    - gocritic
+    - gocyclo
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - modernize
+    - nilerr
+    - noctx
+    - staticcheck
+    - testifylint
+    - thelper
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+  settings:
+    gocyclo:
+      min-complexity: 5
+    gosec:
+      enable-all-rules: true
+    govet:
+      enable-all: true
+  exclusions:
+    generated: lax
+    paths:
+      - (^|/)gen(/|$)
+    rules:
+      - path: (^|/)gen(/|$)
+        linters:
+          - gocyclo
+      - path: \.(pb|connect)\.go$
+        linters:
+          - gocyclo
+      - path: _test\.go
+        linters:
+          - gosec
+          - gocyclo
+
+      # Built sites and favicons are public web assets; 0644/0755 is intentional.
+      - path: internal/(generator|httpserver|scraper)/
+        text: "G301:"
+        linters:
+          - gosec
+      - path: internal/(generator|httpserver|scraper|clientapi|buildconfigs)/
+        text: "G306:"
+        linters:
+          - gosec
+      - path: internal/buildconfigs/
+        text: "G302:"
+        linters:
+          - gosec
+
+      # Paths come from operator config, validated buildconfig names, or contained joins.
+      - path: internal/(buildconfigs|clientapi|config|generator|scraper)/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/(config|generator|httpserver)/
+        text: "G703:"
+        linters:
+          - gosec
+
+      # Secure is set from the request scheme / STENCILBOX_SECURE_COOKIES; gosec wants a literal.
+      - path: internal/iam/auth\.go
+        text: "G124:"
+        linters:
+          - gosec
