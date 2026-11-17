@@ -3,7 +3,7 @@
     "@antora/lunr-extension": "^1.0.0-alpha.13",
     "@cerbos/antora-llm-generator": "^1.2.0",
     "antora": "^3.2.3",
-    "asciidoctor-kroki": "2.0.0"
+    "asciidoctor-kroki": "0.18.1"
   },
   "devDependencies": {
     "@asciidoctor/tabs": "^1.0.0-beta.6"
