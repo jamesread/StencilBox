@@ -260,14 +260,18 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 		log.Errorf("Build config %s not found", req.Msg.ConfigName)
 		response.IsError = true
 		response.Status = "Build config not found"
-		srv.Send(response)
+		if err := srv.Send(response); err != nil {
+			return err
+		}
 		return connect.NewError(connect.CodeNotFound, fmt.Errorf("build config %s not found", req.Msg.ConfigName))
 	}
 
 	if !c.beginBuild() {
 		response.IsError = true
 		response.Status = "StencilBox is shutting down"
-		srv.Send(response)
+		if err := srv.Send(response); err != nil {
+			return err
+		}
 		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("server is shutting down"))
 	}
 	defer c.builds.Done()
@@ -280,7 +284,9 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 		log.Infof("Build update: %s", update)
 
 		response.Status = update
-		srv.Send(response)
+		if err := srv.Send(response); err != nil {
+			return err
+		}
 	}
 
 	log.Infof("Build completed for config %s", req.Msg.ConfigName)
@@ -296,7 +302,9 @@ func (c *ClientApi) StartBuild(ctx context.Context, req *connect.Request[pb.Buil
 	response.Found = found
 	response.IsComplete = true
 
-	srv.Send(response)
+	if err := srv.Send(response); err != nil {
+		return err
+	}
 
 	// Record build history
 	c.recordBuildHistory(req.Msg.ConfigName, buildStatus, buildConfig.OutputDir, false, time.Since(buildStarted))

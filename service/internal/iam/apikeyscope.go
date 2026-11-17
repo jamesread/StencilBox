@@ -201,7 +201,7 @@ func queryStrings(ctx context.Context, db *sql.DB, q string, args ...any) ([]str
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := []string{}
 	for rows.Next() {
 		var s string

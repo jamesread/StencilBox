@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,7 +50,7 @@ func TestGenerateStreamsFailureReason(t *testing.T) {
 
 	status := &BuildStatus{}
 	updates := make(chan string)
-	go Generate(nil, filepath.Join(dir, "out"), cfg, status, updates)
+	go Generate(context.TODO(), filepath.Join(dir, "out"), cfg, status, updates)
 
 	var last string
 	for u := range updates {

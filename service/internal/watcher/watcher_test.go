@@ -39,17 +39,23 @@ func TestWatcherWithDataFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create test data files
 	dataDir := filepath.Join(tmpDir, "data")
-	os.MkdirAll(dataDir, 0755)
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		t.Fatalf("Failed to create data dir: %v", err)
+	}
 
 	dataFile1 := filepath.Join(dataDir, "test1.yml")
 	dataFile2 := filepath.Join(dataDir, "test2.yml")
 
-	os.WriteFile(dataFile1, []byte("key: value1\n"), 0644)
-	os.WriteFile(dataFile2, []byte("key: value2\n"), 0644)
+	if err := os.WriteFile(dataFile1, []byte("key: value1\n"), 0644); err != nil {
+		t.Fatalf("Failed to write data file: %v", err)
+	}
+	if err := os.WriteFile(dataFile2, []byte("key: value2\n"), 0644); err != nil {
+		t.Fatalf("Failed to write data file: %v", err)
+	}
 
 	// Create build config
 	configFile := filepath.Join(tmpDir, "config.yaml")
@@ -117,11 +123,13 @@ func TestWatcherDebounce(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create test data file
 	dataFile := filepath.Join(tmpDir, "test.yml")
-	os.WriteFile(dataFile, []byte("key: value\n"), 0644)
+	if err := os.WriteFile(dataFile, []byte("key: value\n"), 0644); err != nil {
+		t.Fatalf("Failed to write data file: %v", err)
+	}
 
 	// Create build config
 	configFile := filepath.Join(tmpDir, "config.yaml")
@@ -164,7 +172,9 @@ func TestWatcherDebounce(t *testing.T) {
 
 	// Modify file multiple times rapidly
 	for i := 0; i < 5; i++ {
-		os.WriteFile(dataFile, []byte("key: value"+string(rune(i))+"\n"), 0644)
+		if err := os.WriteFile(dataFile, []byte("key: value"+string(rune(i))+"\n"), 0644); err != nil {
+			t.Fatalf("Failed to write data file: %v", err)
+		}
 		time.Sleep(100 * time.Millisecond) // Less than debounce delay
 	}
 
@@ -204,11 +214,13 @@ func TestUpdateBuildConfigs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create initial data file
 	dataFile1 := filepath.Join(tmpDir, "test1.yml")
-	os.WriteFile(dataFile1, []byte("key: value1\n"), 0644)
+	if err := os.WriteFile(dataFile1, []byte("key: value1\n"), 0644); err != nil {
+		t.Fatalf("Failed to write data file: %v", err)
+	}
 
 	// Initial build config
 	configFile := filepath.Join(tmpDir, "config.yaml")
@@ -246,7 +258,9 @@ func TestUpdateBuildConfigs(t *testing.T) {
 
 	// Create new data file and update configs
 	dataFile2 := filepath.Join(tmpDir, "test2.yml")
-	os.WriteFile(dataFile2, []byte("key: value2\n"), 0644)
+	if err := os.WriteFile(dataFile2, []byte("key: value2\n"), 0644); err != nil {
+		t.Fatalf("Failed to write data file: %v", err)
+	}
 
 	updatedConfigs := map[string]*buildconfigs.BuildConfig{
 		"test-config": {
@@ -278,11 +292,13 @@ func TestMultipleConfigsSameFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create shared data file
 	dataFile := filepath.Join(tmpDir, "shared.yml")
-	os.WriteFile(dataFile, []byte("key: value\n"), 0644)
+	if err := os.WriteFile(dataFile, []byte("key: value\n"), 0644); err != nil {
+		t.Fatalf("Failed to write data file: %v", err)
+	}
 
 	// Multiple configs using same file
 	configFile1 := filepath.Join(tmpDir, "config1.yaml")

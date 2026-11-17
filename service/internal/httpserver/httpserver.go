@@ -289,7 +289,7 @@ func shutdown(srv *http.Server, apiServer *clientapi.ClientApi) {
 
 	if err := srv.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Warnf("HTTP server did not shut down cleanly, closing connections: %v", err)
-		srv.Close()
+		_ = srv.Close()
 	}
 
 	<-apiDone

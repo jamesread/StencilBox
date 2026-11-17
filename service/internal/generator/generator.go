@@ -71,8 +71,14 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 		"finalOutputDir": finalOutputDir,
 	}).Infof("Starting build for project")
 
-	os.MkdirAll(finalOutputDir, 0755)
-	os.MkdirAll(temporaryOutputDir, 0755)
+	if err := os.MkdirAll(finalOutputDir, 0755); err != nil {
+		failBuild(buildStatus, updateChannel, "Failed to create output directory: "+err.Error())
+		return
+	}
+	if err := os.MkdirAll(temporaryOutputDir, 0755); err != nil {
+		failBuild(buildStatus, updateChannel, "Failed to create temporary output directory: "+err.Error())
+		return
+	}
 
 	templateDir, err := FindTemplate(cfg.Template)
 	if err != nil {
@@ -147,7 +153,7 @@ func Generate(parentCtx context.Context, baseOutputDir string, cfg *buildconfigs
 		failBuild(buildStatus, updateChannel, "Error creating output file: "+err.Error())
 		return
 	}
-	defer outfile.Close()
+	defer func() { _ = outfile.Close() }()
 
 	repoStorageDir := getRepoStorageDir(cfg)
 	cloneRepos(bctx, repoStorageDir)
@@ -237,11 +243,7 @@ func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.
 		return ""
 	}
 
-	repoDirectory := filepath.Base(filepath.Clean(repoUrl.Path))
-
-	if strings.HasSuffix(repoDirectory, ".git") {
-		repoDirectory = repoDirectory[:len(repoDirectory)-4]
-	}
+	repoDirectory := strings.TrimSuffix(filepath.Base(filepath.Clean(repoUrl.Path)), ".git")
 
 	repoPath := filepath.Join(getRepoStorageDir(cfg), repoDirectory)
 
@@ -261,7 +263,7 @@ func getHookData(hookName string, repo *buildconfigs.GitRepo, cfg *buildconfigs.
 		return ""
 	}
 
-	if contents == nil || len(contents) == 0 {
+	if len(contents) == 0 {
 		return ""
 	}
 
@@ -273,7 +275,9 @@ func getRepoStorageDir(cfg *buildconfigs.BuildConfig) string {
 
 	// Check if the directory exists
 	if _, err := os.Stat(repoStorageDir); os.IsNotExist(err) {
-		os.MkdirAll(repoStorageDir, 0755)
+		if err := os.MkdirAll(repoStorageDir, 0755); err != nil {
+			log.Errorf("Error creating repo storage dir %s: %v", repoStorageDir, err)
+		}
 	}
 
 	log.Infof("repoPath: %s", repoStorageDir)
@@ -477,7 +481,10 @@ func copyFile(fromDir string, toDir string, filename string) {
 		return
 	}
 
-	os.WriteFile(filepath.Join(toDir, filename), contents, 0644)
+	if err := os.WriteFile(filepath.Join(toDir, filename), contents, 0644); err != nil {
+		log.Errorf("Error writing %v: %v", filename, err)
+		return
+	}
 
 	log.Infof("Copied %v to %v", filename, toDir)
 }

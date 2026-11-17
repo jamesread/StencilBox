@@ -82,7 +82,7 @@ func (dfw *DataFileWatcher) watchLoop(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			log.Info("Data file watcher stopping...")
-			dfw.watcher.Close()
+			_ = dfw.watcher.Close()
 			return
 
 		case event, ok := <-dfw.watcher.Events:
@@ -148,7 +148,7 @@ func (dfw *DataFileWatcher) UpdateBuildConfigs(buildConfigs map[string]*buildcon
 
 	// Remove all current watches
 	for filePath := range dfw.fileToConfigs {
-		dfw.watcher.Remove(filePath)
+		_ = dfw.watcher.Remove(filePath)
 	}
 
 	// Clear the mapping
@@ -183,6 +183,6 @@ func (dfw *DataFileWatcher) UpdateBuildConfigs(buildConfigs map[string]*buildcon
 // Stop stops the watcher
 func (dfw *DataFileWatcher) Stop() {
 	if dfw.watcher != nil {
-		dfw.watcher.Close()
+		_ = dfw.watcher.Close()
 	}
 }

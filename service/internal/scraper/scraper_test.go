@@ -186,7 +186,8 @@ func TestDownloadFaviconSVGExtension(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(strings.TrimSpace(string(data)), "<svg") {
-		t.Fatalf("expected svg content")
+	// SVGs often start with an XML declaration before the root <svg> element.
+	if !strings.Contains(string(data), "<svg") {
+		t.Fatalf("expected svg markup in downloaded favicon (%d bytes)", len(data))
 	}
 }

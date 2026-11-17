@@ -53,7 +53,7 @@ func fetchPageContent(pageURL string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch page: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -267,7 +267,7 @@ func DownloadFavicon(faviconURL, saveDir, filename string) (DownloadedFavicon, e
 		if err != nil {
 			return empty, fmt.Errorf("failed to download favicon: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return empty, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
