@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jamesread/armature-iam v1.0.2
 	github.com/jamesread/golure v0.0.0-20261111213547-dc225fc15a30
-	github.com/mark3labs/mcp-go v1.5.0
+	github.com/mark3labs/mcp-go v1.6.0
 	github.com/rs/cors v1.11.1
 	github.com/rubenv/sql-migrate v1.8.1
 	github.com/sirupsen/logrus v1.10.2
